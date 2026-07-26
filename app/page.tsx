@@ -3,13 +3,13 @@
 import { useMemo, useState } from "react";
 
 type View = "home" | "vault" | "games";
-type Asset = { symbol: string; name: string; price: number; ltv: number; tone: string };
+type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string };
 
 const assets: Asset[] = [
-  { symbol: "SOL", name: "Solana", price: 188.42, ltv: 70, tone: "purple" },
-  { symbol: "JUP", name: "Jupiter", price: 1.18, ltv: 55, tone: "green" },
-  { symbol: "JTO", name: "Jito", price: 3.21, ltv: 50, tone: "orange" },
-  { symbol: "BONK", name: "Bonk", price: 0.000028, ltv: 35, tone: "pink" },
+  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple" },
+  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange" },
+  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green" },
+  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink" },
 ];
 
 const games = [
@@ -72,13 +72,13 @@ export default function Home() {
         <section className="app-shell">
           <div className="section-kicker">THE CAGE / DEVNET DEMO</div>
           <h1>Turn Solana assets into <em>table chips.</em></h1>
-          <p className="lead">Choose collateral, preview your borrowing power, and draw a simulated USD chip balance. Nothing here submits a transaction.</p>
+          <p className="lead">Collateralize eligible Solana memecoins with a verified market cap above $10M. Preview your borrowing power and draw a simulated USD chip balance.</p>
           <div className="vault-grid">
             <div className="panel">
               <div className="panel-title"><span>01</span> SELECT COLLATERAL</div>
               <div className="asset-list">
                 {assets.map((a) => <button key={a.symbol} className={asset.symbol === a.symbol ? "asset selected" : "asset"} onClick={() => setAsset(a)}>
-                  <i className={a.tone}>{a.symbol.slice(0, 1)}</i><span><b>{a.symbol}</b><small>{a.name}</small></span><strong>{a.ltv}% LTV</strong>
+                  <i className={a.tone}>{a.symbol.slice(0, 1)}</i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(0)}M cap</small></span><strong>{a.ltv}% LTV</strong>
                 </button>)}
               </div>
             </div>
@@ -89,11 +89,12 @@ export default function Home() {
               <div className="receipt">
                 <p><span>Mark price</span><b>${asset.price < .01 ? asset.price.toFixed(6) : asset.price.toFixed(2)}</b></p>
                 <p><span>Collateral value</span><b>${collateral.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
+                <p><span>Market-cap gate</span><b className="eligible">✓ ABOVE $10M</b></p>
                 <p><span>Maximum draw</span><b>{asset.ltv}%</b></p>
                 <p className="total"><span>Chips available</span><b>{available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
               </div>
               <button className="primary full" onClick={draw}>{connected ? "Draw demo chips" : "Connect wallet to continue"}</button>
-              <small className="fine">Simulation only. A production build requires audited Solana programs, price oracles, liquidation logic and legal review.</small>
+              <small className="fine">Eligibility requires a verified Solana memecoin market cap above $10M. Production must continuously re-check market cap, liquidity and oracle integrity.</small>
             </div>
           </div>
         </section>
@@ -124,18 +125,18 @@ function HomeView({ go }: { go: (v: View) => void }) {
   const stats = useMemo(() => [["Cost to enter", "$0.00"], ["Borrowing power", "UP TO 70%"], ["Tables open", "06"], ["Settlement", "SOL"]], []);
   return <>
     <header className="hero">
-      <div className="eyebrow"><span /> SOLANA · COLLATERALIZED PLAY · SETTLED IN SOL</div>
-      <h1>Keep your bag.<br /><em>Borrow the thrill.</em></h1>
-      <p>Lock a Solana asset you already hold. Draw chips against it. Play across the floor, then settle your ticket in SOL to unlock your collateral.</p>
+      <div className="eyebrow"><span /> SOLANA MEMECOINS · $10M+ MARKET CAP · SETTLED IN SOL</div>
+      <h1>Keep the meme.<br /><em>Borrow the thrill.</em></h1>
+      <p>Lock an eligible Solana memecoin above $10M market cap. Draw chips against it. Play across the floor, then settle your ticket in SOL to unlock your bag.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("vault")}>Enter the cage <span>↗</span></button><button className="secondary" onClick={() => go("games")}>Explore games</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin"><span>◎</span><b>SOL</b></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
     </header>
-    <section className="manifesto"><div><span>THE WHOLE IDEA</span><h2>Your position stays yours.<br />The chips are <em>borrowed.</em></h2></div><p>We’re exploring a new kind of on-chain entertainment: collateral is security, not payment. Nothing is sold to sit down. Settle the ticket and the asset walks back out with you.</p></section>
+    <section className="manifesto"><div><span>THE WHOLE IDEA</span><h2>Your memecoin stays yours.<br />The chips are <em>borrowed.</em></h2></div><p>Only established Solana memes above a $10M market-cap gate can enter the cage. Collateral is security, not payment. Settle the ticket and your bag walks back out with you.</p></section>
     <section className="steps">
       <div className="section-kicker">HOW IT WORKS / THREE MOVES</div>
       <div className="step-grid">
-        <article><span>01 / LOCK</span><b>◆</b><h3>Put an asset in the cage</h3><p>Select SOL or a supported SPL token. A live oracle mark determines its collateral value.</p></article>
+        <article><span>01 / VERIFY</span><b>◆</b><h3>Pass the $10M gate</h3><p>Select a supported Solana memecoin. Market cap, liquidity and oracle health determine eligibility.</p></article>
         <article><span>02 / DRAW</span><b>◎</b><h3>Draw chips against it</h3><p>Borrow up to the asset’s published LTV. One chip tracks one US dollar of play balance.</p></article>
         <article><span>03 / SETTLE</span><b>↗</b><h3>Close the ticket in SOL</h3><p>Repay what you drew to unlock the asset. Any net chip winnings settle to the same wallet.</p></article>
       </div>
