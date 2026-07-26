@@ -1,19 +1,14 @@
 import assert from "node:assert/strict";
-import { access, readFile, readdir } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import test from "node:test";
 
-const developmentPreviewMeta =
-  /<meta(?=[^>]*\bname=["']codex-preview["'])(?=[^>]*\bcontent=["']development["'])[^>]*>/i;
-const templateRoot = new URL("../", import.meta.url);
-const previewRoot = new URL("../app/_sites-preview/", import.meta.url);
-
-async function render() {
+async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
-  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}`);
+  workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${pathname}`);
   const { default: worker } = await import(workerUrl.href);
 
   return worker.fetch(
-    new Request("http://localhost/", {
+    new Request(`http://localhost${pathname}`, {
       headers: { accept: "text/html" },
     }),
     {
@@ -28,64 +23,56 @@ async function render() {
   );
 }
 
-test("server-renders the starter loading skeleton", async () => {
-  const response = await render();
+test("server-renders the SolCage landing experience", async () => {
+  const response = await render("/");
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
 
   const html = await response.text();
-  assert.match(html, developmentPreviewMeta);
-  assert.match(html, /<title>Your site is taking shape<\/title>/i);
-  assert.match(html, /Building your site/);
-  assert.match(html, /Your site is taking shape/);
-  assert.match(
-    html,
-    /Your first version will appear here automatically when it’s ready\./,
-  );
-  assert.doesNotMatch(html, /Codex/);
-  assert.match(html, /react-loading-skeleton/);
-  assert.match(html, /role="status"/);
+  assert.match(html, /<title>SolCage — Collateral in\. Game on\.<\/title>/);
+  assert.match(html, /Keep the meme/);
+  assert.match(html, /Borrow the thrill/);
+  assert.match(html, /Animated SolCage casino chip/);
+  assert.match(html, /\/game-art\/roulette\.webp/);
+  assert.match(html, /href="\/games"/);
+  assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
-test("keeps the loading skeleton scoped and disposable", async () => {
-  const [preview, css, page, layout, packageJson, files] = await Promise.all([
-    readFile(new URL("SkeletonPreview.tsx", previewRoot), "utf8"),
-    readFile(new URL("preview.css", previewRoot), "utf8"),
-    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../app/layout.tsx", import.meta.url), "utf8"),
+test("server-renders all four playable game prototypes", async () => {
+  const response = await render("/games");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  for (const title of ["Coin Flip", "Neon Dice", "Crystal Mines", "Sol Spin"]) {
+    assert.match(html, new RegExp(title));
+  }
+  assert.match(html, /demo chips only/i);
+  assert.match(html, /no custody, cash value, blockchain settlement, or real-money wagering/i);
+  assert.match(html, /\/game-art\/mines\.webp/);
+  assert.match(html, /\/game-art\/dice\.webp/);
+});
+
+test("ships the procedural model, optimized art, and interaction hooks", async () => {
+  const [scene, games, css, packageJson] = await Promise.all([
+    readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
-    readdir(previewRoot),
   ]);
 
-  assert.deepEqual(files.sort(), ["SkeletonPreview.tsx", "preview.css"]);
-  assert.match(preview, /from "react-loading-skeleton"/);
-  assert.match(preview, /baseColor="#eceae7"/);
-  assert.match(preview, /highlightColor="#f9f8f6"/);
-  assert.match(preview, /duration=\{2\.8\}/);
-  assert.match(preview, /sites-skeleton-search-placeholder/);
-  assert.match(packageJson, /"react-loading-skeleton": "3\.5\.0"/);
+  assert.match(packageJson, /"three":/);
+  assert.match(scene, /sculptRuntime/);
+  assert.match(scene, /scrollProgress/);
+  assert.match(scene, /prefers-reduced-motion/);
+  assert.match(games, /kind: "game_round"/);
+  assert.match(games, /Array\.from\(\{ length: 25 \}/);
+  assert.match(css, /@keyframes chipFlip/);
+  assert.match(css, /@keyframes rouletteSpin/);
 
-  const shellIndex = preview.indexOf('className="sites-skeleton-shell"');
-  const statusIndex = preview.indexOf('className="sites-skeleton-status"');
-  assert.ok(shellIndex >= 0 && statusIndex > shellIndex);
-  assert.match(css, /position:\s*fixed/);
-  assert.match(css, /inset:\s*0/);
-  assert.match(css, /opacity:\s*0\.52/);
-  assert.match(css, /prefers-reduced-motion:\s*reduce/);
-  assert.doesNotMatch(css, /#020617|canvas|pets|progress/i);
-  assert.doesNotMatch(
-    preview,
-    /loading-spinner|status-mark|status-progress|canvas|cookie|random/i,
-  );
-
-  assert.match(page, /export const metadata:\s*Metadata/);
-  assert.match(page, /"codex-preview": "development"/);
-  assert.match(page, /<SkeletonPreview \/>/);
-  assert.match(layout, /title:\s*"Starter Project"/);
-  assert.doesNotMatch(layout, /codex-preview|_sites-preview|themeColor|\bViewport\b/);
-  assert.doesNotMatch(css, /(^|\s)(html|body)\s*\{/m);
-
-  await assert.rejects(
-    access(new URL("public/_sites-preview", templateRoot)),
-  );
+  await Promise.all([
+    access(new URL("../public/game-art/roulette.webp", import.meta.url)),
+    access(new URL("../public/game-art/mines.webp", import.meta.url)),
+    access(new URL("../public/game-art/dice.webp", import.meta.url)),
+    access(new URL("../artifacts/chip-model/chip-sculpt-spec.json", import.meta.url)),
+  ]);
 });

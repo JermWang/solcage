@@ -1,0 +1,3 @@
+[
+  {"id":"spin-rig-system","score":0.90,"visible":true,"notes":"Root pivot spins and tilts smoothly while named sockets, colliders, and destruction groups remain available in runtime metadata."}
+]

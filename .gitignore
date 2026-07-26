@@ -43,3 +43,6 @@ next-env.d.ts
 /outputs/
 /work/
 *.tar.gz
+/artifacts/dev.log
+/artifacts/dev.err
+/artifacts/chip-model/*-shot

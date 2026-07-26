@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import SolCageChipScene from "@/components/SolCageChipScene";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string };
@@ -59,9 +60,22 @@ export default function Home() {
         });
       }
     }).catch(() => undefined);
+
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) entry.target.classList.add("is-visible");
+      });
+    }, { threshold: 0.14 });
+    document.querySelectorAll(".reveal").forEach((element) => observer.observe(element));
+    return () => observer.disconnect();
   }, []);
 
   function go(next: View) {
+    if (next === "games") {
+      window.location.assign("/games");
+      return;
+    }
     setView(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
@@ -107,7 +121,7 @@ export default function Home() {
         <div className="nav-links">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Home</button>
           <button className={view === "vault" ? "active" : ""} onClick={() => go("vault")}>Cage</button>
-          <button className={view === "games" ? "active" : ""} onClick={() => go("games")}>Games</button>
+          <a href="/games">Games</a>
           <a href="/leaderboard">Leaderboard</a>
         </div>
         <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{loyaltyPoints.toLocaleString()} PTS</b></span></div>
@@ -165,6 +179,7 @@ export default function Home() {
           </div>
         </section>
       )}
+      <a className="floating-play" href="/games"><span>PLAY THE FLOOR</span><b>↗</b></a>
       <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Interactive front-end demonstration. Prices, wallets, chips, games and settlements are simulated. No custody, real loans or wagering.</p><span>BUILT FOR SOLANA · 2026</span></footer>
     </main>
   );
@@ -179,10 +194,10 @@ function HomeView({ go }: { go: (v: View) => void }) {
       <p>Lock a screened Solana memecoin above $10M market cap—including established and selected Pump.fun tokens. Draw chips, play, then settle in SOL to unlock your bag.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("vault")}>Enter the cage <span>↗</span></button><button className="secondary" onClick={() => go("games")}>Explore games</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
-      <div className="orbit" aria-hidden="true"><div className="coin"><span>◎</span><b>SOL</b></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
+      <div className="orbit" aria-hidden="true"><SolCageChipScene scrollReactive /></div>
     </header>
-    <section className="manifesto"><div><span>THE WHOLE IDEA</span><h2>Your memecoin stays yours.<br />The chips are <em>borrowed.</em></h2></div><p>Only established Solana memes above a $10M market-cap gate can enter the cage. Collateral is security, not payment. Settle the ticket and your bag walks back out with you.</p></section>
-    <section className="steps">
+    <section className="manifesto reveal"><div><span>THE WHOLE IDEA</span><h2>Your memecoin stays yours.<br />The chips are <em>borrowed.</em></h2></div><p>Only established Solana memes above a $10M market-cap gate can enter the cage. Collateral is security, not payment. Settle the ticket and your bag walks back out with you.</p></section>
+    <section className="steps reveal">
       <div className="section-kicker">HOW IT WORKS / THREE MOVES</div>
       <div className="step-grid">
         <article><span>01 / VERIFY</span><b>◆</b><h3>Pass every risk gate</h3><p>$10M+ market cap is only the start. Liquidity, holder concentration, token authorities, age and oracle health must pass too.</p></article>
@@ -190,10 +205,14 @@ function HomeView({ go }: { go: (v: View) => void }) {
         <article><span>03 / SETTLE</span><b>↗</b><h3>Close the ticket in SOL</h3><p>Repay what you drew to unlock the asset. Any net chip winnings settle to the same wallet.</p></article>
       </div>
     </section>
-    <section className="floor">
+    <section className="floor reveal">
       <div className="floor-head"><div><div className="section-kicker">THE FLOOR / SIX TABLES</div><h2>One stack.<br /><em>Every game.</em></h2></div><button className="secondary light" onClick={() => go("games")}>View the floor ↗</button></div>
-      <div className="cards">{games.map(g => <button key={g[2]} onClick={() => go("games")}><span>TABLE {g[0]}</span><i>{g[1]}</i><h3>{g[2]}</h3><p>{g[3]}</p><footer><b>EDGE {g[4]}</b><b>{g[5]}</b></footer></button>)}</div>
+      <div className="cards">{games.map((game, index) => <button key={game[2]} onClick={() => go("games")}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={["/game-art/roulette.webp", "/game-art/dice.webp", "/game-art/roulette.webp", "/game-art/mines.webp", "/game-art/dice.webp", "/game-art/roulette.webp"][index]} alt="" />
+        <span>TABLE {game[0]}</span><i>{game[1]}</i><h3>{game[2]}</h3><p>{game[3]}</p><footer><b>EDGE {game[4]}</b><b>{game[5]}</b></footer>
+      </button>)}</div>
     </section>
-    <section className="warning"><span>READ THE FELT</span><h2>Borrowing to play is still <em>borrowing.</em></h2><p>The debt survives a losing night. If collateral value falls, liquidation can cost the asset—not only the chips. This prototype uses simulated balances and does not enable real-money gambling.</p></section>
+    <section className="warning reveal"><span>READ THE FELT</span><h2>Borrowing to play is still <em>borrowing.</em></h2><p>The debt survives a losing night. If collateral value falls, liquidation can cost the asset—not only the chips. This prototype uses simulated balances and does not enable real-money gambling.</p></section>
   </>;
 }

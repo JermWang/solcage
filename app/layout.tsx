@@ -14,17 +14,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "SolCage — Collateral in. Game on.",
-  description: "Collateralize eligible Solana memecoins above $10M market cap, draw demo chips, and explore the floor.",
-  metadataBase: new URL("https://solcage.sites.openai.com"),
+  description: "Collateralize eligible Solana memecoins above $10M market cap, draw demo chips, and play four original GameFi prototypes.",
+  metadataBase: new URL("https://casinolend-production.up.railway.app"),
   openGraph: {
     title: "SolCage — Keep your bag. Borrow the thrill.",
-    description: "Collateralize Solana memecoins above $10M market cap.",
+    description: "Collateralize eligible Solana memecoins, draw demo chips, and explore the living game floor.",
     images: [{ url: "/og.png", width: 1200, height: 630, alt: "SolCage" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "SolCage — Keep your bag. Borrow the thrill.",
-    description: "Collateralize Solana memecoins above $10M market cap.",
+    description: "Collateralize eligible Solana memecoins, draw demo chips, and explore the living game floor.",
     images: ["/og.png"],
   },
   icons: {

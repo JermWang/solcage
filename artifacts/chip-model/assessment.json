@@ -1,0 +1,270 @@
+{
+  "targetName": "SolCage Hero Chip",
+  "sourceImage": "artifacts\\chip-model\\solcage-chip-reference.png",
+  "preSpecAssessment": {
+    "objectClass": {
+      "primaryType": "casino-chip",
+      "primaryDomain": "object",
+      "formLanguage": ["hard-surface", "rotational", "machined"],
+      "structureKind": ["layered-shell", "radial-repeated-modules"],
+      "motionPotential": ["whole-object-transform", "spin", "tilt", "stack"],
+      "materialFamilies": ["ceramic", "resin", "brushed-metal"],
+      "notes": "Single rotationally symmetric chip. The visible top and edge are strong evidence; the hidden underside is inferred as a mirrored face for a stylized real-time browser prop."
+    },
+    "complexity": {
+      "tier": "moderate",
+      "scores": {
+        "silhouetteComplexity": 1,
+        "componentCount": 2,
+        "hierarchyDepth": 1,
+        "repetitionDensity": 2,
+        "materialLayerCount": 2,
+        "localDetailDensity": 2,
+        "occlusionRisk": 1,
+        "actionReadinessNeed": 2
+      },
+      "estimatedCounts": {
+        "macroComponents": 2,
+        "mesoComponents": 4,
+        "microFeatureGroups": 4,
+        "materialLayers": 4,
+        "repetitionSystems": 3
+      },
+      "reasoning": [
+        "The silhouette is simple but identity depends on layered concentric rings, twelve radial edge inlays, twelve metal ticks, an embossed lightning groove, and three distinct material responses."
+      ]
+    },
+    "specDepthDecision": {
+      "requiredDepth": "moderate",
+      "minimumComponentLevels": [
+        "macro",
+        "meso"
+      ],
+      "needsRepetitionSystems": true,
+      "needsMaterialLocalOverrides": true,
+      "needsMultipleReviewViews": true,
+      "needsActionReadyHierarchy": true,
+      "rationale": "Moderate depth is required because a simple cylinder would lose the radial inlay system, machining grooves, metal ring, and action-ready spin hierarchy."
+    },
+    "unknownsToResolveBeforeImplementation": [
+      "Underside artwork is not visible and will mirror the top medallion.",
+      "Exact chip dimensions are unavailable; use casino-chip proportions with radius 1 and thickness 0.16."
+    ],
+    "detailInventory": {
+      "scanMethod": "grid-3x3",
+      "targetMinDetails": 6,
+      "note": "Enumerate every identity-defining small detail before authoring the spec. Each detail must map to a component.localFeatures entry or material.localOverrides entry, never prose only. Use forge/stage1_intake/build_detail_inventory.py to scan zones.",
+      "details": [
+        {
+          "id": "edge-inlays",
+          "kind": "decal",
+          "description": "Twelve raised alternating violet and acid-lime resin edge inlays.",
+          "region": {"x": 0.05, "y": 0.05, "width": 0.9, "height": 0.9, "units": "normalized"},
+          "scale": "meso",
+          "affects": "radial inlay color, clearcoat, and silhouette relief",
+          "mapsTo": {"type": "component.localFeatures", "ref": "outer-rim.edge-inlays"},
+          "evidenceRef": "full-object",
+          "confidence": 0.98
+        },
+        {
+          "id": "rim-bevel",
+          "kind": "bevel",
+          "description": "Broad rounded outer ceramic edge catches a continuous grazing highlight.",
+          "region": {"x": 0.04, "y": 0.08, "width": 0.92, "height": 0.82, "units": "normalized"},
+          "scale": "macro",
+          "affects": "outer silhouette and rim highlight",
+          "mapsTo": {"type": "component.localFeatures", "ref": "outer-rim.edge-bevel"},
+          "evidenceRef": "full-object",
+          "confidence": 0.96
+        },
+        {
+          "id": "metal-ring",
+          "kind": "gloss",
+          "description": "Brushed silver annulus separates the center medallion from the outer field.",
+          "region": {"x": 0.24, "y": 0.2, "width": 0.52, "height": 0.52, "units": "normalized"},
+          "scale": "meso",
+          "affects": "anisotropic metallic highlight",
+          "mapsTo": {"type": "material.localOverrides", "ref": "brushed-silver.annulus"},
+          "evidenceRef": "center-ring",
+          "confidence": 0.98
+        },
+        {
+          "id": "machining-lines",
+          "kind": "linework",
+          "description": "Fine concentric recessed lines across the black center medallion.",
+          "region": {"x": 0.28, "y": 0.26, "width": 0.44, "height": 0.42, "units": "normalized"},
+          "scale": "micro",
+          "affects": "grazing-light normal response",
+          "mapsTo": {"type": "component.localFeatures", "ref": "center-medallion.concentric-grooves"},
+          "evidenceRef": "center-medallion",
+          "confidence": 0.95
+        },
+        {
+          "id": "lightning-groove",
+          "kind": "ridge",
+          "description": "Raised two-color S-shaped lightning insert on the center face.",
+          "region": {"x": 0.4, "y": 0.31, "width": 0.2, "height": 0.31, "units": "normalized"},
+          "scale": "meso",
+          "affects": "center silhouette relief and emissive accent",
+          "mapsTo": {"type": "component.localFeatures", "ref": "center-medallion.lightning-insert"},
+          "evidenceRef": "center-mark",
+          "confidence": 0.94
+        },
+        {
+          "id": "metal-ticks",
+          "kind": "fastener",
+          "description": "Twelve slim brushed-metal radial tick inserts inside the outer field.",
+          "region": {"x": 0.14, "y": 0.12, "width": 0.72, "height": 0.72, "units": "normalized"},
+          "scale": "micro",
+          "affects": "radial rhythm and specular accents",
+          "mapsTo": {"type": "component.localFeatures", "ref": "outer-field.radial-ticks"},
+          "evidenceRef": "full-object",
+          "confidence": 0.96
+        }
+      ]
+    },
+    "anatomy": {
+      "applies": false,
+      "styleHeads": 0.0,
+      "proportions": {
+        "headUnit": 0.0,
+        "torso": 0.0,
+        "legs": 0.0,
+        "shoulderWidth": 0.0,
+        "hipWidth": 0.0
+      },
+      "pose": {
+        "type": "unassessed",
+        "jointAngles": {}
+      },
+      "faceLandmarks": {
+        "eyeLine": 0.0,
+        "eyeSpacing": 0.0,
+        "noseBase": 0.0,
+        "mouthLine": 0.0,
+        "hairline": 0.0
+      },
+      "features": [],
+      "confidence": 0.0,
+      "note": "Only meaningful when objectClass.primaryDomain is character or hybrid. Set applies=true and fill from forge/stage1_intake/extract_landmarks.py. See grimoire/character/reconstruction.md and grimoire/character/likeness_maximization.md."
+    },
+    "sourceImage": "artifacts\\chip-model\\solcage-chip-reference.png"
+  },
+  "qualityContract": {
+    "qualityBar": "moderate",
+    "definitionOfDone": [
+      "The rendered chip reads immediately as the reference: thick beveled black ceramic body, alternating violet/lime edge inlays, silver annulus, recessed concentric center machining, raised two-tone lightning insert, and radial metal ticks. It must spin and tilt at 60fps as a browser hero prop."
+    ],
+    "minimumSpecDepth": {
+      "macroComponents": 2,
+      "mesoComponents": 3,
+      "microFeatureGroups": 2,
+      "materialLayers": 2,
+      "repetitionSystems": 3,
+      "reviewViewpoints": 3
+    },
+    "featureGroups": [
+      {
+        "id": "overall-silhouette",
+        "name": "Overall silhouette and proportions",
+        "required": true,
+        "qualityCriteria": [
+          "Bounding shape, dominant curves, negative spaces, and scale relationships are explicitly described."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model reads as a generic placeholder instead of the reference object",
+          "major proportions are guessed without evidence"
+        ]
+      },
+      {
+        "id": "primary-structure",
+        "name": "Primary structure and hierarchy",
+        "required": true,
+        "qualityCriteria": [
+          "Major parts, joints, seams, contact points, and parent-child relationships are named before code generation."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "large visible parts are merged into one mesh",
+          "component hierarchy is too shallow for the observed complexity"
+        ]
+      },
+      {
+        "id": "attachment-joint-correctness",
+        "name": "Attachment and joint correctness",
+        "required": true,
+        "qualityCriteria": [
+          "Every visible child appendage, branch, limb, handle, connector, tube, cable, horn, wing, leg, or hinged part has an attachment contract with parent socket, localStart/localEnd, contact type, embed/overlap, and gap tolerance."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "child part root floats away from the parent",
+          "branch/limb/tube is centered in space instead of pivoting from its root",
+          "parent-child transform mixes world and local coordinates"
+        ]
+      },
+      {
+        "id": "surface-material-response",
+        "name": "Surface material response",
+        "required": true,
+        "qualityCriteria": [
+          "Albedo zones, roughness, normal/bump/displacement intent, cavity dirt, edge wear, and local overrides are specified where visible.",
+          "Important materials define independent albedo, roughness, height/normal, and AO responses instead of reusing one texture for unrelated PBR channels.",
+          "Surface response is decomposed into macro, meso, and micro frequency bands with scale and amplitude tied to object scale."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "surface looks like flat plastic",
+          "local material variation is missing or not tied to image evidence"
+        ]
+      },
+      {
+        "id": "reference-lookdev",
+        "name": "Reference color, material, and lighting response",
+        "required": true,
+        "qualityCriteria": [
+          "Material-pass names the reference-derived albedo palette, roughness variation, tactile normal/bump/displacement response, and local masks.",
+          "When a source image is available, run reference PBR extraction and require confidence >= 0.7 before treating maps as implementation-ready.",
+          "Lighting-pass names key/fill/rim or environment light, exposure, tone mapping, background, and contact shadow behavior.",
+          "Neutral, grazing-angle, and reference-matched renders prove that surface relief survives relighting and is not painted into albedo."
+        ],
+        "evidenceRefs": [
+          "full-object"
+        ],
+        "failureModes": [
+          "model has acceptable shape but reads as flat shaded or plastic",
+          "colors are a generic average instead of reference-observed local color zones",
+          "lighting is evenly ambient and cannot reproduce the source value range"
+        ]
+      }
+    ],
+    "visualDeltaChecks": [
+      "silhouette and negative-space delta",
+      "component hierarchy depth delta",
+      "repetition density and distribution delta",
+      "material albedo/roughness/normal response delta",
+      "local feature placement and scale delta"
+    ],
+    "antiShallowSpecRules": [
+      "Do not proceed to code if qualityContract.qualityBar is unassessed.",
+      "Do not proceed to code if the spec only contains a root component for a moderate or complex object.",
+      "Do not proceed to code if required featureGroups are not represented by componentTree, materials, or repetitionSystems.",
+      "Do not proceed to code if visible local features are described only in prose and not attached to components/materials/evidenceRefs.",
+      "Do not proceed past structural-pass if attached child parts lack attachment.parentSocket, localStart, localEnd, embedDepth/overlap, and gapTolerance.",
+      "Do not pass material look-dev when albedo is reused as roughness, height, normal, or AO.",
+      "Do not pass material look-dev without macro, meso, and micro surface frequency bands for close-up materials.",
+      "Do not pass reference-fidelity material look-dev from a source image without usable referencePbr maps or an explicit documented limitation.",
+      "Do not patch a spec with extracted PBR maps when extraction confidence is below the target threshold unless the user explicitly accepts lower fidelity."
+    ]
+  },
+  "authoringInstruction": "Fill observed object class, complexity reasoning, featureGroups, visualDeltaChecks, and unknowns before generating or implementing ObjectSculptSpec."
+}
