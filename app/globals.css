@@ -7,3 +7,69 @@
 /* Token screening status */
 .asset strong{display:flex;flex-direction:column;align-items:flex-end;gap:5px}
 .asset strong em{font-style:normal;font-size:7px;color:#287a46}
+
+.nav-links a{display:flex;align-items:center;padding:0 15px;color:inherit;text-decoration:none;font:700 11px var(--font-geist-mono);text-transform:uppercase}
+.wallet{text-decoration:none;text-align:center}
+.account-page{min-height:100vh}
+.account-nav{position:relative}
+.account-nav .brand{text-decoration:none;color:inherit}
+.account-nav>div{margin-left:auto;display:flex;gap:28px}
+.account-nav>div a{color:inherit;text-decoration:none;font:700 10px var(--font-geist-mono);text-transform:uppercase}
+.account-hero{padding:90px 6vw 65px;border-bottom:1px solid var(--line)}
+.account-hero h1{font-size:clamp(64px,8vw,120px);letter-spacing:-.07em;line-height:.85;margin:38px 0 28px}
+.account-hero h1 em,.points-rules h2 em,.ref-card h2 em{font-family:Georgia,serif;font-weight:400}
+.account-hero p{max-width:720px;font:17px/1.65 Georgia,serif;color:var(--muted)}
+.leaderboard-wrap{padding:45px 6vw 100px}
+.leaderboard-head,.leader-row{display:grid;grid-template-columns:1fr 100px 120px 160px;align-items:center}
+.leaderboard-head{padding:0 22px 14px;font:800 9px var(--font-geist-mono);letter-spacing:.12em;color:var(--muted)}
+.leaderboard-head span:not(:first-child){text-align:right}
+.leader-row{min-height:92px;border-top:1px solid var(--line);padding:14px 22px}
+.leader-row:hover{background:var(--lime)}
+.leader-row>div{display:flex;align-items:center;gap:14px}
+.leader-row>div>span:not(.avatar){display:flex;flex-direction:column;gap:5px}
+.leader-row small{font:9px var(--font-geist-mono);color:var(--muted)}
+.leader-row>b,.leader-row>strong{text-align:right;font:800 12px var(--font-geist-mono)}
+.leader-row>strong{font-size:15px}
+.rank{font:800 14px var(--font-geist-mono);width:28px}
+.avatar{width:48px;height:48px;object-fit:cover;border:1px solid var(--ink);background:var(--purple)}
+.avatar.fallback{display:grid;place-items:center;font-weight:900}
+.loading-row{padding:45px 22px;border-top:1px solid var(--line);font:800 11px var(--font-geist-mono)}
+.points-rules{background:var(--ink);color:white;padding:85px 6vw;display:grid;grid-template-columns:1fr 1fr;gap:8vw}
+.points-rules>div>span{color:var(--lime);font:800 9px var(--font-geist-mono)}
+.points-rules h2{font-size:56px;line-height:.95;letter-spacing:-.05em}
+.rule-list p{display:grid;grid-template-columns:40px 1fr auto;border-bottom:1px solid #454545;padding:18px 0;margin:0;align-items:center}
+.rule-list p b,.rule-list p strong{font:800 10px var(--font-geist-mono)}
+.rule-list p span{font:15px Georgia,serif}
+.profile-loading{min-height:70vh;display:grid;place-items:center;font:800 11px var(--font-geist-mono)}
+.profile-top{padding:65px 6vw;display:grid;grid-template-columns:150px 1fr auto;align-items:center;gap:38px;border-bottom:1px solid var(--line)}
+.profile-top h1{font-size:58px;letter-spacing:-.05em;margin:15px 0 7px}
+.profile-top p{font:10px var(--font-geist-mono);color:var(--muted)}
+.profile-avatar{position:relative;width:145px;height:145px;background:var(--purple);border:1px solid var(--ink)}
+.profile-avatar img{width:100%;height:100%;object-fit:cover}
+.profile-avatar>span{display:grid;place-items:center;height:100%;font-size:68px;font-weight:900}
+.profile-avatar label{position:absolute;left:8px;right:8px;bottom:8px;padding:10px;background:var(--lime);text-align:center;font:800 9px var(--font-geist-mono);cursor:pointer}
+.profile-avatar input{display:none}
+.profile-score{background:var(--ink);color:white;padding:28px 35px;display:flex;flex-direction:column;min-width:240px}
+.profile-score span,.profile-score small{font:9px var(--font-geist-mono);color:var(--lime)}
+.profile-score b{font-size:48px;letter-spacing:-.04em;margin:8px 0}
+.profile-grid{padding:55px 6vw;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.profile-form,.ref-card{background:#e7e6df;border:1px solid var(--line);padding:30px}
+.profile-form label{display:flex;flex-direction:column;gap:8px;margin:16px 0;font:800 9px var(--font-geist-mono)}
+.profile-form input,.profile-form textarea{border:0;border-bottom:1px solid var(--ink);background:transparent;padding:11px 0;outline:none;font:16px Arial}
+.profile-form textarea{min-height:78px;resize:vertical}
+.form-status{display:block;min-height:20px;margin-top:12px;color:var(--muted)}
+.ref-card{background:var(--purple)}
+.ref-card h2{font-size:46px;line-height:.95;letter-spacing:-.04em;margin:36px 0 20px}
+.ref-card p{font:15px/1.6 Georgia,serif;max-width:550px}
+.ref-code{background:var(--paper);border:1px solid var(--ink);padding:16px 18px;margin:28px 0 15px;display:flex;justify-content:space-between;align-items:center}
+.ref-code span{font:800 9px var(--font-geist-mono)}
+.ref-code b{font:900 22px var(--font-geist-mono);letter-spacing:.12em}
+.ref-card>strong{display:block;margin-top:20px;font:800 10px var(--font-geist-mono)}
+.history-panel{padding:65px 6vw 100px;display:grid;grid-template-columns:1fr 1.5fr;gap:6vw}
+.history-panel h2{font-size:45px;letter-spacing:-.04em}
+.history-panel article{display:grid;grid-template-columns:90px 1fr 70px 100px;gap:12px;padding:15px 0;border-bottom:1px solid var(--line);align-items:center}
+.history-panel article span,.history-panel article small{font:9px var(--font-geist-mono);color:var(--muted)}
+.history-panel article b{font-size:13px}
+.history-panel article strong{text-align:right;font:800 11px var(--font-geist-mono)}
+@media(max-width:800px){.leaderboard-head,.leader-row{grid-template-columns:1fr 70px 105px}.leaderboard-head span:nth-child(3),.leader-row>b:nth-child(3){display:none}.points-rules,.profile-grid,.history-panel{grid-template-columns:1fr}.profile-top{grid-template-columns:100px 1fr}.profile-avatar{width:100px;height:100px}.profile-score{grid-column:1/-1}.account-hero,.leaderboard-wrap,.points-rules,.profile-top,.profile-grid,.history-panel{padding-left:20px;padding-right:20px}.history-panel{gap:20px}}
+@media(max-width:600px){.account-nav>div{gap:12px}.account-nav>div a{font-size:8px}.nav-links a{padding:0 7px;font-size:8px}.leaderboard-head,.leader-row{grid-template-columns:1fr 100px}.leaderboard-head span:nth-child(2),.leader-row>b:nth-child(2){display:none}.leader-row{padding:10px 4px}.leader-row>div{gap:8px}.account-hero h1{font-size:58px}.points-rules h2{font-size:44px}.profile-top h1{font-size:38px}.profile-form,.ref-card{padding:20px}.history-panel article{grid-template-columns:70px 1fr 80px}.history-panel article small{display:none}}

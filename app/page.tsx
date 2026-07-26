@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string };
@@ -36,25 +36,65 @@ export default function Home() {
   const [activeGame, setActiveGame] = useState("Sol Spin");
   const [bet, setBet] = useState(25);
   const [result, setResult] = useState("Place a demo bet to spin");
+  const [loyaltyPoints, setLoyaltyPoints] = useState(0);
+  const [profileName, setProfileName] = useState("Profile");
 
   const collateral = Number(amount || 0) * asset.price;
   const available = collateral * asset.ltv / 100;
+
+  useEffect(() => {
+    const referralCode = new URLSearchParams(window.location.search).get("ref");
+    fetch("/api/me").then((response) => response.json()).then((profile) => {
+      if (!profile.error) {
+        setLoyaltyPoints(profile.points ?? 0);
+        setProfileName(profile.displayName ?? "Profile");
+      }
+      if (referralCode) {
+        fetch("/api/referrals", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({ code: referralCode }),
+        }).then((response) => response.json()).then((result) => {
+          if (result.profile) setLoyaltyPoints(result.profile.points ?? 0);
+        });
+      }
+    }).catch(() => undefined);
+  }, []);
 
   function go(next: View) {
     setView(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
+  async function recordEvent(payload: Record<string, unknown>) {
+    const response = await fetch("/api/events", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ ...payload, eventKey: crypto.randomUUID() }),
+    });
+    const data = await response.json();
+    if (response.ok) setLoyaltyPoints(data.points ?? loyaltyPoints);
+  }
+
   function draw() {
     if (!connected) return setConnected(true);
     setChips(Math.round(available * 100) / 100);
+    void recordEvent({
+      kind: "loan_draw",
+      asset: asset.symbol,
+      collateralAmount: Number(amount || 0),
+      collateralValue: collateral,
+      chipsDrawn: available,
+    });
   }
 
   function play() {
     if (chips < bet) return setResult("Draw more chips at the cage first");
     const won = Math.random() > 0.52;
+    const payout = won ? bet * 1.96 : 0;
     setChips((v) => Math.max(0, Math.round((v + (won ? bet * 0.96 : -bet)) * 100) / 100));
     setResult(won ? "WIN — payout added to your stack" : "HOUSE — better luck next round");
+    void recordEvent({ kind: "game_round", game: activeGame, bet, won, payout });
   }
 
   return (
@@ -68,9 +108,10 @@ export default function Home() {
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Home</button>
           <button className={view === "vault" ? "active" : ""} onClick={() => go("vault")}>Cage</button>
           <button className={view === "games" ? "active" : ""} onClick={() => go("games")}>Games</button>
+          <a href="/leaderboard">Leaderboard</a>
         </div>
-        <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>SOL OWED <b>{chips ? (chips / 188.42).toFixed(3) : "0.000"}</b></span></div>
-        <button className="wallet" onClick={() => setConnected(!connected)}>{connected ? "7xKp…9nQ2" : "Connect wallet"}</button>
+        <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{loyaltyPoints.toLocaleString()} PTS</b></span></div>
+        <a className="wallet" href="/profile">{profileName}</a>
       </nav>
 
       {view === "home" && <HomeView go={go} />}
