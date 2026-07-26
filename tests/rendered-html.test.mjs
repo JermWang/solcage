@@ -50,8 +50,9 @@ test("server-renders all three game experiences without Coin Flip", async () => 
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
-  assert.match(html, /practice mode uses local outcomes/i);
-  assert.match(html, /production protocol connects collateral, credit, game settlement and loyalty/i);
+  assert.doesNotMatch(html, /pre-launch|integrating|production play/i);
+  assert.match(html, /round outcomes in this interface are generated locally/i);
+  assert.match(html, /unifies collateral, credit, gameplay and loyalty/i);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });

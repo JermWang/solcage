@@ -43,7 +43,7 @@ export default function GamesPage() {
 
   function canPlay() {
     if (bet > bank) {
-      setMessage("Your practice stack is too small for that stake.");
+      setMessage("Your table balance is too small for that stake.");
       return false;
     }
     return true;
@@ -118,11 +118,11 @@ export default function GamesPage() {
 
   return (
     <main className="games-page">
-      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA FLOOR — PRE-LAUNCH</b></div>
+      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA FLOOR — OPEN</b></div>
       <nav className="games-nav">
         <Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link>
         <div className="nav-links"><Link href="/">Home</Link><Link href="/?view=vault">Cage</Link><Link className="active" href="/games">Games</Link><Link href="/leaderboard">Leaderboard</Link></div>
-        <div className="game-bank"><small>PRACTICE STACK</small><b>{money(bank)} CHIPS</b></div>
+        <div className="game-bank"><small>TABLE BALANCE</small><b>{money(bank)} CHIPS</b></div>
         <Link className="wallet" href="/profile">Profile</Link>
       </nav>
 
@@ -130,13 +130,13 @@ export default function GamesPage() {
         <div className="games-hero-copy">
           <div className="eyebrow"><span /> THREE GAME EXPERIENCES / ORIGINAL SOLCAGE ART</div>
           <h1>The floor is<br /><em>alive.</em></h1>
-          <p>Choose a table, set a practice stake, and play instantly. Every completed round writes to your activity history and earns loyalty points while the production settlement programs are integrated.</p>
+          <p>Choose a table, set your stake, and play instantly. Every completed round writes to your activity history and earns loyalty points.</p>
           <a className="primary" href="#tables">Choose a table <span>↓</span></a>
         </div>
         <div className="games-hero-art" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/game-art/roulette.webp" alt="" />
-          <div><span>LIVE FLOOR</span><b>03 TABLES</b><small>SOLANA SETTLEMENT INTEGRATING</small></div>
+          <div><span>LIVE FLOOR</span><b>03 TABLES</b><small>WALLET-LINKED ACCOUNT</small></div>
         </div>
       </header>
 
@@ -163,7 +163,7 @@ export default function GamesPage() {
             <b>{money(bet)} CHIPS</b>
             <button onClick={() => setBet(Math.min(bank || 5, bet * 2))}>2×</button>
           </div>
-          <small>Practice mode uses local outcomes. Production play activates only with audited settlement programs and verifiable randomness.</small>
+          <small>Round outcomes in this interface are generated locally. Wallet-linked activity and loyalty are recorded to your SolCage profile.</small>
         </div>
 
         <div className={`game-stage game-${active}`}>
@@ -204,7 +204,7 @@ export default function GamesPage() {
         </div>
       </section>
 
-      <section className="responsible-strip"><b>BUILT FOR SOLANA.</b><p>The production protocol connects collateral, credit, game settlement and loyalty through one wallet-native account layer.</p><Link href="/">BACK TO THE CAGE ↗</Link></section>
+      <section className="responsible-strip"><b>BUILT FOR SOLANA.</b><p>SolCage unifies collateral, credit, gameplay and loyalty around a single wallet-linked profile.</p><Link href="/">BACK TO THE CAGE ↗</Link></section>
     </main>
   );
 }
