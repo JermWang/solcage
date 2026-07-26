@@ -3,15 +3,26 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import bs58 from "bs58";
 
 type History = { kind: string; points: number; multiplier: number; description: string; created_at: string };
-type Profile = { username: string; displayName: string; avatarUrl: string | null; bio: string; walletAddress: string | null; referralCode: string; points: number; rank: number; referrals: number; multiplier: number; history: History[] };
+type Profile = { username: string; displayName: string; avatarUrl: string | null; bio: string; walletAddress: string | null; walletVerified: boolean; referralCode: string; points: number; rank: number | null; referrals: number; multiplier: number; history: History[] };
+
+declare global {
+  interface Window {
+    solana?: {
+      isPhantom?: boolean;
+      connect(): Promise<{ publicKey: { toString(): string } }>;
+      signMessage(message: Uint8Array, encoding: string): Promise<{ signature: Uint8Array }>;
+    };
+  }
+}
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
-  const [form, setForm] = useState({ username: "", displayName: "", bio: "", walletAddress: "", avatarUrl: "" });
+  const [form, setForm] = useState({ username: "", displayName: "", bio: "", avatarUrl: "" });
   const [status, setStatus] = useState("Loading your profile…");
-  useEffect(() => { fetch("/api/me").then(r => r.json()).then((data) => { if (data.error) return setStatus(data.error); setProfile(data); setForm({ username: data.username, displayName: data.displayName, bio: data.bio, walletAddress: data.walletAddress ?? "", avatarUrl: data.avatarUrl ?? "" }); setStatus(""); }); }, []);
+  useEffect(() => { fetch("/api/me").then(r => r.json()).then((data) => { if (data.error) return setStatus(data.error); setProfile(data); setForm({ username: data.username, displayName: data.displayName, bio: data.bio, avatarUrl: data.avatarUrl ?? "" }); setStatus(""); }); }, []);
   async function save(event: FormEvent) {
     event.preventDefault(); setStatus("Saving…");
     const response = await fetch("/api/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(form) });
@@ -33,12 +44,38 @@ export default function ProfilePage() {
     await navigator.clipboard.writeText(link);
     setStatus("Referral link copied.");
   }
+  async function verifyWallet() {
+    try {
+      const provider = window.solana;
+      if (!provider?.isPhantom) return setStatus("Install or open Phantom to verify a Solana wallet.");
+      setStatus("Connecting to Phantom…");
+      const connection = await provider.connect();
+      const wallet = connection.publicKey.toString();
+      const challengeResponse = await fetch("/api/wallet/challenge", {
+        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ wallet }),
+      });
+      const challenge = await challengeResponse.json();
+      if (!challengeResponse.ok) throw new Error(challenge.error);
+      const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), "utf8");
+      const verifyResponse = await fetch("/api/wallet/verify", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ wallet, nonce: challenge.nonce, signature: bs58.encode(signed.signature) }),
+      });
+      const verified = await verifyResponse.json();
+      if (!verifyResponse.ok) throw new Error(verified.error);
+      setProfile(verified.profile);
+      setStatus("Wallet ownership verified.");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Wallet verification cancelled.");
+    }
+  }
   return <main className="account-page">
     <nav className="account-nav"><Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div></nav>
     {!profile ? <div className="profile-loading">{status}</div> : <>
       <section className="profile-top">
         <div className="profile-avatar">{form.avatarUrl ? <Image src={form.avatarUrl} alt="Your profile" width={145} height={145} unoptimized /> : <span>{form.displayName.slice(0, 1)}</span>}<label>CHANGE PFP<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={avatar} /></label></div>
-        <div><div className="section-kicker">PLAYER PROFILE / SEASON ZERO</div><h1>{profile.displayName}</h1><p>@{profile.username} · GLOBAL RANK #{profile.rank}</p></div>
+        <div><div className="section-kicker">PLAYER PROFILE / SEASON ZERO</div><h1>{profile.displayName}</h1><p>@{profile.username} · {profile.rank ? `GLOBAL RANK #${profile.rank}` : "VERIFY WALLET TO RANK"}</p></div>
         <div className="profile-score"><span>LOYALTY BALANCE</span><b>{profile.points.toLocaleString()}</b><small>POINTS · {profile.multiplier.toFixed(2)}× MULTIPLIER</small></div>
       </section>
       <section className="profile-grid">
@@ -47,7 +84,11 @@ export default function ProfilePage() {
           <label>DISPLAY NAME<input value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} maxLength={40} /></label>
           <label>USERNAME<input value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} maxLength={24} /></label>
           <label>BIO<textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} maxLength={180} /></label>
-          <label>SOLANA WALLET<input value={form.walletAddress} onChange={e => setForm({ ...form, walletAddress: e.target.value })} placeholder="Optional public address" /></label>
+          <div className={profile.walletVerified ? "wallet-proof verified" : "wallet-proof"}>
+            <span>{profile.walletVerified ? "✓ VERIFIED SOLANA WALLET" : "WALLET VERIFICATION REQUIRED"}</span>
+            <b>{profile.walletAddress ? `${profile.walletAddress.slice(0, 6)}…${profile.walletAddress.slice(-5)}` : "No wallet connected"}</b>
+            <button className="secondary" type="button" onClick={verifyWallet}>{profile.walletVerified ? "RE-VERIFY WALLET" : "VERIFY WITH PHANTOM"}</button>
+          </div>
           <button className="primary full" type="submit">SAVE PROFILE</button><small className="form-status">{status}</small>
         </form>
         <div className="ref-card">

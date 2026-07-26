@@ -37,6 +37,8 @@ const schemaStatements = [
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE UNIQUE INDEX IF NOT EXISTS users_username_lower_idx ON users (LOWER(username))`,
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS wallet_verified_at TIMESTAMPTZ`,
+  `CREATE UNIQUE INDEX IF NOT EXISTS users_verified_wallet_idx ON users (wallet_address) WHERE wallet_verified_at IS NOT NULL`,
   `CREATE INDEX IF NOT EXISTS users_referred_by_idx ON users (referred_by)`,
   `CREATE TABLE IF NOT EXISTS sessions (
     token_hash CHAR(64) PRIMARY KEY,
@@ -45,6 +47,15 @@ const schemaStatements = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS sessions_expiry_idx ON sessions (expires_at)`,
+  `CREATE TABLE IF NOT EXISTS wallet_challenges (
+    nonce VARCHAR(64) PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    wallet_address VARCHAR(64) NOT NULL,
+    message TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS wallet_challenge_user_idx ON wallet_challenges (user_id, expires_at)`,
   `CREATE TABLE IF NOT EXISTS reward_ledger (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,

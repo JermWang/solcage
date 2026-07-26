@@ -73,3 +73,7 @@
 .history-panel article strong{text-align:right;font:800 11px var(--font-geist-mono)}
 @media(max-width:800px){.leaderboard-head,.leader-row{grid-template-columns:1fr 70px 105px}.leaderboard-head span:nth-child(3),.leader-row>b:nth-child(3){display:none}.points-rules,.profile-grid,.history-panel{grid-template-columns:1fr}.profile-top{grid-template-columns:100px 1fr}.profile-avatar{width:100px;height:100px}.profile-score{grid-column:1/-1}.account-hero,.leaderboard-wrap,.points-rules,.profile-top,.profile-grid,.history-panel{padding-left:20px;padding-right:20px}.history-panel{gap:20px}}
 @media(max-width:600px){.account-nav>div{gap:12px}.account-nav>div a{font-size:8px}.nav-links a{padding:0 7px;font-size:8px}.leaderboard-head,.leader-row{grid-template-columns:1fr 100px}.leaderboard-head span:nth-child(2),.leader-row>b:nth-child(2){display:none}.leader-row{padding:10px 4px}.leader-row>div{gap:8px}.account-hero h1{font-size:58px}.points-rules h2{font-size:44px}.profile-top h1{font-size:38px}.profile-form,.ref-card{padding:20px}.history-panel article{grid-template-columns:70px 1fr 80px}.history-panel article small{display:none}}
+.wallet-proof{border:1px solid var(--ink);padding:16px;margin:22px 0 8px;display:grid;gap:10px;background:#deddd5}
+.wallet-proof.verified{box-shadow:inset 4px 0 var(--lime)}
+.wallet-proof>span{font:800 9px var(--font-geist-mono);color:var(--muted)}
+.wallet-proof>button{margin-top:4px}

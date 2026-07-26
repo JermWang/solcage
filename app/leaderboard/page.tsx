@@ -20,7 +20,7 @@ export default function LeaderboardPage() {
     <section className="account-hero">
       <div className="section-kicker">GLOBAL RANKINGS / SEASON ZERO</div>
       <h1>The <em>loyalty board.</em></h1>
-      <p>Earn points by opening collateral tickets, playing demo rounds, and bringing verified players into the cage. Points are an off-chain loyalty score—not a promise of tokens or financial value.</p>
+      <p>Earn points by opening collateral tickets, playing demo rounds, and bringing verified players into the cage. Rankings include cryptographically verified Solana wallets only. Points are an off-chain loyalty score—not a promise of tokens or financial value.</p>
     </section>
     <section className="leaderboard-wrap">
       <div className="leaderboard-head"><span>RANK / PLAYER</span><span>REFS</span><span>ACTIVITY</span><span>POINTS</span></div>

@@ -97,8 +97,8 @@ export function json(data: unknown, status = 200, identity?: SessionIdentity) {
 
 export async function profileSnapshot(userId: string) {
   const user = await db().query(
-    `SELECT id, username, display_name, avatar_url, bio, wallet_address, referral_code,
-            referred_by, created_at
+    `SELECT id, username, display_name, avatar_url, bio, wallet_address, wallet_verified_at,
+            referral_code, referred_by, created_at
      FROM users WHERE id = $1`,
     [userId],
   );
@@ -110,14 +110,16 @@ export async function profileSnapshot(userId: string) {
   );
   const rank = await db().query(
     `WITH totals AS (
-       SELECT user_id, SUM(points) AS points FROM reward_ledger GROUP BY user_id
+       SELECT l.user_id, SUM(l.points) AS points
+       FROM reward_ledger l JOIN users u ON u.id = l.user_id
+       WHERE u.wallet_verified_at IS NOT NULL GROUP BY l.user_id
      ), ranked AS (
        SELECT user_id, RANK() OVER (ORDER BY points DESC) AS rank FROM totals
      ) SELECT rank::int FROM ranked WHERE user_id = $1`,
     [userId],
   );
   const referrals = await db().query(
-    `SELECT COUNT(*)::int AS count FROM users WHERE referred_by = $1`,
+    `SELECT COUNT(*)::int AS count FROM users WHERE referred_by = $1 AND wallet_verified_at IS NOT NULL`,
     [userId],
   );
   const history = await db().query(
@@ -133,12 +135,13 @@ export async function profileSnapshot(userId: string) {
     avatarUrl: row.avatar_url,
     bio: row.bio,
     walletAddress: row.wallet_address,
+    walletVerified: Boolean(row.wallet_verified_at),
     referralCode: row.referral_code,
     referred: Boolean(row.referred_by),
     createdAt: row.created_at,
     points: totals.rows[0].points,
     events: totals.rows[0].events,
-    rank: rank.rows[0]?.rank ?? 1,
+    rank: row.wallet_verified_at ? (rank.rows[0]?.rank ?? 1) : null,
     referrals: referrals.rows[0].count,
     multiplier: row.referred_by ? 1.25 : 1,
     history: history.rows,

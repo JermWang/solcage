@@ -14,6 +14,7 @@ export async function GET() {
        FROM users u
        LEFT JOIN reward_ledger l ON l.user_id = u.id
        LEFT JOIN users r ON r.referred_by = u.id
+       WHERE u.wallet_verified_at IS NOT NULL
        GROUP BY u.id
        ORDER BY points DESC, u.created_at ASC
        LIMIT 100`,
