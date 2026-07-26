@@ -20,9 +20,8 @@ const assets: Asset[] = [
 
 const games = [
   ["01", "◎", "Sol Spin", "Pick a color or number, place your stake, and send the wheel.", "2.70%", "35:1", "/game-art/roulette.webp"],
-  ["02", "◐", "Coin Flip", "Call violet or lime. One click, one flip, instant demo settlement.", "2.00%", "1.96×", "/game-art/roulette.webp"],
-  ["03", "◆", "Crystal Mines", "Reveal crystals for a rising multiplier. Cash out before the mine.", "3.00%", "RISING", "/game-art/mines.webp"],
-  ["04", "⚄", "Neon Dice", "Set your target from 2 to 95 and roll under the line.", "2.00%", "49×", "/game-art/dice.webp"],
+  ["02", "◆", "Crystal Mines", "Reveal crystals for a rising multiplier. Cash out before the mine.", "3.00%", "RISING", "/game-art/mines.webp"],
+  ["03", "⚄", "Neon Dice", "Set your target from 2 to 95 and roll under the line.", "2.00%", "49×", "/game-art/dice.webp"],
 ];
 
 export default function Home() {
@@ -31,9 +30,6 @@ export default function Home() {
   const [asset, setAsset] = useState(assets[0]);
   const [amount, setAmount] = useState("10");
   const [chips, setChips] = useState(0);
-  const [activeGame, setActiveGame] = useState("Sol Spin");
-  const [bet, setBet] = useState(25);
-  const [result, setResult] = useState("Place a demo bet to spin");
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [profileName, setProfileName] = useState("Profile");
 
@@ -99,18 +95,9 @@ export default function Home() {
     });
   }
 
-  function play() {
-    if (chips < bet) return setResult("Draw more chips at the cage first");
-    const won = Math.random() > 0.52;
-    const payout = won ? bet * 1.96 : 0;
-    setChips((v) => Math.max(0, Math.round((v + (won ? bet * 0.96 : -bet)) * 100) / 100));
-    setResult(won ? "WIN — payout added to your stack" : "HOUSE — better luck next round");
-    void recordEvent({ kind: "game_round", game: activeGame, bet, won, payout });
-  }
-
   return (
     <main>
-      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>DEVNET FLOOR — OPEN</b></div>
+      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA CREDIT + GAMES</b></div>
       <nav>
         <button className="brand" onClick={() => go("home")} aria-label="SolCage home">
           <span className="brand-mark">SC</span><span>SOLCAGE</span>
@@ -128,7 +115,7 @@ export default function Home() {
       {view === "home" && <HomeView go={go} />}
       {view === "vault" && (
         <section className="app-shell">
-          <div className="section-kicker">THE CAGE / DEVNET DEMO</div>
+          <div className="section-kicker">THE CAGE / CREDIT PREVIEW</div>
           <h1>Turn Solana assets into <em>table chips.</em></h1>
           <p className="lead">Collateralize screened Solana memecoins with a verified market cap above $10M. Pump.fun candidates must also pass age, liquidity, authority and concentration checks.</p>
           <div className="vault-grid">
@@ -142,7 +129,7 @@ export default function Home() {
             </div>
             <div className="panel ticket">
               <div className="panel-title"><span>02</span> OPEN A TICKET</div>
-              <label>COLLATERAL AMOUNT <span>Balance: demo</span></label>
+              <label>COLLATERAL AMOUNT <span>Position input</span></label>
               <div className="amount"><input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" aria-label="Collateral amount" /><b>{asset.symbol}</b></div>
               <div className="receipt">
                 <p><span>Mark price</span><b>${asset.price < .01 ? asset.price.toFixed(6) : asset.price.toFixed(2)}</b></p>
@@ -153,63 +140,59 @@ export default function Home() {
                 <p><span>Maximum draw</span><b>{asset.ltv}%</b></p>
                 <p className="total"><span>Chips available</span><b>{available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
               </div>
-              <button className="primary full" onClick={draw}>{connected ? "Draw demo chips" : "Connect wallet to continue"}</button>
+              <button className="primary full" onClick={draw}>{connected ? "Preview available credit" : "Connect wallet to preview"}</button>
               <small className="fine">Screened does not mean safe or endorsed. Eligibility requires a verified $10M+ market cap, sufficient executable liquidity, revoked mint/freeze authority, holder-distribution limits and clean oracle coverage. Any failed check disables new loans.</small>
             </div>
           </div>
         </section>
       )}
-      {view === "games" && (
-        <section className="app-shell">
-          <div className="section-kicker">THE FLOOR / SIX TABLES</div>
-          <h1>Pick your <em>table.</em></h1>
-          <div className="game-layout">
-            <div className="game-menu">{games.map((g) => <button key={g[2]} className={activeGame === g[2] ? "selected" : ""} onClick={() => { setActiveGame(g[2]); setResult("Place a demo bet to play"); }}><span>{g[1]}</span><b>{g[2]}</b><small>EDGE {g[4]}</small></button>)}</div>
-            <div className="table-panel">
-              <span className="live">● DEVNET SIMULATION</span>
-              <div className="table-symbol">{games.find(g => g[2] === activeGame)?.[1]}</div>
-              <h2>{activeGame}</h2><p>{result}</p>
-              <div className="bet-row"><button onClick={() => setBet(Math.max(5, bet / 2))}>½</button><strong>{bet.toFixed(2)} CHIPS</strong><button onClick={() => setBet(bet * 2)}>2×</button></div>
-              <button className="primary play" onClick={play}>PLAY DEMO ROUND</button>
-              <small>Stack: {chips.toFixed(2)} chips · no real wagering</small>
-            </div>
-          </div>
-        </section>
-      )}
       <a className="floating-play" href="/games"><span>PLAY THE FLOOR</span><b>↗</b></a>
-      <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Interactive front-end demonstration. Prices, wallets, chips, games and settlements are simulated. No custody, real loans or wagering.</p><span>BUILT FOR SOLANA · 2026</span></footer>
+      <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Solana-native memecoin credit, game settlement and loyalty in one wallet-connected platform.</p><span>BUILT FOR SOLANA · 2026</span></footer>
     </main>
   );
 }
 
 function HomeView({ go }: { go: (v: View) => void }) {
-  const stats = useMemo(() => [["Demo stack", "1,000"], ["Live games", "04"], ["Round rewards", "ON"], ["Settlement", "DEMO"]], []);
+  const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", "03"], ["Round rewards", "ON"], ["Network", "SOLANA"]], []);
   return <>
     <header className="hero">
-      <div className="eyebrow"><span /> THE FLOOR IS OPEN · 1,000 DEMO CHIPS · LOYALTY ON EVERY ROUND</div>
+      <div className="eyebrow"><span /> MEMECOIN CREDIT ON SOLANA · $10M+ COLLATERAL · FLOOR REWARDS</div>
       <h1>Bag locked.<br /><em>Tables open.</em></h1>
-      <p>Put a screened Solana memecoin in the cage, draw a stack, and hit four playable tables. Every round builds your profile history and loyalty score.</p>
+      <p>Deposit an eligible Solana memecoin, open a collateralized credit position, and take that liquidity to the floor. Every position and round builds your account history and loyalty score.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("games")}>Play now <span>↗</span></button><button className="secondary" onClick={() => go("vault")}>Open the cage</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin"><span>◎</span><b>SOL</b></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
     </header>
-    <div className="lobby-marquee" aria-label="Floor status"><b><span /> LIVE TABLES 04</b><b>DEMO STACK 1,000</b><b>LOYALTY ACTIVE</b><b>PROFILE HISTORY ON</b></div>
+    <div className="lobby-marquee" aria-label="Floor status"><b><span /> LIVE TABLES 03</b><b>SOLANA CREDIT MARKET</b><b>LOYALTY ACTIVE</b><b>PROFILE HISTORY ON</b></div>
     <section className="floor reveal">
-      <div className="floor-head"><div><div className="section-kicker">THE FLOOR / FOUR LIVE PROTOTYPES</div><h2>Pick a table.<br /><em>Place a demo bet.</em></h2></div><button className="secondary light" onClick={() => go("games")}>Enter the floor ↗</button></div>
+      <div className="floor-head"><div><div className="section-kicker">THE FLOOR / THREE GAME EXPERIENCES</div><h2>Pick a table.<br /><em>Place your stake.</em></h2></div><button className="secondary light" onClick={() => go("games")}>Enter the floor ↗</button></div>
       <div className="cards">{games.map((game) => <button key={game[2]} onClick={() => go("games")}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={game[6]} alt="" />
         <span>TABLE {game[0]}</span><i>{game[1]}</i><h3>{game[2]}</h3><p>{game[3]}</p><footer><b>EDGE {game[4]}</b><b>{game[5]}</b></footer>
       </button>)}</div>
     </section>
+    <section className="lending-brief reveal" id="lending">
+      <div className="lending-intro">
+        <div className="section-kicker">THE CREDIT MARKET / SOLANA MEMECOINS</div>
+        <h2>Keep the bag.<br /><em>Access the liquidity.</em></h2>
+        <p>SolCage is designed as a Solana-native collateral market for established memecoins. At launch, eligible tokens enter program-controlled vaults, each asset receives its own loan-to-value limit, and repayment unlocks the original collateral.</p>
+        <button className="primary" onClick={() => go("vault")}>Explore the cage <span>↗</span></button>
+      </div>
+      <div className="lending-details">
+        <article><span>01 / ELIGIBILITY</span><h3>$10M market cap is the first gate—not the only one.</h3><p>Executable liquidity, holder concentration, token authorities, trading history and oracle coverage determine whether new positions can open.</p></article>
+        <article><span>02 / CREDIT</span><h3>Every asset gets a risk-adjusted LTV.</h3><p>More liquid, widely distributed assets support higher credit limits. Volatile or concentrated collateral receives a lower ceiling or is disabled.</p></article>
+        <article><span>03 / REPAYMENT</span><h3>Positions settle through the same Solana wallet.</h3><p>Repay the outstanding balance to release collateral. If health falls below the maintenance threshold, protocol liquidation protects the credit pool.</p></article>
+      </div>
+      <div className="asset-tape"><span>COLLATERAL UNIVERSE</span><b>$TRIPLET</b><b>$FARTCOIN</b><b>$KINS</b><b>$JIMOTHY</b><b>$BONK</b><b>$WIF</b><b>$POPCAT</b></div>
+    </section>
     <section className="steps reveal">
       <div className="section-kicker">FUND THE FLOOR / THREE MOVES</div>
       <div className="step-grid">
-        <article><span>01 / LOCK</span><b>◆</b><h3>Put the bag in the cage</h3><p>Choose a screened $10M+ Solana asset and open a simulated collateral ticket.</p></article>
-        <article><span>02 / STACK</span><b>◎</b><h3>Draw your table chips</h3><p>Your asset tier sets the demo stack. The bag stays locked while the ticket is open.</p></article>
-        <article><span>03 / PLAY</span><b>↗</b><h3>Hit the floor</h3><p>Play four instant prototypes, build round history, and climb the loyalty leaderboard.</p></article>
+        <article><span>01 / LOCK</span><b>◆</b><h3>Put the bag in the cage</h3><p>Choose a screened $10M+ Solana asset and open a collateral position.</p></article>
+        <article><span>02 / BORROW</span><b>◎</b><h3>Access the credit line</h3><p>Your asset’s risk tier sets the available LTV while the collateral remains secured in the vault.</p></article>
+        <article><span>03 / PLAY</span><b>↗</b><h3>Hit the floor</h3><p>Play three game experiences, build round history, and climb the loyalty leaderboard.</p></article>
       </div>
     </section>
-    <section className="warning reveal"><span>READ THE FELT</span><h2>Borrowing to play is still <em>borrowing.</em></h2><p>The debt survives a losing night. If collateral value falls, liquidation can cost the asset—not only the chips. This prototype uses simulated balances and does not enable real-money gambling.</p></section>
   </>;
 }

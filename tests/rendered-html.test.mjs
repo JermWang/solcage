@@ -32,23 +32,26 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /<title>SolCage — Collateral in\. Game on\.<\/title>/);
   assert.match(html, /Bag locked/);
   assert.match(html, /Tables open/);
-  assert.match(html, /LIVE TABLES 04/);
+  assert.match(html, /LIVE TABLES 03/);
+  assert.match(html, /THE CREDIT MARKET/);
+  assert.match(html, /Access the liquidity/);
   assert.doesNotMatch(html, /Animated SolCage casino chip/);
   assert.match(html, /\/game-art\/roulette\.webp/);
   assert.match(html, /href="\/games"/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
-test("server-renders all four playable game prototypes", async () => {
+test("server-renders all three game experiences without Coin Flip", async () => {
   const response = await render("/games");
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Coin Flip", "Neon Dice", "Crystal Mines", "Sol Spin"]) {
+  for (const title of ["Neon Dice", "Crystal Mines", "Sol Spin"]) {
     assert.match(html, new RegExp(title));
   }
-  assert.match(html, /demo chips only/i);
-  assert.match(html, /no custody, cash value, blockchain settlement, or real-money wagering/i);
+  assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
+  assert.match(html, /practice mode uses local outcomes/i);
+  assert.match(html, /production protocol connects collateral, credit, game settlement and loyalty/i);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
@@ -69,7 +72,7 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(games, /Array\.from\(\{ length: 25 \}/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.match(games, /games-hero-art/);
-  assert.match(css, /@keyframes chipFlip/);
+  assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /@keyframes rouletteSpin/);
 
   await Promise.all([

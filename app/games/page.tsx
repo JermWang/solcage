@@ -3,10 +3,9 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
-type GameId = "coin" | "dice" | "mines" | "roulette";
+type GameId = "dice" | "mines" | "roulette";
 
 const gameCatalog: Array<{ id: GameId; name: string; eyebrow: string; image: string; detail: string }> = [
-  { id: "coin", name: "Coin Flip", eyebrow: "INSTANT / 1.96×", image: "/game-art/dice.webp", detail: "Call the face. Fast, clean, and built around the live SolCage chip." },
   { id: "dice", name: "Neon Dice", eyebrow: "ROLL UNDER / VARIABLE", image: "/game-art/dice.webp", detail: "Move the target, watch the odds change, then roll from 1 to 100." },
   { id: "mines", name: "Crystal Mines", eyebrow: "5 × 5 / CASH OUT", image: "/game-art/mines.webp", detail: "Reveal clean cells for a rising multiplier. Leave before the energy mine wakes." },
   { id: "roulette", name: "Sol Spin", eyebrow: "SINGLE ZERO / 2×", image: "/game-art/roulette.webp", detail: "Pick a color and send the luminous ball around the single-zero wheel." },
@@ -19,12 +18,10 @@ function money(value: number) {
 }
 
 export default function GamesPage() {
-  const [active, setActive] = useState<GameId>("coin");
+  const [active, setActive] = useState<GameId>("dice");
   const [bank, setBank] = useState(1000);
   const [bet, setBet] = useState(25);
-  const [message, setMessage] = useState("Choose a side and flip the chip.");
-  const [coinSide, setCoinSide] = useState<"VIOLET" | "LIME">("VIOLET");
-  const [coinFlip, setCoinFlip] = useState(0);
+  const [message, setMessage] = useState("Move the target, watch the odds change, then roll from 1 to 100.");
   const [diceTarget, setDiceTarget] = useState(50);
   const [diceRoll, setDiceRoll] = useState<number | null>(null);
   const [rouletteChoice, setRouletteChoice] = useState<"RED" | "BLACK" | "ZERO">("RED");
@@ -46,7 +43,7 @@ export default function GamesPage() {
 
   function canPlay() {
     if (bet > bank) {
-      setMessage("Your demo stack is too small for that bet.");
+      setMessage("Your practice stack is too small for that stake.");
       return false;
     }
     return true;
@@ -56,14 +53,6 @@ export default function GamesPage() {
     setBank((value) => Math.max(0, value - bet + payout));
     setMessage(nextMessage);
     void record(gameName, won, payout);
-  }
-
-  function playCoin() {
-    if (!canPlay()) return;
-    const landed = Math.random() >= 0.5 ? "VIOLET" : "LIME";
-    const won = landed === coinSide;
-    setCoinFlip((value) => value + 1);
-    settle(won, won ? bet * 1.96 : 0, won ? `${landed} lands. You called it.` : `${landed} lands. The cage keeps this one.`, "Coin Flip");
   }
 
   function playDice() {
@@ -129,25 +118,25 @@ export default function GamesPage() {
 
   return (
     <main className="games-page">
-      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SIMULATION FLOOR — OPEN</b></div>
+      <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA FLOOR — PRE-LAUNCH</b></div>
       <nav className="games-nav">
         <Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link>
         <div className="nav-links"><Link href="/">Home</Link><Link href="/?view=vault">Cage</Link><Link className="active" href="/games">Games</Link><Link href="/leaderboard">Leaderboard</Link></div>
-        <div className="game-bank"><small>DEMO STACK</small><b>{money(bank)} CHIPS</b></div>
+        <div className="game-bank"><small>PRACTICE STACK</small><b>{money(bank)} CHIPS</b></div>
         <Link className="wallet" href="/profile">Profile</Link>
       </nav>
 
       <header className="games-hero">
         <div className="games-hero-copy">
-          <div className="eyebrow"><span /> FOUR LIVE PROTOTYPES / ORIGINAL SOLCAGE ART</div>
+          <div className="eyebrow"><span /> THREE GAME EXPERIENCES / ORIGINAL SOLCAGE ART</div>
           <h1>The floor is<br /><em>alive.</em></h1>
-          <p>Choose a table, set a demo stake, and play instantly. Every completed round writes to your activity history and earns loyalty points.</p>
+          <p>Choose a table, set a practice stake, and play instantly. Every completed round writes to your activity history and earns loyalty points while the production settlement programs are integrated.</p>
           <a className="primary" href="#tables">Choose a table <span>↓</span></a>
         </div>
         <div className="games-hero-art" aria-hidden="true">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/game-art/roulette.webp" alt="" />
-          <div><span>LIVE FLOOR</span><b>04 TABLES</b><small>DEMO CHIPS ONLY</small></div>
+          <div><span>LIVE FLOOR</span><b>03 TABLES</b><small>SOLANA SETTLEMENT INTEGRATING</small></div>
         </div>
       </header>
 
@@ -174,21 +163,10 @@ export default function GamesPage() {
             <b>{money(bet)} CHIPS</b>
             <button onClick={() => setBet(Math.min(bank || 5, bet * 2))}>2×</button>
           </div>
-          <small>Simulation only. Outcomes are generated locally and are not provably fair or suitable for real wagering.</small>
+          <small>Practice mode uses local outcomes. Production play activates only with audited settlement programs and verifiable randomness.</small>
         </div>
 
         <div className={`game-stage game-${active}`}>
-          {active === "coin" && (
-            <>
-              <div className={`flip-coin flip-${coinFlip % 2}`}><b>SC</b><span /></div>
-              <div className="choice-row">
-                <button className={coinSide === "VIOLET" ? "selected" : ""} onClick={() => setCoinSide("VIOLET")}>VIOLET</button>
-                <button className={coinSide === "LIME" ? "selected" : ""} onClick={() => setCoinSide("LIME")}>LIME</button>
-              </div>
-              <button className="primary game-action" onClick={playCoin}>FLIP THE CHIP</button>
-            </>
-          )}
-
           {active === "dice" && (
             <>
               <div className="dice-readout"><span>{diceRoll ?? "—"}</span><small>ROLL / 100</small></div>
@@ -226,7 +204,7 @@ export default function GamesPage() {
         </div>
       </section>
 
-      <section className="responsible-strip"><b>PLAY THE PROTOTYPE.</b><p>These games use demo chips only. There is no custody, cash value, blockchain settlement, or real-money wagering.</p><Link href="/">BACK TO THE CAGE ↗</Link></section>
+      <section className="responsible-strip"><b>BUILT FOR SOLANA.</b><p>The production protocol connects collateral, credit, game settlement and loyalty through one wallet-native account layer.</p><Link href="/">BACK TO THE CAGE ↗</Link></section>
     </main>
   );
 }
