@@ -342,6 +342,18 @@
 }
 @media(prefers-reduced-motion:reduce){.circular-carousel{transition:none}.circular-carousel .coin-card{transition:none}}
 
+/* Full-bleed carousel flow without a framed outer container */
+.seamless-carousel-shell{width:100vw;margin:78px 0 0 calc(50% - 50vw);border:0;box-shadow:none;background:radial-gradient(circle at 50% 48%,rgba(141,101,255,.25),transparent 34%),radial-gradient(circle at 90% 45%,rgba(201,255,56,.07),transparent 24%),linear-gradient(180deg,var(--paper) 0,#111018 110px,#0b0a0e calc(100% - 110px),var(--paper) 100%)}
+.seamless-carousel-shell .coin-carousel-head{min-height:0;padding:92px 6vw 12px;border:0;background:transparent;backdrop-filter:none}
+.seamless-carousel-shell .coin-carousel-focus{min-height:0;padding:12px 6vw 92px;border:0;background:transparent;backdrop-filter:none}
+.seamless-carousel-shell .circular-carousel-stage::before{background:linear-gradient(90deg,#0c0a10 3%,transparent)}
+.seamless-carousel-shell .circular-carousel-stage::after{background:linear-gradient(-90deg,#0c0a10 3%,transparent)}
+@media(max-width:600px){
+  .seamless-carousel-shell{width:100vw;margin:58px 0 0 calc(50% - 50vw)}
+  .seamless-carousel-shell .coin-carousel-head{padding:76px 20px 8px}
+  .seamless-carousel-shell .coin-carousel-focus{padding:8px 20px 76px}
+}
+
 /* High-contrast lime chrome and a static game-floor splash */
 .ticker,.ticker *{color:#0b0a0d}
 .games-hero-art{height:580px;position:relative;isolation:isolate;overflow:hidden;border:1px solid #4a4253;transform:rotate(2deg);box-shadow:24px 26px 0 #060508}

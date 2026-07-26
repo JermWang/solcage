@@ -36,6 +36,7 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /THE CREDIT MARKET/);
   assert.match(html, /Access the liquidity/);
   assert.match(html, /Accepted collateral coins circular carousel/);
+  assert.match(html, /seamless-carousel-shell/);
   assert.match(html, /Choose your bag/);
   assert.match(html, /\/coin-art\/jimothy\.webp/);
   assert.match(html, /\/coin-art\/triplet\.webp/);
@@ -62,9 +63,10 @@ test("server-renders all three game experiences without Coin Flip", async () => 
 });
 
 test("ships the procedural model, optimized art, and interaction hooks", async () => {
-  const [scene, games, css, packageJson] = await Promise.all([
+  const [scene, games, page, css, packageJson] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
@@ -73,6 +75,7 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(scene, /sculptRuntime/);
   assert.match(scene, /scrollProgress/);
   assert.match(scene, /prefers-reduced-motion/);
+  assert.match(page, /addEventListener\("wheel", captureWheel, \{ passive: false \}\)/);
   assert.match(games, /kind: "game_round"/);
   assert.match(games, /Array\.from\(\{ length: 25 \}/);
   assert.doesNotMatch(games, /SolCageChipScene/);

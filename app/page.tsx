@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -202,10 +202,33 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
 
 function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (asset: Asset) => void }) {
   const [turn, setTurn] = useState(0);
+  const stageRef = useRef<HTMLDivElement>(null);
   const wheelLocked = useRef(false);
+  const wheelTimer = useRef<number | null>(null);
   const dragStart = useRef<number | null>(null);
   const active = ((turn % items.length) + items.length) % items.length;
   const angleStep = 360 / items.length;
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
+
+    function captureWheel(event: globalThis.WheelEvent) {
+      event.preventDefault();
+      event.stopPropagation();
+      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+      if (Math.abs(delta) < 8 || wheelLocked.current) return;
+      wheelLocked.current = true;
+      setTurn((current) => current + (delta > 0 ? 1 : -1));
+      wheelTimer.current = window.setTimeout(() => { wheelLocked.current = false; }, 420);
+    }
+
+    stage.addEventListener("wheel", captureWheel, { passive: false });
+    return () => {
+      stage.removeEventListener("wheel", captureWheel);
+      if (wheelTimer.current !== null) window.clearTimeout(wheelTimer.current);
+    };
+  }, []);
 
   function rotateBy(amount: number) {
     setTurn((current) => current + amount);
@@ -216,15 +239,6 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
     if (offset > items.length / 2) offset -= items.length;
     if (offset < -items.length / 2) offset += items.length;
     setTurn((current) => current + offset);
-  }
-
-  function handleWheel(event: WheelEvent<HTMLDivElement>) {
-    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    if (Math.abs(delta) < 8 || wheelLocked.current) return;
-    event.preventDefault();
-    wheelLocked.current = true;
-    rotateBy(delta > 0 ? 1 : -1);
-    window.setTimeout(() => { wheelLocked.current = false; }, 420);
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
@@ -249,7 +263,7 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
   const ringStyle = { "--ring-rotation": `${turn * -angleStep}deg` } as CSSProperties;
 
   return (
-    <div className="collateral-showcase">
+    <div className="collateral-showcase seamless-carousel-shell">
       <div className="coin-carousel-head">
         <div>
           <span><i /> ACCEPTED COLLATERAL</span>
@@ -264,7 +278,7 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
       </div>
       <div
         className="coin-carousel-stage circular-carousel-stage"
-        onWheel={handleWheel}
+        ref={stageRef}
         onKeyDown={handleKeyDown}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
