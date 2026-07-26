@@ -3,13 +3,18 @@
 import { useMemo, useState } from "react";
 
 type View = "home" | "vault" | "games";
-type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string };
+type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string };
 
 const assets: Asset[] = [
-  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple" },
-  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange" },
-  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green" },
-  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink" },
+  { symbol: "ANSEM", name: "The Black Bull", price: 0.1959, marketCap: 195_900_000, ltv: 30, tone: "purple", origin: "PUMP · 1 MO" },
+  { symbol: "FARTCOIN", name: "Fartcoin", price: 0.1312, marketCap: 131_200_000, ltv: 30, tone: "green", origin: "PUMP · 1 YR" },
+  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", price: 0.01748, marketCap: 17_480_000, ltv: 20, tone: "orange", origin: "PUMP · 5 MO" },
+  { symbol: "KINS", name: "Kintara", price: 0.0151, marketCap: 15_100_000, ltv: 18, tone: "pink", origin: "PUMP · RECENT" },
+  { symbol: "TBB", name: "The Bitcoin Bull", price: 0.04535, marketCap: 45_350_000, ltv: 22, tone: "orange", origin: "PUMP · 26 D" },
+  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple", origin: "SOLANA" },
+  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange", origin: "SOLANA" },
+  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green", origin: "SOLANA" },
+  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink", origin: "SOLANA" },
 ];
 
 const games = [
@@ -72,13 +77,13 @@ export default function Home() {
         <section className="app-shell">
           <div className="section-kicker">THE CAGE / DEVNET DEMO</div>
           <h1>Turn Solana assets into <em>table chips.</em></h1>
-          <p className="lead">Collateralize eligible Solana memecoins with a verified market cap above $10M. Preview your borrowing power and draw a simulated USD chip balance.</p>
+          <p className="lead">Collateralize screened Solana memecoins with a verified market cap above $10M. Pump.fun candidates must also pass age, liquidity, authority and concentration checks.</p>
           <div className="vault-grid">
             <div className="panel">
               <div className="panel-title"><span>01</span> SELECT COLLATERAL</div>
               <div className="asset-list">
                 {assets.map((a) => <button key={a.symbol} className={asset.symbol === a.symbol ? "asset selected" : "asset"} onClick={() => setAsset(a)}>
-                  <i className={a.tone}>{a.symbol.slice(0, 1)}</i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(0)}M cap</small></span><strong>{a.ltv}% LTV</strong>
+                  <i className={a.tone}>{a.symbol.slice(0, 1)}</i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(1)}M cap</small></span><strong><em>✓ SCREENED</em>{a.ltv}% LTV</strong>
                 </button>)}
               </div>
             </div>
@@ -90,11 +95,13 @@ export default function Home() {
                 <p><span>Mark price</span><b>${asset.price < .01 ? asset.price.toFixed(6) : asset.price.toFixed(2)}</b></p>
                 <p><span>Collateral value</span><b>${collateral.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
                 <p><span>Market-cap gate</span><b className="eligible">✓ ABOVE $10M</b></p>
+                <p><span>Origin / age</span><b>{asset.origin}</b></p>
+                <p><span>Risk tier</span><b>{asset.ltv <= 20 ? "HIGH" : asset.ltv <= 30 ? "ELEVATED" : "VOLATILE"}</b></p>
                 <p><span>Maximum draw</span><b>{asset.ltv}%</b></p>
                 <p className="total"><span>Chips available</span><b>{available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
               </div>
               <button className="primary full" onClick={draw}>{connected ? "Draw demo chips" : "Connect wallet to continue"}</button>
-              <small className="fine">Eligibility requires a verified Solana memecoin market cap above $10M. Production must continuously re-check market cap, liquidity and oracle integrity.</small>
+              <small className="fine">Screened does not mean safe or endorsed. Eligibility requires a verified $10M+ market cap, sufficient executable liquidity, revoked mint/freeze authority, holder-distribution limits and clean oracle coverage. Any failed check disables new loans.</small>
             </div>
           </div>
         </section>
@@ -125,9 +132,9 @@ function HomeView({ go }: { go: (v: View) => void }) {
   const stats = useMemo(() => [["Cost to enter", "$0.00"], ["Borrowing power", "UP TO 70%"], ["Tables open", "06"], ["Settlement", "SOL"]], []);
   return <>
     <header className="hero">
-      <div className="eyebrow"><span /> SOLANA MEMECOINS · $10M+ MARKET CAP · SETTLED IN SOL</div>
+      <div className="eyebrow"><span /> SCREENED SOLANA MEMECOINS · $10M+ MARKET CAP · SETTLED IN SOL</div>
       <h1>Keep the meme.<br /><em>Borrow the thrill.</em></h1>
-      <p>Lock an eligible Solana memecoin above $10M market cap. Draw chips against it. Play across the floor, then settle your ticket in SOL to unlock your bag.</p>
+      <p>Lock a screened Solana memecoin above $10M market cap—including established and selected Pump.fun tokens. Draw chips, play, then settle in SOL to unlock your bag.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("vault")}>Enter the cage <span>↗</span></button><button className="secondary" onClick={() => go("games")}>Explore games</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin"><span>◎</span><b>SOL</b></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
@@ -136,7 +143,7 @@ function HomeView({ go }: { go: (v: View) => void }) {
     <section className="steps">
       <div className="section-kicker">HOW IT WORKS / THREE MOVES</div>
       <div className="step-grid">
-        <article><span>01 / VERIFY</span><b>◆</b><h3>Pass the $10M gate</h3><p>Select a supported Solana memecoin. Market cap, liquidity and oracle health determine eligibility.</p></article>
+        <article><span>01 / VERIFY</span><b>◆</b><h3>Pass every risk gate</h3><p>$10M+ market cap is only the start. Liquidity, holder concentration, token authorities, age and oracle health must pass too.</p></article>
         <article><span>02 / DRAW</span><b>◎</b><h3>Draw chips against it</h3><p>Borrow up to the asset’s published LTV. One chip tracks one US dollar of play balance.</p></article>
         <article><span>03 / SETTLE</span><b>↗</b><h3>Close the ticket in SOL</h3><p>Repay what you drew to unlock the asset. Any net chip winnings settle to the same wallet.</p></article>
       </div>
