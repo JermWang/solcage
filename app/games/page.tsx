@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import SolCageChipScene from "@/components/SolCageChipScene";
 
 type GameId = "coin" | "dice" | "mines" | "roulette";
 
@@ -145,7 +144,11 @@ export default function GamesPage() {
           <p>Choose a table, set a demo stake, and play instantly. Every completed round writes to your activity history and earns loyalty points.</p>
           <a className="primary" href="#tables">Choose a table <span>↓</span></a>
         </div>
-        <SolCageChipScene className="games-hero-chip" scrollReactive />
+        <div className="games-hero-art" aria-hidden="true">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/game-art/roulette.webp" alt="" />
+          <div><span>LIVE FLOOR</span><b>04 TABLES</b><small>DEMO CHIPS ONLY</small></div>
+        </div>
       </header>
 
       <section className="preview-rail" id="tables">
