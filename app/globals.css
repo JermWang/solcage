@@ -311,6 +311,37 @@
 }
 @media(prefers-reduced-motion:reduce){.coin-card,.coin-card-image img,.coin-carousel-controls button{transition:none}.coin-card.is-active,.coin-card.is-left,.coin-card.is-right,.coin-card[data-distance]{transform:none}}
 
+/* True circular 3D coin ring */
+.circular-carousel-stage{height:560px;overflow:hidden;perspective:1150px;perspective-origin:50% 47%;cursor:grab;touch-action:pan-y;user-select:none;outline:none}
+.circular-carousel-stage:active{cursor:grabbing}
+.circular-carousel-stage:focus-visible{box-shadow:inset 0 0 0 2px var(--lime)}
+.circular-carousel-stage::before,.circular-carousel-stage::after{width:18%;z-index:4}
+.circular-carousel-stage::before{background:linear-gradient(90deg,#0c0a10 6%,transparent)}
+.circular-carousel-stage::after{background:linear-gradient(-90deg,#0c0a10 6%,transparent)}
+.circular-carousel{--ring-radius:470px;position:absolute;left:50%;top:50%;display:block;width:290px;height:405px;margin:-202px 0 0 -145px;padding:0;overflow:visible;transform:translateZ(calc(var(--ring-radius) * -1)) rotateY(var(--ring-rotation));transform-style:preserve-3d;transition:transform .72s cubic-bezier(.18,.82,.2,1)}
+.circular-carousel .coin-card{position:absolute;inset:0;width:290px;height:405px;transform:rotateY(var(--coin-angle)) translateZ(var(--ring-radius));transform-origin:center;backface-visibility:hidden;transition:opacity .5s,filter .5s,border-color .35s,scale .5s;will-change:transform,opacity}
+.circular-carousel .coin-card.is-active,.circular-carousel .coin-card.is-left,.circular-carousel .coin-card.is-right,.circular-carousel .coin-card[data-distance]{transform:rotateY(var(--coin-angle)) translateZ(var(--ring-radius))}
+.circular-carousel .coin-card.is-active{z-index:3;scale:1.045;opacity:1;filter:none;border-color:color-mix(in srgb,var(--coin-accent) 68%,white)}
+.circular-carousel .coin-card[data-distance="1"]{opacity:.76;filter:saturate(.82) brightness(.76);scale:.92}
+.circular-carousel .coin-card[data-distance="2"]{opacity:.28;filter:saturate(.5) brightness(.54);scale:.84;pointer-events:none}
+.circular-carousel .coin-card[data-distance="3"],.circular-carousel .coin-card[data-distance="4"],.circular-carousel .coin-card[data-distance="5"]{opacity:.05;filter:brightness(.35);scale:.76;pointer-events:none}
+.carousel-orbit-lines{position:absolute;z-index:0;inset:0;pointer-events:none}
+.carousel-orbit-lines i{position:absolute;left:50%;bottom:38px;width:min(900px,92%);height:160px;border:1px solid rgba(196,174,255,.18);border-radius:50%;transform:translateX(-50%) rotateX(70deg);box-shadow:0 0 70px rgba(141,101,255,.12),inset 0 0 55px rgba(141,101,255,.08)}
+.carousel-orbit-lines i:nth-child(2){bottom:68px;width:min(650px,72%);height:115px;border-color:rgba(201,255,56,.11)}
+.carousel-orbit-lines span{position:absolute;left:50%;bottom:78px;width:270px;height:55px;border-radius:50%;background:rgba(141,101,255,.36);filter:blur(38px);transform:translateX(-50%)}
+@media(max-width:800px){
+  .circular-carousel-stage{height:525px;perspective:1000px}
+  .circular-carousel{--ring-radius:430px}
+}
+@media(max-width:600px){
+  .circular-carousel-stage{height:490px;perspective:880px}
+  .circular-carousel{--ring-radius:390px;width:254px;height:372px;margin:-186px 0 0 -127px}
+  .circular-carousel .coin-card{width:254px;height:372px}
+  .carousel-orbit-lines i{bottom:25px;height:120px}
+  .carousel-orbit-lines i:nth-child(2){bottom:48px;height:90px}
+}
+@media(prefers-reduced-motion:reduce){.circular-carousel{transition:none}.circular-carousel .coin-card{transition:none}}
+
 /* High-contrast lime chrome and a static game-floor splash */
 .ticker,.ticker *{color:#0b0a0d}
 .games-hero-art{height:580px;position:relative;isolation:isolate;overflow:hidden;border:1px solid #4a4253;transform:rotate(2deg);box-shadow:24px 26px 0 #060508}

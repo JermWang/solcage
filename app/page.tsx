@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type WheelEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent, type WheelEvent } from "react";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -201,45 +201,52 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
 }
 
 function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (asset: Asset) => void }) {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
+  const [turn, setTurn] = useState(0);
+  const wheelLocked = useRef(false);
+  const dragStart = useRef<number | null>(null);
+  const active = ((turn % items.length) + items.length) % items.length;
+  const angleStep = 360 / items.length;
 
-  function scrollToCard(index: number) {
-    const safeIndex = Math.max(0, Math.min(items.length - 1, index));
-    const card = trackRef.current?.querySelector<HTMLElement>(`[data-coin-index="${safeIndex}"]`);
-    card?.scrollIntoView({
-      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-    setActive(safeIndex);
+  function rotateBy(amount: number) {
+    setTurn((current) => current + amount);
   }
 
-  function updateActiveCard() {
-    const track = trackRef.current;
-    if (!track) return;
-    const center = track.scrollLeft + track.clientWidth / 2;
-    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-coin-index]"));
-    const next = cards.reduce((closest, card, index) => {
-      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
-      const closestCard = cards[closest];
-      const closestCenter = closestCard.offsetLeft + closestCard.offsetWidth / 2;
-      return Math.abs(cardCenter - center) < Math.abs(closestCenter - center) ? index : closest;
-    }, 0);
-    setActive((current) => current === next ? current : next);
+  function rotateTo(index: number) {
+    let offset = index - active;
+    if (offset > items.length / 2) offset -= items.length;
+    if (offset < -items.length / 2) offset += items.length;
+    setTurn((current) => current + offset);
   }
 
   function handleWheel(event: WheelEvent<HTMLDivElement>) {
-    const track = event.currentTarget;
     const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-    const atStart = track.scrollLeft <= 1;
-    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
-    if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return;
+    if (Math.abs(delta) < 8 || wheelLocked.current) return;
     event.preventDefault();
-    track.scrollLeft += delta;
+    wheelLocked.current = true;
+    rotateBy(delta > 0 ? 1 : -1);
+    window.setTimeout(() => { wheelLocked.current = false; }, 420);
+  }
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    rotateBy(event.key === "ArrowRight" ? 1 : -1);
+  }
+
+  function handlePointerDown(event: PointerEvent<HTMLDivElement>) {
+    dragStart.current = event.clientX;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerUp(event: PointerEvent<HTMLDivElement>) {
+    if (dragStart.current === null) return;
+    const movement = event.clientX - dragStart.current;
+    dragStart.current = null;
+    if (Math.abs(movement) > 36) rotateBy(movement < 0 ? 1 : -1);
   }
 
   const focused = items[active];
+  const ringStyle = { "--ring-rotation": `${turn * -angleStep}deg` } as CSSProperties;
 
   return (
     <div className="collateral-showcase">
@@ -248,34 +255,45 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
           <span><i /> ACCEPTED COLLATERAL</span>
           <h3>Choose your bag.</h3>
         </div>
-        <p>Scroll, swipe, or use the controls to explore {items.length} screened Solana assets.</p>
+        <p>Spin the 3D ring by scrolling, dragging, swiping, or using the controls.</p>
         <div className="coin-carousel-controls">
-          <button onClick={() => scrollToCard(active - 1)} disabled={active === 0} aria-label="Previous collateral asset">←</button>
+          <button onClick={() => rotateBy(-1)} aria-label="Previous collateral asset">←</button>
           <span>{String(active + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</span>
-          <button onClick={() => scrollToCard(active + 1)} disabled={active === items.length - 1} aria-label="Next collateral asset">→</button>
+          <button onClick={() => rotateBy(1)} aria-label="Next collateral asset">→</button>
         </div>
       </div>
-      <div className="coin-carousel-stage">
+      <div
+        className="coin-carousel-stage circular-carousel-stage"
+        onWheel={handleWheel}
+        onKeyDown={handleKeyDown}
+        onPointerDown={handlePointerDown}
+        onPointerUp={handlePointerUp}
+        tabIndex={0}
+        aria-label="Accepted collateral coins circular carousel"
+      >
+        <div className="carousel-orbit-lines" aria-hidden="true"><i /><i /><span /></div>
         <div
-          className="coin-carousel"
-          ref={trackRef}
-          onScroll={updateActiveCard}
-          onWheel={handleWheel}
-          tabIndex={0}
-          aria-label="Accepted collateral coins carousel"
+          className="coin-carousel circular-carousel"
+          style={ringStyle}
         >
           {items.map((coin, index) => {
-            const distance = Math.min(Math.abs(index - active), 3);
-            const direction = index < active ? "is-left" : index > active ? "is-right" : "is-active";
+            let offset = index - active;
+            if (offset > items.length / 2) offset -= items.length;
+            if (offset < -items.length / 2) offset += items.length;
+            const distance = Math.abs(offset);
+            const direction = offset < 0 ? "is-left" : offset > 0 ? "is-right" : "is-active";
+            const cardStyle = { "--coin-angle": `${index * angleStep}deg` } as CSSProperties;
             return (
               <button
                 className={`coin-card ${coin.tone} ${direction}`}
                 data-distance={distance}
                 data-coin-index={index}
                 key={coin.symbol}
-                onClick={() => scrollToCard(index)}
+                onClick={() => rotateTo(index)}
                 aria-pressed={index === active}
                 aria-label={`Focus ${coin.name}, ${coin.ltv}% maximum LTV`}
+                tabIndex={distance <= 1 ? 0 : -1}
+                style={cardStyle}
               >
                 <span className="coin-card-image">
                   {/* eslint-disable-next-line @next/next/no-img-element */}

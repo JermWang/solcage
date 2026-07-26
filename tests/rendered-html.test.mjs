@@ -35,7 +35,7 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /LIVE TABLES 03/);
   assert.match(html, /THE CREDIT MARKET/);
   assert.match(html, /Access the liquidity/);
-  assert.match(html, /Accepted collateral coins carousel/);
+  assert.match(html, /Accepted collateral coins circular carousel/);
   assert.match(html, /Choose your bag/);
   assert.match(html, /\/coin-art\/jimothy\.webp/);
   assert.match(html, /\/coin-art\/triplet\.webp/);
@@ -79,6 +79,8 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(games, /games-hero-art/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /@keyframes rouletteSpin/);
+  assert.match(css, /rotateY\(var\(--coin-angle\)\) translateZ\(var\(--ring-radius\)\)/);
+  assert.match(css, /True circular 3D coin ring/);
 
   await Promise.all([
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
