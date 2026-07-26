@@ -214,6 +214,8 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
     if (!stage) return;
 
     function captureWheel(event: globalThis.WheelEvent) {
+      const target = event.target;
+      if (!(target instanceof Element) || !target.closest(".coin-card")) return;
       event.preventDefault();
       event.stopPropagation();
       const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;

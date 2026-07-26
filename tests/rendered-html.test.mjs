@@ -76,6 +76,7 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(scene, /scrollProgress/);
   assert.match(scene, /prefers-reduced-motion/);
   assert.match(page, /addEventListener\("wheel", captureWheel, \{ passive: false \}\)/);
+  assert.match(page, /target\.closest\("\.coin-card"\)/);
   assert.match(games, /kind: "game_round"/);
   assert.match(games, /Array\.from\(\{ length: 25 \}/);
   assert.doesNotMatch(games, /SolCageChipScene/);
