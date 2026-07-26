@@ -35,6 +35,10 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /LIVE TABLES 03/);
   assert.match(html, /THE CREDIT MARKET/);
   assert.match(html, /Access the liquidity/);
+  assert.match(html, /Accepted collateral coins carousel/);
+  assert.match(html, /Choose your bag/);
+  assert.match(html, /\/coin-art\/jimothy\.webp/);
+  assert.match(html, /\/coin-art\/triplet\.webp/);
   assert.doesNotMatch(html, /Animated SolCage casino chip/);
   assert.match(html, /\/game-art\/roulette\.webp/);
   assert.match(html, /href="\/games"/);
@@ -80,6 +84,9 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
     access(new URL("../public/game-art/mines.webp", import.meta.url)),
     access(new URL("../public/game-art/dice.webp", import.meta.url)),
+    access(new URL("../public/coin-art/jimothy.webp", import.meta.url)),
+    access(new URL("../public/coin-art/kins.webp", import.meta.url)),
+    access(new URL("../public/coin-art/wif.jpg", import.meta.url)),
     access(new URL("../artifacts/chip-model/chip-sculpt-spec.json", import.meta.url)),
   ]);
 });

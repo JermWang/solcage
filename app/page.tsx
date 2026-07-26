@@ -1,21 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type WheelEvent } from "react";
 
 type View = "home" | "vault" | "games";
-type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string };
+type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
 
 const assets: Asset[] = [
-  { symbol: "ANSEM", name: "The Black Bull", price: 0.1959, marketCap: 195_900_000, ltv: 30, tone: "purple", origin: "PUMP · 1 MO" },
-  { symbol: "FARTCOIN", name: "Fartcoin", price: 0.1312, marketCap: 131_200_000, ltv: 30, tone: "green", origin: "PUMP · 1 YR" },
-  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", price: 0.01748, marketCap: 17_480_000, ltv: 20, tone: "orange", origin: "PUMP · 5 MO" },
-  { symbol: "KINS", name: "Kintara", price: 0.0151, marketCap: 15_100_000, ltv: 18, tone: "pink", origin: "PUMP · RECENT" },
-  { symbol: "TBB", name: "The Bitcoin Bull", price: 0.04535, marketCap: 45_350_000, ltv: 22, tone: "orange", origin: "PUMP · 26 D" },
-  { symbol: "JIMOTHY", name: "Jimothy the Raccoon", price: 0.0171, marketCap: 17_100_000, ltv: 15, tone: "green", origin: "PUMP · NEW" },
-  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple", origin: "SOLANA" },
-  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange", origin: "SOLANA" },
-  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green", origin: "SOLANA" },
-  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink", origin: "SOLANA" },
+  { symbol: "ANSEM", name: "The Black Bull", price: 0.1959, marketCap: 195_900_000, ltv: 30, tone: "purple", origin: "PUMP · 1 MO", image: "/coin-art/ansem.webp" },
+  { symbol: "FARTCOIN", name: "Fartcoin", price: 0.1312, marketCap: 131_200_000, ltv: 30, tone: "green", origin: "PUMP · 1 YR", image: "/coin-art/fartcoin.webp" },
+  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", price: 0.01748, marketCap: 17_480_000, ltv: 20, tone: "orange", origin: "PUMP · 5 MO", image: "/coin-art/triplet.webp" },
+  { symbol: "KINS", name: "Kintara", price: 0.0151, marketCap: 15_100_000, ltv: 18, tone: "pink", origin: "PUMP · RECENT", image: "/coin-art/kins.webp" },
+  { symbol: "TBB", name: "The Bitcoin Bull", price: 0.04535, marketCap: 45_350_000, ltv: 22, tone: "orange", origin: "PUMP · 26 D", image: "/coin-art/tbb.webp" },
+  { symbol: "JIMOTHY", name: "Jimothy the Raccoon", price: 0.0171, marketCap: 17_100_000, ltv: 15, tone: "green", origin: "PUMP · NEW", image: "/coin-art/jimothy.webp" },
+  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple", origin: "SOLANA", image: "/coin-art/pengu.webp" },
+  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange", origin: "SOLANA", image: "/coin-art/bonk.webp" },
+  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green", origin: "SOLANA", image: "/coin-art/wif.jpg" },
+  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink", origin: "SOLANA", image: "/coin-art/popcat.webp" },
 ];
 
 const games = [
@@ -112,7 +112,7 @@ export default function Home() {
         <a className="wallet" href="/profile">{profileName}</a>
       </nav>
 
-      {view === "home" && <HomeView go={go} />}
+      {view === "home" && <HomeView go={go} onSelectAsset={(nextAsset) => { setAsset(nextAsset); go("vault"); }} />}
       {view === "vault" && (
         <section className="app-shell">
           <div className="section-kicker">THE CAGE / CREDIT PREVIEW</div>
@@ -123,7 +123,10 @@ export default function Home() {
               <div className="panel-title"><span>01</span> SELECT COLLATERAL</div>
               <div className="asset-list">
                 {assets.map((a) => <button key={a.symbol} className={asset.symbol === a.symbol ? "asset selected" : "asset"} onClick={() => setAsset(a)}>
-                  <i className={a.tone}>{a.symbol.slice(0, 1)}</i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(1)}M cap</small></span><strong><em>✓ SCREENED</em>{a.ltv}% LTV</strong>
+                  <i className={a.tone}>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={a.image} alt="" />
+                  </i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(1)}M cap</small></span><strong><em>✓ SCREENED</em>{a.ltv}% LTV</strong>
                 </button>)}
               </div>
             </div>
@@ -152,7 +155,7 @@ export default function Home() {
   );
 }
 
-function HomeView({ go }: { go: (v: View) => void }) {
+function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset: (asset: Asset) => void }) {
   const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", "03"], ["Round rewards", "ON"], ["Network", "SOLANA"]], []);
   return <>
     <header className="hero">
@@ -184,7 +187,7 @@ function HomeView({ go }: { go: (v: View) => void }) {
         <article><span>02 / CREDIT</span><h3>Every asset gets a risk-adjusted LTV.</h3><p>More liquid, widely distributed assets support higher credit limits. Volatile or concentrated collateral receives a lower ceiling or is disabled.</p></article>
         <article><span>03 / REPAYMENT</span><h3>Positions settle through the same Solana wallet.</h3><p>Repay the outstanding balance to release collateral. If health falls below the maintenance threshold, protocol liquidation protects the credit pool.</p></article>
       </div>
-      <div className="asset-tape"><span>COLLATERAL UNIVERSE</span><b>$TRIPLET</b><b>$FARTCOIN</b><b>$KINS</b><b>$JIMOTHY</b><b>$BONK</b><b>$WIF</b><b>$POPCAT</b></div>
+      <CollateralCarousel items={assets} onSelect={onSelectAsset} />
     </section>
     <section className="steps reveal">
       <div className="section-kicker">FUND THE FLOOR / THREE MOVES</div>
@@ -195,4 +198,107 @@ function HomeView({ go }: { go: (v: View) => void }) {
       </div>
     </section>
   </>;
+}
+
+function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (asset: Asset) => void }) {
+  const trackRef = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+
+  function scrollToCard(index: number) {
+    const safeIndex = Math.max(0, Math.min(items.length - 1, index));
+    const card = trackRef.current?.querySelector<HTMLElement>(`[data-coin-index="${safeIndex}"]`);
+    card?.scrollIntoView({
+      behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth",
+      block: "nearest",
+      inline: "center",
+    });
+    setActive(safeIndex);
+  }
+
+  function updateActiveCard() {
+    const track = trackRef.current;
+    if (!track) return;
+    const center = track.scrollLeft + track.clientWidth / 2;
+    const cards = Array.from(track.querySelectorAll<HTMLElement>("[data-coin-index]"));
+    const next = cards.reduce((closest, card, index) => {
+      const cardCenter = card.offsetLeft + card.offsetWidth / 2;
+      const closestCard = cards[closest];
+      const closestCenter = closestCard.offsetLeft + closestCard.offsetWidth / 2;
+      return Math.abs(cardCenter - center) < Math.abs(closestCenter - center) ? index : closest;
+    }, 0);
+    setActive((current) => current === next ? current : next);
+  }
+
+  function handleWheel(event: WheelEvent<HTMLDivElement>) {
+    const track = event.currentTarget;
+    const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+    const atStart = track.scrollLeft <= 1;
+    const atEnd = track.scrollLeft + track.clientWidth >= track.scrollWidth - 1;
+    if ((delta < 0 && atStart) || (delta > 0 && atEnd)) return;
+    event.preventDefault();
+    track.scrollLeft += delta;
+  }
+
+  const focused = items[active];
+
+  return (
+    <div className="collateral-showcase">
+      <div className="coin-carousel-head">
+        <div>
+          <span><i /> ACCEPTED COLLATERAL</span>
+          <h3>Choose your bag.</h3>
+        </div>
+        <p>Scroll, swipe, or use the controls to explore {items.length} screened Solana assets.</p>
+        <div className="coin-carousel-controls">
+          <button onClick={() => scrollToCard(active - 1)} disabled={active === 0} aria-label="Previous collateral asset">←</button>
+          <span>{String(active + 1).padStart(2, "0")} / {String(items.length).padStart(2, "0")}</span>
+          <button onClick={() => scrollToCard(active + 1)} disabled={active === items.length - 1} aria-label="Next collateral asset">→</button>
+        </div>
+      </div>
+      <div className="coin-carousel-stage">
+        <div
+          className="coin-carousel"
+          ref={trackRef}
+          onScroll={updateActiveCard}
+          onWheel={handleWheel}
+          tabIndex={0}
+          aria-label="Accepted collateral coins carousel"
+        >
+          {items.map((coin, index) => {
+            const distance = Math.min(Math.abs(index - active), 3);
+            const direction = index < active ? "is-left" : index > active ? "is-right" : "is-active";
+            return (
+              <button
+                className={`coin-card ${coin.tone} ${direction}`}
+                data-distance={distance}
+                data-coin-index={index}
+                key={coin.symbol}
+                onClick={() => scrollToCard(index)}
+                aria-pressed={index === active}
+                aria-label={`Focus ${coin.name}, ${coin.ltv}% maximum LTV`}
+              >
+                <span className="coin-card-image">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={coin.image} alt={`${coin.name} profile`} loading="lazy" />
+                  <small><i /> SCREENED</small>
+                </span>
+                <span className="coin-card-copy">
+                  <span><small>{coin.origin}</small><b>${coin.symbol}</b><em>{coin.name}</em></span>
+                  <span className="coin-card-metrics">
+                    <span><small>CAP REFERENCE</small><b>${(coin.marketCap / 1_000_000).toFixed(coin.marketCap >= 100_000_000 ? 0 : 1)}M</b></span>
+                    <span><small>MAX LTV</small><b>{coin.ltv}%</b></span>
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      <div className="coin-carousel-focus">
+        <div><span>SELECTED ASSET</span><b>${focused.symbol}</b><small>{focused.name}</small></div>
+        <p>Screened for the $10M+ gate and assigned a {focused.ltv}% maximum LTV.</p>
+        <button onClick={() => onSelect(focused)}>Open ${focused.symbol} position <span>↗</span></button>
+      </div>
+    </div>
+  );
 }
