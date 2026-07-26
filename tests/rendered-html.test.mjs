@@ -84,6 +84,7 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(css, /@keyframes rouletteSpin/);
   assert.match(css, /rotateY\(var\(--coin-angle\)\) translateZ\(var\(--ring-radius\)\)/);
   assert.match(css, /True circular 3D coin ring/);
+  assert.match(css, /\.seamless-carousel-shell\{[^}]*var\(--paper\);color:var\(--ink\)/);
 
   await Promise.all([
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),

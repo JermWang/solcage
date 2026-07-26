@@ -343,11 +343,17 @@
 @media(prefers-reduced-motion:reduce){.circular-carousel{transition:none}.circular-carousel .coin-card{transition:none}}
 
 /* Full-bleed carousel flow without a framed outer container */
-.seamless-carousel-shell{width:100vw;margin:78px 0 0 calc(50% - 50vw);border:0;box-shadow:none;background:radial-gradient(circle at 50% 48%,rgba(141,101,255,.25),transparent 34%),radial-gradient(circle at 90% 45%,rgba(201,255,56,.07),transparent 24%),linear-gradient(180deg,var(--paper) 0,#111018 110px,#0b0a0e calc(100% - 110px),var(--paper) 100%)}
+.seamless-carousel-shell{width:100vw;margin:78px 0 0 calc(50% - 50vw);border:0;box-shadow:none;background:radial-gradient(circle at 50% 48%,rgba(141,101,255,.14),transparent 34%),radial-gradient(circle at 90% 45%,rgba(201,255,56,.12),transparent 24%),var(--paper);color:var(--ink)}
 .seamless-carousel-shell .coin-carousel-head{min-height:0;padding:92px 6vw 12px;border:0;background:transparent;backdrop-filter:none}
 .seamless-carousel-shell .coin-carousel-focus{min-height:0;padding:12px 6vw 92px;border:0;background:transparent;backdrop-filter:none}
-.seamless-carousel-shell .circular-carousel-stage::before{background:linear-gradient(90deg,#0c0a10 3%,transparent)}
-.seamless-carousel-shell .circular-carousel-stage::after{background:linear-gradient(-90deg,#0c0a10 3%,transparent)}
+.seamless-carousel-shell .coin-carousel-head>div:first-child>span{color:var(--purple)}
+.seamless-carousel-shell .coin-carousel-controls button{border-color:rgba(15,14,17,.2);background:rgba(255,255,255,.5);color:var(--ink)}
+.seamless-carousel-shell .coin-carousel-controls button:hover{background:var(--ink);border-color:var(--ink);color:var(--lime)}
+.seamless-carousel-shell .coin-carousel-controls span{color:var(--muted)}
+.seamless-carousel-shell .circular-carousel-stage::before{background:linear-gradient(90deg,var(--paper) 3%,transparent)}
+.seamless-carousel-shell .circular-carousel-stage::after{background:linear-gradient(-90deg,var(--paper) 3%,transparent)}
+.seamless-carousel-shell .coin-carousel-focus>div b{color:var(--ink)}
+.seamless-carousel-shell .coin-carousel-focus>div small,.seamless-carousel-shell .coin-carousel-focus>p{color:var(--muted)}
 @media(max-width:600px){
   .seamless-carousel-shell{width:100vw;margin:58px 0 0 calc(50% - 50vw)}
   .seamless-carousel-shell .coin-carousel-head{padding:76px 20px 8px}
