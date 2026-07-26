@@ -30,9 +30,10 @@ test("server-renders the SolCage landing experience", async () => {
 
   const html = await response.text();
   assert.match(html, /<title>SolCage — Collateral in\. Game on\.<\/title>/);
-  assert.match(html, /Keep the meme/);
-  assert.match(html, /Borrow the thrill/);
-  assert.match(html, /Animated SolCage casino chip/);
+  assert.match(html, /Bag locked/);
+  assert.match(html, /Tables open/);
+  assert.match(html, /LIVE TABLES 04/);
+  assert.doesNotMatch(html, /Animated SolCage casino chip/);
   assert.match(html, /\/game-art\/roulette\.webp/);
   assert.match(html, /href="\/games"/);
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
