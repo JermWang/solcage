@@ -42,6 +42,8 @@ jobs:
   sbf:
     runs-on: ubuntu-latest
     timeout-minutes: 45
+    env:
+      SBF_TOOLS_VERSION: v1.54
     steps:
       - uses: actions/checkout@v4
       - name: Install pinned Solana toolchain
@@ -56,6 +58,7 @@ jobs:
         run: |
           cargo build-sbf \
             --manifest-path programs/solcage_lending/Cargo.toml \
+            --tools-version "$SBF_TOOLS_VERSION" \
             --sbf-out-dir target/deploy
           test -s target/deploy/solcage_lending.so
           sha256sum target/deploy/solcage_lending.so

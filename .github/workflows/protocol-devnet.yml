@@ -17,6 +17,7 @@ jobs:
     env:
       SOLANA_URL: https://api.devnet.solana.com
       PROGRAM_ID: 3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At
+      SBF_TOOLS_VERSION: v1.54
       DEPLOYER_KEYPAIR_JSON: ${{ secrets.SOLCAGE_DEVNET_DEPLOYER_KEYPAIR }}
       PROGRAM_KEYPAIR_JSON: ${{ secrets.SOLCAGE_DEVNET_PROGRAM_KEYPAIR }}
     steps:
@@ -45,6 +46,7 @@ jobs:
           solana --version
           cargo build-sbf \
             --manifest-path programs/solcage_lending/Cargo.toml \
+            --tools-version "$SBF_TOOLS_VERSION" \
             --sbf-out-dir target/deploy
           test -s target/deploy/solcage_lending.so
           sha256sum target/deploy/solcage_lending.so
