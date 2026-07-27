@@ -62,23 +62,29 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
   assert.doesNotMatch(html, /pre-launch|integrating|production play/i);
   assert.match(html, /HMAC-SHA256/i);
-  assert.match(html, /OPEN-SOURCE FOUNDATION/i);
+  assert.match(html, /PROVABLY FAIR FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
+  assert.match(html, /href="\/games\/mines"/);
   assert.match(html, /href="\/lending"/);
+  assert.match(html, /\/game-art\/plinko\.webp/);
+  assert.match(html, /\/game-art\/blackjack\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, roulette, plinko, blackjack, blackjackApi, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/plinko/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/blackjack/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/blackjack/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/mines/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/mines/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/mines.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
@@ -102,13 +108,17 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(page, /target\.closest\("\.coin-card"\)/);
   assert.match(health, /database: "connected"/);
   assert.match(health, /readyTables !== 8/);
-  assert.match(games, /OPEN-SOURCE FOUNDATION/);
+  assert.match(games, /PROVABLY FAIR FLOOR/);
   assert.match(roulette, /RouletteWheel/);
   assert.match(roulette, /\/api\/games\/fair\/commit/);
   assert.match(plinko, /VERIFIED PLINKO/);
   assert.match(plinko, /already-settled HMAC path/i);
   assert.match(blackjack, /BLACKJACK PARTY FOUNDATION/);
   assert.match(blackjackApi, /createShuffledDeck/);
+  assert.match(mines, /Crystal Mines/);
+  assert.match(minesApi, /generateMinePositions/);
+  assert.match(minesApi, /awardPoints/);
+  assert.match(minesEngine, /mineMultiplier/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
   assert.match(fairReveal, /plinko/);
@@ -126,6 +136,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(protocolProgram, /get_price_no_older_than/);
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
+  assert.match(notices, /iamThiagoo\/mines-casino/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);
@@ -138,6 +149,8 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
     access(new URL("../public/game-art/mines.webp", import.meta.url)),
     access(new URL("../public/game-art/dice.webp", import.meta.url)),
+    access(new URL("../public/game-art/plinko.webp", import.meta.url)),
+    access(new URL("../public/game-art/blackjack.webp", import.meta.url)),
     access(new URL("../public/coin-art/jimothy.webp", import.meta.url)),
     access(new URL("../public/coin-art/kins.webp", import.meta.url)),
     access(new URL("../public/coin-art/wif.jpg", import.meta.url)),

@@ -43,5 +43,17 @@ table/card presentation are being adapted for SolCage. Randomness and settlement
 are replaced by the server-commitment and client-seed verification model used by
 SolCage Originals.
 
+## Mines Casino
+
+- Source: https://github.com/iamThiagoo/mines-casino
+- Revision reviewed: `ab33905f8f4b10fdb87d9f0166ba11b6ab5a2c12`
+- License: MIT
+- Copyright: Thiago Ferreira
+
+The five-by-five board, progressive crystal reveals, and cashout interaction
+informed Crystal Mines. SolCage replaces the original socket and browser-state
+flow with a PostgreSQL-backed, row-locked action endpoint, HMAC-SHA256 board
+shuffle, hidden server commitment, persisted proof, and atomic reward settlement.
+
 The full license text for each package is included in its installed package and
 is available from the linked source repository.

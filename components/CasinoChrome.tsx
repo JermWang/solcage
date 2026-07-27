@@ -7,9 +7,11 @@ import { BrandMark } from "@/components/BrandMark";
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards";
   children: ReactNode;
+  searchValue?: string;
+  onSearchChange?: (value: string) => void;
 };
 
-export function CasinoChrome({ active, children }: CasinoChromeProps) {
+export function CasinoChrome({ active, children, searchValue, onSearchChange }: CasinoChromeProps) {
   const [profileName, setProfileName] = useState("Profile");
   const [points, setPoints] = useState(0);
 
@@ -37,7 +39,7 @@ export function CasinoChrome({ active, children }: CasinoChromeProps) {
           <Link className={active === "casino" ? "active" : ""} href="/games"><i>⌁</i> Casino</Link>
           <Link href="/games/roulette"><i>◉</i> Originals</Link>
           <span className="casino-nav-muted"><i>♠</i> Live tables</span>
-          <span className="casino-nav-muted"><i>⚡</i> Slots</span>
+          <Link href="/games/play?game=slots"><i>⚡</i> Slots</Link>
 
           <small>FINANCE</small>
           <Link className={active === "lending" ? "active" : ""} href="/lending"><i>◇</i> Lending</Link>
@@ -58,7 +60,16 @@ export function CasinoChrome({ active, children }: CasinoChromeProps) {
 
       <section className="casino-workspace">
         <header className="casino-topbar">
-          <div className="casino-search"><span>⌕</span><input aria-label="Search games" placeholder="Search games" /></div>
+          <div className="casino-search">
+            <span>⌕</span>
+            <input
+              aria-label="Search games"
+              placeholder={onSearchChange ? "Search the floor" : "Casino search"}
+              value={searchValue ?? ""}
+              readOnly={!onSearchChange}
+              onChange={(event) => onSearchChange?.(event.target.value)}
+            />
+          </div>
           <div className="casino-top-actions">
             <Link href="/leaderboard"><small>WEEKLY RACE</small><b>{points.toLocaleString()} XP</b></Link>
             <Link className="casino-deposit" href="/lending">Deposit</Link>

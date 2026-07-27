@@ -1,6 +1,7 @@
 import { Provable } from "@provableio/provable-core";
 import { transaction } from "@/lib/db";
 import { json, profileSnapshot, requireIdentity } from "@/lib/identity";
+import { awardPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
 
@@ -137,6 +138,14 @@ export async function POST(request: Request) {
          VALUES ($1, $2, $3, $4, $5, $6, $7)`,
         [crypto.randomUUID(), identity.userId, result.game, bet, result.won ? "win" : "loss", result.payout, `fair:${roundId}`],
       );
+      await awardPoints(client, {
+        userId: identity.userId,
+        kind: "game_round",
+        basePoints: Math.min(115, 10 + Math.round(bet / 10)),
+        description: `Verified ${result.game} round`,
+        eventKey: `game:${roundId}`,
+        metadata: { game: result.game, won: result.won, payout: result.payout },
+      });
       return {
         ...result,
         proof: {

@@ -9,25 +9,27 @@ type LobbyGame = {
   studio: string;
   tag: string;
   image: string;
-  href?: string;
+  href: string;
   tone: string;
+  categories: string[];
 };
 
 const games: LobbyGame[] = [
-  { name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "VERIFIABLE", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet" },
-  { name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "HMAC-SHA256", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "lime" },
-  { name: "Cage Slots", studio: "PROVABLE.IO ENGINE", tag: "MIT FOUNDATION", image: "/og.png", href: "/games/play?game=slots", tone: "gold" },
-  { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/mines.webp", href: "/games/plinko", tone: "cyan" },
-  { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/roulette.webp", href: "/games/blackjack", tone: "red" },
-  { name: "Crystal Mines", studio: "SOLCAGE ORIGINALS", tag: "TABLE PAUSED", image: "/game-art/mines.webp", tone: "cyan" },
-  { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red" },
-  { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple" },
+  { name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "TRENDING", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet", categories: ["Originals", "Table games", "High limit"] },
+  { name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "lime", categories: ["Originals", "Instant"] },
+  { name: "Cage Slots", studio: "PROVABLE.IO ENGINE", tag: "HOT", image: "/og.png", href: "/games/play?game=slots", tone: "gold", categories: ["Originals", "Slots", "Instant"] },
+  { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
+  { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
+  { name: "Crystal Mines", studio: "MINES CASINO FOUNDATION", tag: "NEW", image: "/game-art/mines.webp", href: "/games/mines", tone: "cyan", categories: ["Originals", "Instant"] },
+  { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red", categories: ["Table games", "High limit"] },
+  { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "FAST", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple", categories: ["Originals", "Instant"] },
 ];
 
-const categories = ["Lobby", "Originals", "Table games", "Instant", "High limit", "All games"];
+const categories = ["Lobby", "Originals", "Slots", "Table games", "Instant", "High limit", "All games"];
 
 export default function GamesLobby() {
   const [category, setCategory] = useState("Lobby");
+  const [query, setQuery] = useState("");
   const [activity, setActivity] = useState<Array<{ player: string; game: string; payout: number }>>([]);
 
   useEffect(() => {
@@ -38,47 +40,50 @@ export default function GamesLobby() {
   }, []);
 
   const visibleGames = useMemo(() => {
-    if (category === "Originals") return games.filter((game) => game.studio.includes("ORIGINALS"));
-    if (category === "Table games") return games.filter((game) => /Roulette|Blackjack/.test(game.name));
-    if (category === "Instant") return games.filter((game) => /Dice|Plinko|Mines/.test(game.name));
-    if (category === "High limit") return games.filter((game) => game.name.includes("Private"));
-    return games;
-  }, [category]);
+    const normalizedQuery = query.trim().toLowerCase();
+    return games.filter((game) => {
+      const categoryMatch = ["Lobby", "All games"].includes(category) || game.categories.includes(category);
+      const searchMatch = !normalizedQuery || `${game.name} ${game.studio} ${game.tag}`.toLowerCase().includes(normalizedQuery);
+      return categoryMatch && searchMatch;
+    });
+  }, [category, query]);
 
   return (
-    <CasinoChrome active="casino">
+    <CasinoChrome active="casino" searchValue={query} onSearchChange={setQuery}>
       <div className="casino-content">
         <section className="casino-promo-grid">
           <article className="casino-primary-promo">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img className="casino-promo-image" src="/game-art/plinko.webp" alt="" />
+            <span className="casino-promo-scrim" />
             <div>
-              <span className="live-pill"><i /> SOLCAGE ORIGINALS</span>
-              <h1>Provably fair.<br /><em>Visibly Solana.</em></h1>
-              <p>Casino-grade game presentation with committed server seeds, player-controlled client seeds, and independently reproducible outcomes.</p>
-              <div><Link href="/games/roulette">Play roulette</Link><Link href="/lending">Fund with collateral</Link></div>
+              <span className="live-pill"><i /> HOT DROP / SOLCAGE ORIGINAL</span>
+              <h1>Neon Plinko.<br /><em>Let it fall.</em></h1>
+              <p>Pick your stake. Commit the path. Watch the board settle up to 30×.</p>
+              <div><Link href="/games/plinko">Play now</Link><Link href="#games">All games</Link></div>
             </div>
-            <div className="promo-wheel" aria-hidden="true"><i /><i /><i /><b>SC</b></div>
           </article>
           <article className="casino-mini-promo race">
             <span>WEEKLY LOYALTY RACE</span>
             <h2>Play. Borrow.<br />Climb.</h2>
-            <p>Verified activity powers the global points board.</p>
+            <p>Every settled round moves the global board.</p>
             <Link href="/leaderboard">Open standings ↗</Link>
           </article>
           <article className="casino-mini-promo credit">
             <span>MEMECOIN CREDIT</span>
             <h2>Keep the bag.<br />Open the floor.</h2>
-            <p>Dedicated collateral positions and account history.</p>
+            <p>Use eligible Solana collateral without selling it.</p>
             <Link href="/lending">Enter lending ↗</Link>
           </article>
         </section>
 
         <section className="casino-live-strip">
-          <b><i /> LIVE ACTIVITY</b>
+          <b><i /> LIVE WINS</b>
           <div>
             {(activity.length ? activity : [
               { player: "The floor", game: "is open", payout: 0 },
-              { player: "Verified", game: "HMAC-SHA256 rounds", payout: 0 },
-              { player: "Rewards", game: "loyalty active", payout: 0 },
+              { player: "Verified", game: "HMAC rounds", payout: 0 },
+              { player: "Rewards", game: "loyalty live", payout: 0 },
             ]).map((item, index) => (
               <span key={`${item.player}-${index}`}><strong>{item.player}</strong>{item.game}{item.payout > 0 && <b>+{item.payout.toFixed(2)}</b>}</span>
             ))}
@@ -89,30 +94,32 @@ export default function GamesLobby() {
           {categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}
         </nav>
 
-        <section className="casino-game-section">
-          <header><div><span>CASINO</span><h2>{category === "Lobby" ? "Trending on the floor" : category}</h2></div><small>{visibleGames.filter((game) => game.href).length} OPEN TABLES</small></header>
-          <div className="casino-game-grid">
-            {visibleGames.map((game, index) => {
-              const content = <>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={game.image} alt="" />
-                <span className="game-card-shade" />
-                <span className="game-card-index">{String(index + 1).padStart(2, "0")}</span>
-                <span className="game-card-tag">{game.tag}</span>
-                <span className="game-card-play">{game.href ? "▶" : "—"}</span>
-                <footer><small>{game.studio}</small><b>{game.name}</b></footer>
-              </>;
-              return game.href
-                ? <Link className={`casino-game-card ${game.tone}`} href={game.href} key={game.name}>{content}</Link>
-                : <article className={`casino-game-card is-closed ${game.tone}`} key={game.name}>{content}</article>;
-            })}
-          </div>
+        <section className="casino-game-section" id="games">
+          <header>
+            <div><span>{query ? "SEARCH RESULTS" : "CASINO"}</span><h2>{query ? `Games matching “${query}”` : category === "Lobby" ? "Trending on the floor" : category}</h2></div>
+            <small>{visibleGames.length} OPEN GAMES</small>
+          </header>
+          {visibleGames.length ? (
+            <div className="casino-game-grid">
+              {visibleGames.map((game, index) => (
+                <Link className={`casino-game-card ${game.tone}`} href={game.href} key={game.name}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={game.image} alt="" />
+                  <span className="game-card-shade" />
+                  <span className="game-card-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="game-card-tag">{game.tag}</span>
+                  <span className="game-card-play">▶</span>
+                  <footer><small>{game.studio}</small><b>{game.name}</b></footer>
+                </Link>
+              ))}
+            </div>
+          ) : <div className="casino-empty-search"><b>NO GAMES FOUND</b><span>Try roulette, mines, dice, Plinko, blackjack, or slots.</span></div>}
         </section>
 
         <section className="casino-integrity">
-          <div><span>OPEN-SOURCE FOUNDATION</span><h2>Built on code we can inspect.</h2></div>
-          <p>Roulette uses the MIT React Casino Roulette foundation. Plinko adapts the MIT Plinko.rng peg-board model. Outcomes are generated server-side with the MIT Provable.IO HMAC-SHA256 engine and stored alongside their verification proof.</p>
-          <Link href="/games/roulette">Verify a round ↗</Link>
+          <div><span>PROVABLY FAIR FLOOR</span><h2>Commit first. Reveal after.</h2></div>
+          <p>Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
+          <Link href="/games/mines">Play the newest game ↗</Link>
         </section>
       </div>
     </CasinoChrome>

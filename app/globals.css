@@ -418,15 +418,17 @@
 .casino-promo-grid{display:grid;grid-template-columns:minmax(0,2fr) minmax(210px,.8fr) minmax(210px,.8fr);gap:14px}
 .casino-primary-promo,.casino-mini-promo{position:relative;min-height:310px;border:1px solid var(--casino-line);border-radius:18px;overflow:hidden}
 .casino-primary-promo{padding:38px;background:radial-gradient(circle at 88% 50%,rgba(141,101,255,.52),transparent 28%),linear-gradient(135deg,#1d1729,#0f0d14 60%,#171121)}
-.casino-primary-promo>div:first-child{position:relative;z-index:2;max-width:560px}
+.casino-primary-promo>div{position:relative;z-index:3;max-width:560px}
+.casino-promo-image{position:absolute;z-index:0;inset:0;width:100%;height:100%;object-fit:cover;object-position:64% 54%;filter:saturate(1.1) contrast(1.08)}
+.casino-promo-scrim{position:absolute;z-index:1;inset:0;background:linear-gradient(90deg,rgba(8,7,11,.98) 0%,rgba(8,7,11,.87) 43%,rgba(8,7,11,.12) 78%),linear-gradient(180deg,transparent 42%,rgba(8,7,11,.58))}
 .live-pill{display:inline-flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid rgba(201,255,56,.22);border-radius:20px;background:rgba(8,7,11,.36);color:var(--lime);font:800 8px var(--font-geist-mono);letter-spacing:.12em}
 .live-pill i,.casino-live-strip> b i,.verified-badge i{width:6px;height:6px;border-radius:50%;background:var(--lime);box-shadow:0 0 12px var(--lime)}
 .casino-primary-promo h1{margin:24px 0 14px;font-size:clamp(40px,4vw,66px);line-height:.9;letter-spacing:-.06em}
 .casino-primary-promo h1 em{font-family:Georgia,serif;font-weight:400;color:#bba6ff}
 .casino-primary-promo p{max-width:500px;color:#aaa3b0;font:14px/1.6 Georgia,serif}
-.casino-primary-promo>div:first-child>div{display:flex;gap:9px;margin-top:24px}
-.casino-primary-promo>div:first-child>div a{padding:13px 16px;border:1px solid rgba(255,255,255,.16);border-radius:8px;font:800 9px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.06em}
-.casino-primary-promo>div:first-child>div a:first-child{background:var(--lime);border-color:var(--lime);color:#09080b}
+.casino-primary-promo>div>div{display:flex;gap:9px;margin-top:24px}
+.casino-primary-promo>div>div a{padding:13px 16px;border:1px solid rgba(255,255,255,.16);border-radius:8px;font:800 9px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.06em}
+.casino-primary-promo>div>div a:first-child{background:var(--lime);border-color:var(--lime);color:#09080b}
 .promo-wheel{position:absolute;right:-58px;bottom:-90px;width:330px;height:330px;border:35px solid #0c0a0f;border-radius:50%;background:conic-gradient(#8d65ff 0 10deg,#16121e 10deg 30deg,#c9ff38 30deg 39deg,#16121e 39deg 62deg,#8d65ff 62deg 72deg,#16121e 72deg 95deg,#c9ff38 95deg 104deg,#16121e 104deg);box-shadow:inset 0 0 0 3px #5d526b,0 30px 80px #000;transform:rotate(-16deg);display:grid;place-items:center}
 .promo-wheel::before{content:"";position:absolute;inset:42px;border:1px solid #776987;border-radius:50%;background:#0d0b10;box-shadow:inset 0 0 45px #000}
 .promo-wheel b{position:relative;z-index:2;font-size:45px;color:var(--lime)}
@@ -454,6 +456,8 @@
 .casino-game-card{position:relative;aspect-ratio:.72;border:1px solid var(--casino-line);border-radius:13px;overflow:hidden;background:#151219;isolation:isolate;transition:transform .25s,border-color .25s}
 .casino-game-card:hover{transform:translateY(-6px);border-color:color-mix(in srgb,var(--card-accent,#8d65ff) 60%,white)}
 .casino-game-card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.95) contrast(1.08);transition:transform .45s}
+.casino-game-card>img[src*="plinko"]{object-position:63% center}
+.casino-game-card>img[src*="blackjack"]{object-position:61% center}
 .casino-game-card:hover>img{transform:scale(1.05)}
 .game-card-shade{position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,transparent 26%,rgba(7,6,9,.15) 47%,rgba(7,6,9,.95) 90%),linear-gradient(135deg,color-mix(in srgb,var(--card-accent,#8d65ff) 27%,transparent),transparent 50%)}
 .game-card-index,.game-card-tag{position:absolute;z-index:2;top:11px;font:800 7px var(--font-geist-mono);letter-spacing:.09em}
@@ -465,6 +469,7 @@
 .casino-game-card footer b{font-size:16px;letter-spacing:-.025em}
 .casino-game-card.is-closed{opacity:.58}.casino-game-card.is-closed:hover{transform:none;border-color:var(--casino-line)}
 .casino-game-card.violet{--card-accent:#8d65ff}.casino-game-card.lime{--card-accent:#c9ff38}.casino-game-card.gold{--card-accent:#ffc75c}.casino-game-card.cyan{--card-accent:#4ff5df}.casino-game-card.red{--card-accent:#ff4f62}.casino-game-card.purple{--card-accent:#c278ff}
+.casino-empty-search{min-height:240px;border:1px dashed #39333f;border-radius:14px;background:#0e0d12;display:grid;place-items:center;align-content:center;gap:8px;color:#706a77;text-align:center}.casino-empty-search b{color:#d9d4de;font:900 11px var(--font-geist-mono);letter-spacing:.12em}.casino-empty-search span{font:10px var(--font-geist-mono)}
 .casino-integrity{margin-top:50px;padding:30px;border:1px solid var(--casino-line);border-radius:14px;background:linear-gradient(100deg,#131118,#0d0c10);display:grid;grid-template-columns:1fr 1.4fr auto;align-items:center;gap:35px}
 .casino-integrity span{color:var(--lime);font:800 8px var(--font-geist-mono);letter-spacing:.12em}
 .casino-integrity h2{font-size:25px;margin:7px 0 0}
@@ -520,7 +525,7 @@
 .fairness-grid span{color:#706a77;font:800 7px var(--font-geist-mono);letter-spacing:.1em}
 .fairness-grid code{overflow:hidden;text-overflow:ellipsis;color:#b8b0bd;font:9px var(--font-geist-mono);white-space:nowrap}
 .fairness-panel>small{color:#77717e;font:10px/1.6 var(--font-geist-mono)}
-@media(max-width:1200px){.casino-game-grid{grid-template-columns:repeat(3,1fr)}.casino-promo-grid{grid-template-columns:1.5fr 1fr}.casino-primary-promo{grid-row:span 2}.casino-mini-promo{min-height:148px}.promo-wheel{opacity:.58}.casino-primary-promo>div:first-child{max-width:470px}}
+@media(max-width:1200px){.casino-game-grid{grid-template-columns:repeat(3,1fr)}.casino-promo-grid{grid-template-columns:1.5fr 1fr}.casino-primary-promo{grid-row:span 2}.casino-mini-promo{min-height:148px}.promo-wheel{opacity:.58}.casino-primary-promo>div{max-width:470px}}
 @media(max-width:900px){.casino-app{grid-template-columns:82px minmax(0,1fr)}.casino-sidebar{padding:18px 10px}.casino-wordmark{justify-content:center;padding-left:0;padding-right:0}.casino-wordmark>span,.casino-sidebar nav>a:not(.active){font-size:0}.casino-sidebar nav>a,.casino-nav-muted{justify-content:center;padding:0}.casino-sidebar nav>a i,.casino-nav-muted i{font-size:18px}.casino-sidebar nav>small,.casino-nav-muted,.casino-sidebar-card{display:none}.casino-sidebar nav>a.active{font-size:0}.casino-sidebar nav>a.active i{font-size:18px}.roulette-room{grid-template-columns:1fr}.roulette-visual{min-height:520px}.casino-integrity{grid-template-columns:1fr auto}.casino-integrity>p{grid-row:2;grid-column:1/-1}}
 @media(max-width:650px){.casino-app{display:block}.casino-sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:66px;padding:7px 12px;border:0;border-top:1px solid var(--casino-line);flex-direction:row;z-index:50}.casino-wordmark{display:none}.casino-sidebar nav{width:100%;height:100%;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.casino-sidebar nav>small,.casino-sidebar nav>a:nth-of-type(3),.casino-sidebar nav>a:nth-of-type(4),.casino-sidebar nav>a:nth-of-type(6),.casino-sidebar nav>a:nth-of-type(8){display:none}.casino-sidebar nav>a{height:100%;font-size:0!important}.casino-topbar{height:62px;padding:0 14px}.casino-search{display:none}.casino-top-actions{width:100%;justify-content:flex-end}.casino-top-actions>a:first-child{margin-right:auto}.casino-content,.casino-game-room{padding:14px 14px 92px}.casino-promo-grid{display:block}.casino-primary-promo{min-height:430px;padding:28px}.casino-primary-promo h1{font-size:47px}.casino-mini-promo{min-height:175px;margin-top:10px}.promo-wheel{right:-90px;bottom:-95px;opacity:.55}.casino-live-strip>div{gap:22px}.casino-categories{margin-top:14px}.casino-game-grid{grid-template-columns:repeat(2,1fr)}.casino-integrity{display:block}.casino-integrity p{margin:18px 0}.game-room-header{align-items:start}.game-room-header>div:first-child span{display:none}.game-room-balance{padding:8px}.roulette-visual{min-height:430px}.roulette-visual .roulette-wheel-container{transform:scale(.88)}.roulette-console{padding:20px}.fairness-grid{grid-template-columns:1fr}.game-room-header h1{font-size:27px}.casino-game-card footer b{font-size:14px}}
 
@@ -636,3 +641,22 @@
 .blackjack-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:18px}.blackjack-actions button{height:54px;border:1px solid var(--purple);border-radius:9px;background:rgba(141,101,255,.16);color:#d8ccff;font:900 10px var(--font-geist-mono);letter-spacing:.1em;cursor:pointer}.blackjack-actions button:last-child{background:var(--lime);border-color:var(--lime);color:#08070b}.blackjack-actions button:disabled{opacity:.45}
 @media(max-width:1050px){.blackjack-room{grid-template-columns:1fr}.blackjack-table{min-height:610px}}
 @media(max-width:700px){.blackjack-table{min-height:510px;border-radius:120px 120px 18px 18px/80px 80px 18px 18px}.table-rule{top:27px;font-size:6px}.blackjack-hand.dealer{top:62px}.blackjack-hand.player{bottom:28px}.blackjack-hand>div{min-height:125px}.playing-card{width:78px;height:112px;margin-left:-20px}.playing-card>b{font-size:16px}.playing-card>i{top:29px;font-size:14px}.playing-card>strong{font-size:35px}.blackjack-mark{width:80px;height:80px}.blackjack-mark span{font-size:30px}}
+
+/* Crystal Mines — interaction pattern adapted from the MIT mines-casino foundation */
+.mines-room{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(300px,.75fr);gap:14px}
+.mines-stage{position:relative;min-height:650px;padding:82px 50px 46px;border:1px solid var(--casino-line);border-radius:18px;background:radial-gradient(circle at 50% 40%,rgba(25,169,155,.18),transparent 36%),radial-gradient(circle at 90% 10%,rgba(141,101,255,.18),transparent 28%),linear-gradient(145deg,#12101a,#08070b 72%);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.mines-stage:before{content:"";position:absolute;inset:0;opacity:.16;background-image:linear-gradient(rgba(255,255,255,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.055) 1px,transparent 1px);background-size:42px 42px;mask-image:linear-gradient(180deg,transparent,#000 20%,#000 80%,transparent)}
+.mines-status{position:absolute;z-index:3;top:22px;right:22px;padding:13px 16px;border:1px solid var(--casino-line);border-radius:10px;background:rgba(8,7,11,.72);backdrop-filter:blur(12px);display:grid;grid-template-columns:auto auto;gap:4px 15px}.mines-status span{grid-column:1/-1;color:#77707d;font:800 7px var(--font-geist-mono);letter-spacing:.11em}.mines-status b{font-size:22px;color:var(--lime)}.mines-status small{align-self:center;color:#8a8390;font:800 7px var(--font-geist-mono)}
+.mines-grid{position:relative;z-index:2;width:min(560px,88%);display:grid;grid-template-columns:repeat(5,1fr);gap:11px;perspective:900px}
+.mines-grid button{position:relative;aspect-ratio:1;border:1px solid #41394b;border-radius:14px;background:linear-gradient(145deg,#211c29,#100e14);box-shadow:inset 0 1px rgba(255,255,255,.05),0 8px 16px rgba(0,0,0,.25);color:#5e5667;cursor:pointer;transition:transform .18s,border-color .18s,background .18s,box-shadow .18s}
+.mines-grid button:before{content:"";position:absolute;inset:12%;border:1px solid rgba(255,255,255,.035);border-radius:9px}
+.mines-grid button:not(:disabled):hover{transform:translateY(-5px) rotateX(7deg);border-color:#786b86;background:linear-gradient(145deg,#2a2235,#131018);box-shadow:0 16px 28px rgba(0,0,0,.38)}
+.mines-grid button span{position:relative;z-index:2;font-size:34px;filter:drop-shadow(0 0 16px currentColor)}
+.mines-grid button.crystal{border-color:#54f4dc;background:radial-gradient(circle,#248b82,#0d3b38 63%,#0a1a1a);color:#8bfff0;animation:mines-reveal .38s cubic-bezier(.2,.8,.2,1)}
+.mines-grid button.mine{border-color:#ff5267;background:radial-gradient(circle,#8a2133,#350d17 68%,#17080d);color:#ff8a9b;animation:mines-hit .45s cubic-bezier(.2,.8,.2,1)}
+.mines-grid button.settled-safe{opacity:.34}
+@keyframes mines-reveal{0%{transform:rotateY(90deg) scale(.82)}100%{transform:none}}@keyframes mines-hit{35%{transform:scale(1.12) rotate(4deg)}100%{transform:none}}
+.mines-outcome{position:absolute;z-index:5;left:50%;top:50%;transform:translate(-50%,-50%);min-width:230px;padding:19px 26px;border:1px solid #61556c;border-radius:12px;background:rgba(7,6,9,.93);box-shadow:0 24px 70px rgba(0,0,0,.62);display:flex;flex-direction:column;gap:7px;text-align:center;backdrop-filter:blur(14px)}.mines-outcome span{font:900 13px var(--font-geist-mono);letter-spacing:.1em}.mines-outcome b{color:#aaa2af;font:800 9px var(--font-geist-mono)}.mines-outcome.win{border-color:rgba(201,255,56,.42)}.mines-outcome.win span,.mines-outcome.win b{color:var(--lime)}.mines-outcome.loss{border-color:rgba(255,82,103,.46)}.mines-outcome.loss span{color:#ff7f90}
+.mine-count-picker{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.mine-count-picker button{height:48px;border:1px solid var(--casino-line);border-radius:8px;background:#1a171e;color:#aaa3b0;font:900 11px var(--font-geist-mono);cursor:pointer}.mine-count-picker button.active{border-color:var(--lime);background:rgba(201,255,56,.12);color:var(--lime);box-shadow:inset 0 0 0 1px var(--lime)}
+@media(max-width:1050px){.mines-room{grid-template-columns:1fr}.mines-stage{min-height:620px}}
+@media(max-width:700px){.mines-stage{min-height:500px;padding:82px 16px 24px}.mines-grid{width:100%;gap:6px}.mines-grid button{border-radius:10px}.mines-grid button span{font-size:24px}.mines-status{right:12px;top:12px}.mines-page .fairness-panel{padding:20px}}
