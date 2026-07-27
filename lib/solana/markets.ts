@@ -1,4 +1,5 @@
 import bs58 from "bs58";
+import { derivePythPriceFeedAccount } from "./pyth.ts";
 
 export const SPL_TOKEN_PROGRAM_ID = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
 export const SPL_TOKEN_2022_PROGRAM_ID = "TokenzQdBNbLqP5VEhdkAS6EPFLC1PHnBqCXEpPxuEb";
@@ -11,6 +12,7 @@ export type CollateralMarket = {
   liquidationLtvBps: number;
   priceFeedAccount: string;
   priceFeedId: string;
+  priceFeedShardId: number;
   tokenProgram: string;
   enabled: boolean;
 };
@@ -59,6 +61,7 @@ export function collateralMarketsFromEnvironment(): CollateralMarket[] {
     const decimals = boundedInteger(entry.decimals, 0, 12);
     const ltvBps = boundedInteger(entry.ltvBps, 1, 5_000);
     const liquidationLtvBps = boundedInteger(entry.liquidationLtvBps, 2, 8_000);
+    const priceFeedShardId = boundedInteger(entry.priceFeedShardId ?? 0, 0, 65_535);
     const tokenProgram = entry.tokenProgram ?? SPL_TOKEN_PROGRAM_ID;
     const priceFeedId = typeof entry.priceFeedId === "string"
       ? entry.priceFeedId.replace(/^0x/, "").toLowerCase()
@@ -72,8 +75,10 @@ export function collateralMarketsFromEnvironment(): CollateralMarket[] {
       || decimals === null
       || ltvBps === null
       || liquidationLtvBps === null
+      || priceFeedShardId === null
       || liquidationLtvBps <= ltvBps
       || !/^[0-9a-f]{64}$/.test(priceFeedId)
+      || derivePythPriceFeedAccount(priceFeedId, priceFeedShardId).toBase58() !== entry.priceFeedAccount
       || seenMints.has(entry.mint)
     ) {
       continue;
@@ -88,6 +93,7 @@ export function collateralMarketsFromEnvironment(): CollateralMarket[] {
       liquidationLtvBps,
       priceFeedAccount: entry.priceFeedAccount,
       priceFeedId,
+      priceFeedShardId,
       tokenProgram,
       enabled: entry.enabled !== false,
     });

@@ -8,8 +8,16 @@ on:
       - "Cargo.lock"
       - "Anchor.toml"
       - "programs/**"
-      - "lib/solana/lendingClient.ts"
+      - "app/api/protocol/**"
+      - "app/lending/**"
+      - "config/collateral-markets.mainnet.json"
+      - "lib/solana/**"
+      - "package.json"
+      - "package-lock.json"
       - "scripts/protocol-local-smoke.mjs"
+      - "scripts/verify-collateral-markets.mjs"
+      - "tests/lending-client.test.mjs"
+      - "tests/pyth-readiness.test.mjs"
       - ".github/workflows/protocol-ci.yml"
   pull_request:
     paths:
@@ -17,14 +25,40 @@ on:
       - "Cargo.lock"
       - "Anchor.toml"
       - "programs/**"
-      - "lib/solana/lendingClient.ts"
+      - "app/api/protocol/**"
+      - "app/lending/**"
+      - "config/collateral-markets.mainnet.json"
+      - "lib/solana/**"
+      - "package.json"
+      - "package-lock.json"
       - "scripts/protocol-local-smoke.mjs"
+      - "scripts/verify-collateral-markets.mjs"
+      - "tests/lending-client.test.mjs"
+      - "tests/pyth-readiness.test.mjs"
       - ".github/workflows/protocol-ci.yml"
 
 permissions:
   contents: read
 
 jobs:
+  web-lending:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Reject high-severity dependency advisories
+        run: npm audit --audit-level=high
+      - name: Build lending application
+        run: npm run build
+      - name: Test wallet instructions and oracle attestation
+        run: node --experimental-strip-types --test tests/lending-client.test.mjs tests/pyth-readiness.test.mjs
+
   rust:
     runs-on: ubuntu-latest
     timeout-minutes: 30

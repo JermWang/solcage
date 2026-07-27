@@ -5,9 +5,13 @@ import {
   isSupportedTokenProgram,
   type CollateralMarket,
 } from "@/lib/solana/markets";
+import {
+  parsePythPriceUpdate,
+  pythConfidenceBps,
+  PYTH_RECEIVER_PROGRAM_ID,
+} from "@/lib/solana/pyth";
 
 const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-const PYTH_RECEIVER_PROGRAM_ID = "rec5EKMGg6MxZYaMdyBfgwp4d5rB9T1VQH5pJv5LtFJ";
 const PROTOCOL_DISCRIMINATOR = createHash("sha256").update("account:Protocol").digest().subarray(0, 8);
 const MARKET_DISCRIMINATOR = createHash("sha256").update("account:Market").digest().subarray(0, 8);
 
@@ -292,15 +296,53 @@ export async function inspectProtocolReadiness(input: {
       "collateral-vault",
       `${market.symbol} collateral vault`,
     ));
-    checks.push(priceAccount?.owner === PYTH_RECEIVER_PROGRAM_ID
-      ? pass("price-update", `${market.symbol} Pyth price account`, market.priceFeedAccount)
-      : fail(
-          "price-update",
-          `${market.symbol} Pyth price account`,
-          priceAccount
-            ? `Expected Pyth Receiver ownership; found ${priceAccount.owner}`
-            : "Configured price-update account does not exist",
-        ));
+    if (!priceAccount || priceAccount.owner !== PYTH_RECEIVER_PROGRAM_ID) {
+      checks.push(fail(
+        "price-update",
+        `${market.symbol} Pyth price account`,
+        priceAccount
+          ? `Expected Pyth Receiver ownership; found ${priceAccount.owner}`
+          : "Configured price-update account does not exist",
+      ));
+    } else {
+      const price = parsePythPriceUpdate(Buffer.from(priceAccount.data[0], "base64"));
+      const marketData = marketAccount ? Buffer.from(marketAccount.data[0], "base64") : null;
+      const maximumAge = marketData && marketData.length >= 120
+        ? marketData.readBigUInt64LE(110)
+        : null;
+      const maximumConfidenceBps = marketData && marketData.length >= 120
+        ? BigInt(marketData.readUInt16LE(118))
+        : null;
+      const now = BigInt(Math.floor(Date.now() / 1_000));
+      const confidenceBps = price ? pythConfidenceBps(price.price, price.confidence) : null;
+      checks.push(price
+        ? pass("price-shape", `${market.symbol} Pyth account type`, "PriceUpdateV2 discriminator verified")
+        : fail("price-shape", `${market.symbol} Pyth account type`, "Pyth account data is malformed"));
+      checks.push(price?.verification === "full"
+        ? pass("price-verification", `${market.symbol} oracle verification`, "Full guardian verification")
+        : fail("price-verification", `${market.symbol} oracle verification`, "Price update is not fully verified"));
+      checks.push(price?.feedId === market.priceFeedId
+        ? pass("price-feed-id", `${market.symbol} oracle feed`, market.priceFeedId)
+        : fail("price-feed-id", `${market.symbol} oracle feed`, "Price account contains another feed ID"));
+      checks.push(price && price.price > 0n
+        ? pass("price-positive", `${market.symbol} oracle price`, "Positive price")
+        : fail("price-positive", `${market.symbol} oracle price`, "Price is missing or non-positive"));
+      checks.push(
+        price
+        && maximumAge !== null
+        && price.publishTime <= now + 30n
+        && price.publishTime + maximumAge >= now
+          ? pass("price-fresh", `${market.symbol} oracle freshness`, `Published ${now - price.publishTime}s ago`)
+          : fail("price-fresh", `${market.symbol} oracle freshness`, "Price exceeds the on-chain maximum age"),
+      );
+      checks.push(
+        confidenceBps !== null
+        && maximumConfidenceBps !== null
+        && confidenceBps <= maximumConfidenceBps
+          ? pass("price-confidence", `${market.symbol} oracle confidence`, `${confidenceBps} bps`)
+          : fail("price-confidence", `${market.symbol} oracle confidence`, "Confidence interval exceeds the market limit"),
+      );
+    }
     return {
       symbol: market.symbol,
       marketAddress: marketAddress.toBase58(),

@@ -50,6 +50,8 @@ export async function GET() {
       ltvBps: market.ltvBps,
       liquidationLtvBps: market.liquidationLtvBps,
       priceFeedAccount: market.priceFeedAccount,
+      priceFeedId: market.priceFeedId,
+      priceFeedShardId: market.priceFeedShardId,
       tokenProgram: market.tokenProgram,
       enabled: market.enabled,
       attested: readiness.markets.find((attestation) => attestation.symbol === market.symbol)?.ready ?? false,

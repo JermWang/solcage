@@ -9,8 +9,9 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
-    "test": "npm run build && node --experimental-strip-types --test tests/baccarat-engine.test.mjs tests/crash-engine.test.mjs tests/dice-engine.test.mjs tests/keno-engine.test.mjs tests/lending-client.test.mjs tests/slots-engine.test.mjs tests/video-poker-engine.test.mjs tests/rendered-html.test.mjs",
+    "test": "npm run build && node --experimental-strip-types --test tests/baccarat-engine.test.mjs tests/crash-engine.test.mjs tests/dice-engine.test.mjs tests/keno-engine.test.mjs tests/lending-client.test.mjs tests/pyth-readiness.test.mjs tests/slots-engine.test.mjs tests/video-poker-engine.test.mjs tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern tmp --ignore-pattern node_modules_* --ignore-pattern target --ignore-pattern build",
+    "protocol:verify-markets": "node --experimental-strip-types scripts/verify-collateral-markets.mjs",
     "db:generate": "drizzle-kit generate"
   },
   "dependencies": {

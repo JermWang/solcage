@@ -9,21 +9,20 @@ type Asset = {
   symbol: string;
   name: string;
   image: string;
-  ltv: number;
   cap: string;
   liquidity: string;
   status: "ACTIVE" | "WATCH";
 };
 
 const collateralAssets: Asset[] = [
-  { symbol: "FARTCOIN", name: "Fartcoin", image: "/coin-art/fartcoin.webp", ltv: 30, cap: "$100M+", liquidity: "Deep", status: "ACTIVE" },
-  { symbol: "BONK", name: "Bonk", image: "/coin-art/bonk.webp", ltv: 35, cap: "$100M+", liquidity: "Deep", status: "ACTIVE" },
-  { symbol: "WIF", name: "dogwifhat", image: "/coin-art/wif.jpg", ltv: 30, cap: "$100M+", liquidity: "Deep", status: "ACTIVE" },
-  { symbol: "PENGU", name: "Pudgy Penguins", image: "/coin-art/pengu.webp", ltv: 35, cap: "$100M+", liquidity: "Deep", status: "ACTIVE" },
-  { symbol: "POPCAT", name: "Popcat", image: "/coin-art/popcat.webp", ltv: 25, cap: "$10M+", liquidity: "Medium", status: "ACTIVE" },
-  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", image: "/coin-art/triplet.webp", ltv: 0, cap: "Monitored", liquidity: "Review", status: "WATCH" },
-  { symbol: "KINS", name: "Kintara", image: "/coin-art/kins.webp", ltv: 0, cap: "Monitored", liquidity: "Review", status: "WATCH" },
-  { symbol: "JIMOTHY", name: "Jimothy the Raccoon", image: "/coin-art/jimothy.webp", ltv: 0, cap: "Monitored", liquidity: "Review", status: "WATCH" },
+  { symbol: "FARTCOIN", name: "Fartcoin", image: "/coin-art/fartcoin.webp", cap: "$10M+ gate", liquidity: "Verified", status: "ACTIVE" },
+  { symbol: "BONK", name: "Bonk", image: "/coin-art/bonk.webp", cap: "$10M+ gate", liquidity: "Verified", status: "ACTIVE" },
+  { symbol: "WIF", name: "dogwifhat", image: "/coin-art/wif.jpg", cap: "$10M+ gate", liquidity: "Verified", status: "ACTIVE" },
+  { symbol: "PENGU", name: "Pudgy Penguins", image: "/coin-art/pengu.webp", cap: "$10M+ gate", liquidity: "Verified", status: "ACTIVE" },
+  { symbol: "POPCAT", name: "Popcat", image: "/coin-art/popcat.webp", cap: "$10M+ gate", liquidity: "Feed review", status: "WATCH" },
+  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", image: "/coin-art/triplet.webp", cap: "Monitored", liquidity: "Feed review", status: "WATCH" },
+  { symbol: "KINS", name: "Kintara", image: "/coin-art/kins.webp", cap: "Monitored", liquidity: "Feed review", status: "WATCH" },
+  { symbol: "JIMOTHY", name: "Jimothy the Raccoon", image: "/coin-art/jimothy.webp", cap: "Monitored", liquidity: "Feed review", status: "WATCH" },
 ];
 
 type ConfiguredMarket = ClientMarket & {

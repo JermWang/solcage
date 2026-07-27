@@ -16,6 +16,8 @@ export type ClientMarket = {
   decimals: number;
   tokenProgram: string;
   priceFeedAccount: string;
+  priceFeedId?: string;
+  priceFeedShardId?: number;
   enabled: boolean;
   attested?: boolean;
 };
