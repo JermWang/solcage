@@ -99,6 +99,32 @@ workflow are replaced with a prior server commitment, player client seed,
 deterministic HMAC-SHA256 Fisher-Yates shuffle, PostgreSQL row lock,
 idempotent settlement, persisted receipts, and atomic loyalty credit.
 
+## Phaser Video Poker
+
+- Source: https://github.com/pinkkis/phaser-video-poker
+- Revision reviewed: `7e5be6ddceca40bd7bf581a4fed9a8ee45b51a23`
+- License: MIT
+- Copyright: 2019 Kristian Koivisto-Kokko
+
+The five-card deal, card-hold controls, draw phase, keyboard shortcuts, and hand
+evaluation test structure informed Neon Draw. SolCage replaces the original
+browser game state and random shuffle with a prior server commitment, player
+client seed, deterministic HMAC-SHA256 Fisher-Yates shuffle, PostgreSQL row
+lock, idempotent two-action settlement, persisted receipts, and atomic loyalty
+credit.
+
+## Full Pay Video Poker
+
+- Source: https://github.com/jaredkjar/video-poker
+- Revision reviewed: `10946f9d8dcee2c5ab321ad6f01957f8c842ee40`
+- License: MIT
+- Copyright: 2026 Jared Kjar
+
+The full-pay 9/6 Jacks or Better hand ranking, max-coin paytable, and polished
+machine presentation informed Neon Draw. SolCage independently implements the
+evaluator and uses the committed server shoe as the only authority for dealt
+and replacement cards.
+
 ## Mines Casino
 
 - Source: https://github.com/iamThiagoo/mines-casino
@@ -155,6 +181,10 @@ Copyright (c) 2018 Charlie Guan
 Copyright (c) 2026 John Leonardo
 
 Copyright (c) 2020 Naman Adlakha
+
+Copyright (c) 2019 Kristian Koivisto-Kokko
+
+Copyright (c) 2026 Jared Kjar
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

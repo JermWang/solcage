@@ -56,7 +56,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Cage Baccarat", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
+  for (const title of ["Cage Roulette", "Cage Baccarat", "Neon Draw", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
@@ -65,6 +65,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /PROVABLY FAIR FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
   assert.match(html, /href="\/games\/baccarat"/);
+  assert.match(html, /href="\/games\/video-poker"/);
   assert.match(html, /href="\/games\/dice"/);
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
@@ -76,6 +77,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /\/game-art\/plinko\.webp/);
   assert.match(html, /\/game-art\/blackjack\.webp/);
   assert.match(html, /\/game-art\/baccarat\.webp/);
+  assert.match(html, /\/game-art\/video-poker\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/crash\.webp/);
   assert.match(html, /\/game-art\/keno\.webp/);
@@ -111,6 +113,40 @@ test("server-renders the dedicated sourced Cage Baccarat room", async () => {
   assert.match(html, /BEAD ROAD/);
   assert.match(html, /HMAC-SHA256/);
   assert.match(html, /416 CARDS/);
+});
+
+test("server-renders the dedicated sourced Neon Draw machine", async () => {
+  const response = await render("/games/video-poker");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /Neon Draw/);
+  assert.match(html, /9\/6 JACKS OR BETTER/);
+  assert.match(html, /99\.54%/);
+  assert.match(html, /ROYAL FLUSH/);
+  assert.match(html, /JACKS OR BETTER/);
+  assert.match(html, /COMMITTED DECK/);
+  assert.match(html, /HMAC-SHA256/);
+});
+
+test("ships row-locked Video Poker deal, hold, draw, and source notices", async () => {
+  const [page, api, engine, notices] = await Promise.all([
+    readFile(new URL("../app/games/video-poker/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/video-poker/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/videoPoker.ts", import.meta.url), "utf8"),
+    readFile(new URL("../THIRD_PARTY_NOTICES.md", import.meta.url), "utf8"),
+  ]);
+  assert.match(page, /KEYS 1—5 TO HOLD/);
+  assert.match(page, /\/api\/games\/video-poker\/action/);
+  assert.match(api, /FOR UPDATE/);
+  assert.match(api, /status = 'active'/);
+  assert.match(api, /drawVideoPokerHand/);
+  assert.match(api, /awardPoints/);
+  assert.match(engine, /multiplier: 800/);
+  assert.match(engine, /VIDEO_POKER_MAX_HOLD_MASK = 31/);
+  assert.match(notices, /pinkkis\/phaser-video-poker/);
+  assert.match(notices, /jaredkjar\/video-poker/);
+  await access(new URL("../public/game-art/video-poker.webp", import.meta.url));
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
@@ -267,6 +303,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     access(new URL("../public/game-art/plinko.webp", import.meta.url)),
     access(new URL("../public/game-art/blackjack.webp", import.meta.url)),
     access(new URL("../public/game-art/baccarat.webp", import.meta.url)),
+    access(new URL("../public/game-art/video-poker.webp", import.meta.url)),
     access(new URL("../public/coin-art/jimothy.webp", import.meta.url)),
     access(new URL("../public/coin-art/kins.webp", import.meta.url)),
     access(new URL("../public/coin-art/wif.jpg", import.meta.url)),
