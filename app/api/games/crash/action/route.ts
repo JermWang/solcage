@@ -7,6 +7,8 @@ import {
 } from "@/lib/games/crash";
 import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -129,6 +131,19 @@ export async function POST(request: Request) {
           : Number(body.autoCashout);
         if (!Number.isFinite(bet) || bet < 0.01 || bet > 100_000) throw new Error("Invalid stake");
         if (!/^[a-z0-9:_-]{8,128}$/i.test(clientSeed)) throw new Error("Invalid client seed");
+        // Stake taken once at the opening action; the terminal path settles below.
+        const houseAtStart = houseConfig();
+        if (houseAtStart.enabled && houseReadiness(houseAtStart).ready) {
+          await takeStake(client, {
+            userId: identity.userId,
+            stakeRaw: toBaseUnits(bet.toFixed(houseAtStart.decimals), houseAtStart.decimals),
+            maxMultiplier: MAX_MULTIPLIER.crash,
+            rakeBps: houseAtStart.rakeBps,
+            correlationId: `bet:${roundId}`,
+            limits: houseAtStart.limits,
+            metadata: { game: "crash" },
+          });
+        }
         if (
           requestedAutoCashout !== null
           && (!Number.isFinite(requestedAutoCashout) || requestedAutoCashout < 1.01 || requestedAutoCashout > 100)
@@ -183,6 +198,22 @@ export async function POST(request: Request) {
         [state.clientSeed, settled ? "revealed" : "active", JSON.stringify(state), roundId],
       );
       if (settled) {
+        // A player who never cashes out simply loses the stake taken at start:
+        // the bust path settles with payout 0 and posts nothing here.
+        const houseAtEnd = houseConfig();
+        if (
+          houseAtEnd.enabled
+          && houseReadiness(houseAtEnd).ready
+          && (state.payout ?? 0) > 0
+        ) {
+          await payWinnings(client, {
+            userId: identity.userId,
+            payoutRaw: toBaseUnits((state.payout ?? 0).toFixed(houseAtEnd.decimals), houseAtEnd.decimals),
+            limits: houseAtEnd.limits,
+            correlationId: `win:${roundId}`,
+            metadata: { game: "crash", cashoutMultiplier: state.cashoutMultiplier },
+          });
+        }
         await client.query(
           `INSERT INTO game_history (id, user_id, game, bet, outcome, payout, event_key)
            VALUES ($1, $2, 'crash', $3, $4, $5, $6)
@@ -210,6 +241,8 @@ export async function POST(request: Request) {
     return json(response, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Crash action failed" }, 400);
   }
 }

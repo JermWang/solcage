@@ -8,6 +8,8 @@ import {
   MINES_BOARD_SIZE,
 } from "@/lib/games/mines";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -95,6 +97,20 @@ export async function POST(request: Request) {
         if (!Number.isFinite(bet) || bet < 0.01 || bet > 100_000) throw new Error("Invalid stake");
         if (!ALLOWED_MINE_COUNTS.has(mineCount)) throw new Error("Invalid mine count");
         if (!/^[a-z0-9:_-]{8,128}$/i.test(clientSeed)) throw new Error("Invalid client seed");
+        // Multi-step game: the stake is taken once, here, at the opening
+        // action. Every terminal path (mine hit or cashout) settles below.
+        const houseAtStart = houseConfig();
+        if (houseAtStart.enabled && houseReadiness(houseAtStart).ready) {
+          await takeStake(client, {
+            userId: identity.userId,
+            stakeRaw: toBaseUnits(bet.toFixed(houseAtStart.decimals), houseAtStart.decimals),
+            maxMultiplier: MAX_MULTIPLIER.mines,
+            rakeBps: houseAtStart.rakeBps,
+            correlationId: `bet:${roundId}`,
+            limits: houseAtStart.limits,
+            metadata: { game: "mines", mineCount },
+          });
+        }
         const generator = Provable(() => undefined)({
           serverSeed: round.server_seed,
           clientSeed,
@@ -151,6 +167,22 @@ export async function POST(request: Request) {
         [state.clientSeed, settled ? "revealed" : "active", JSON.stringify(state), roundId],
       );
       if (settled) {
+        // One payout per round, keyed on the round id, so a repeated terminal
+        // request cannot pay twice. A mine hit settles at zero and posts nothing.
+        const houseAtEnd = houseConfig();
+        if (
+          houseAtEnd.enabled
+          && houseReadiness(houseAtEnd).ready
+          && (state.payout ?? 0) > 0
+        ) {
+          await payWinnings(client, {
+            userId: identity.userId,
+            payoutRaw: toBaseUnits((state.payout ?? 0).toFixed(houseAtEnd.decimals), houseAtEnd.decimals),
+            limits: houseAtEnd.limits,
+            correlationId: `win:${roundId}`,
+            metadata: { game: "mines", multiplier: state.multiplier },
+          });
+        }
         await client.query(
           `INSERT INTO game_history (id, user_id, game, bet, outcome, payout, event_key)
            VALUES ($1, $2, 'mines', $3, $4, $5, $6)
@@ -172,6 +204,8 @@ export async function POST(request: Request) {
     return json(response, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Mines action failed" }, 400);
   }
 }

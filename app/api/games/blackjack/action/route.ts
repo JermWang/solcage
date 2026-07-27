@@ -11,6 +11,8 @@ import {
   type PlayingCard,
 } from "@/lib/games/blackjack";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -100,6 +102,18 @@ export async function POST(request: Request) {
         const clientSeed = String(body.clientSeed ?? "");
         if (!Number.isFinite(bet) || bet < 0.01 || bet > 100_000) throw new Error("Invalid stake");
         if (!/^[a-z0-9:_-]{8,128}$/i.test(clientSeed)) throw new Error("Invalid client seed");
+        const houseAtDeal = houseConfig();
+        if (houseAtDeal.enabled && houseReadiness(houseAtDeal).ready) {
+          await takeStake(client, {
+            userId: identity.userId,
+            stakeRaw: toBaseUnits(bet.toFixed(houseAtDeal.decimals), houseAtDeal.decimals),
+            maxMultiplier: MAX_MULTIPLIER.blackjack,
+            rakeBps: houseAtDeal.rakeBps,
+            correlationId: `bet:${roundId}`,
+            limits: houseAtDeal.limits,
+            metadata: { game: "blackjack" },
+          });
+        }
         const generator = Provable(() => undefined)({
           serverSeed: round.server_seed,
           clientSeed,
@@ -124,6 +138,21 @@ export async function POST(request: Request) {
         if (round.status !== "active" || !state) throw new Error("Deal cards before acting");
         if (action === "double") {
           if (state.doubledDown || state.player.length !== 2) throw new Error("Double down is only available on the first two cards");
+          // Doubling commits a second stake equal to the first. It gets its own
+          // correlation id and its own funds check — a player who cannot cover
+          // it is refused here rather than doubling on money they do not have.
+          const houseAtDouble = houseConfig();
+          if (houseAtDouble.enabled && houseReadiness(houseAtDouble).ready) {
+            await takeStake(client, {
+              userId: identity.userId,
+              stakeRaw: toBaseUnits(state.bet.toFixed(houseAtDouble.decimals), houseAtDouble.decimals),
+              maxMultiplier: MAX_MULTIPLIER.blackjack,
+              rakeBps: houseAtDouble.rakeBps,
+              correlationId: `bet-double:${roundId}`,
+              limits: houseAtDouble.limits,
+              metadata: { game: "blackjack", double: true },
+            });
+          }
           state.bet = roundMoney(state.bet * 2);
           state.doubledDown = true;
         }
@@ -152,6 +181,22 @@ export async function POST(request: Request) {
         [state.clientSeed, settled ? "revealed" : "active", JSON.stringify(state), roundId],
       );
       if (settled) {
+        // state.payout already accounts for a doubled stake, and both stakes
+        // were debited, so this settles the hand whole.
+        const houseAtEnd = houseConfig();
+        if (
+          houseAtEnd.enabled
+          && houseReadiness(houseAtEnd).ready
+          && (state.payout ?? 0) > 0
+        ) {
+          await payWinnings(client, {
+            userId: identity.userId,
+            payoutRaw: toBaseUnits((state.payout ?? 0).toFixed(houseAtEnd.decimals), houseAtEnd.decimals),
+            limits: houseAtEnd.limits,
+            correlationId: `win:${roundId}`,
+            metadata: { game: "blackjack", outcome: state.outcome, doubled: Boolean(state.doubledDown) },
+          });
+        }
         await client.query(
           `INSERT INTO game_history (id, user_id, game, bet, outcome, payout, event_key)
            VALUES ($1, $2, 'blackjack', $3, $4, $5, $6)
@@ -173,6 +218,8 @@ export async function POST(request: Request) {
     return json(response, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Blackjack action failed" }, 400);
   }
 }

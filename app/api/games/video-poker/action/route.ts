@@ -11,6 +11,8 @@ import {
 } from "@/lib/games/videoPoker";
 import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -113,6 +115,19 @@ export async function POST(request: Request) {
         const clientSeed = String(body.clientSeed ?? "");
         if (!Number.isFinite(bet) || bet < 0.01 || bet > 100_000) throw new Error("Invalid stake");
         if (!/^[a-z0-9:_-]{8,128}$/i.test(clientSeed)) throw new Error("Invalid client seed");
+        // Stake taken at the deal; the draw settles it.
+        const houseAtDeal = houseConfig();
+        if (houseAtDeal.enabled && houseReadiness(houseAtDeal).ready) {
+          await takeStake(client, {
+            userId: identity.userId,
+            stakeRaw: toBaseUnits(bet.toFixed(houseAtDeal.decimals), houseAtDeal.decimals),
+            maxMultiplier: MAX_MULTIPLIER["video-poker"],
+            rakeBps: houseAtDeal.rakeBps,
+            correlationId: `bet:${roundId}`,
+            limits: houseAtDeal.limits,
+            metadata: { game: "video-poker" },
+          });
+        }
         const generator = Provable(() => undefined)({
           serverSeed: round.server_seed,
           clientSeed,
@@ -158,6 +173,20 @@ export async function POST(request: Request) {
          WHERE id = $2`,
         [JSON.stringify(state), roundId],
       );
+      const houseAtDraw = houseConfig();
+      if (
+        houseAtDraw.enabled
+        && houseReadiness(houseAtDraw).ready
+        && (state.payout ?? 0) > 0
+      ) {
+        await payWinnings(client, {
+          userId: identity.userId,
+          payoutRaw: toBaseUnits((state.payout ?? 0).toFixed(houseAtDraw.decimals), houseAtDraw.decimals),
+          limits: houseAtDraw.limits,
+          correlationId: `win:${roundId}`,
+          metadata: { game: "video-poker", outcome: state.outcome },
+        });
+      }
       await client.query(
         `INSERT INTO game_history (id, user_id, game, bet, outcome, payout, event_key)
          VALUES ($1, $2, 'video-poker', $3, $4, $5, $6)
@@ -187,6 +216,8 @@ export async function POST(request: Request) {
     return json({ ...response, points: profile.points, rankPosition: profile.rank }, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Video Poker action failed" }, 400);
   }
 }
