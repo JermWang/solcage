@@ -52,5 +52,6 @@ next-env.d.ts
 # Solana / Anchor build outputs and deployment keypairs
 /target/
 /.anchor/
+/secrets/
 **/target/
 **/*-keypair.json

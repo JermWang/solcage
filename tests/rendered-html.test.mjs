@@ -177,8 +177,8 @@ test("ships a database-backed live casino activity floor", async () => {
   assert.match(css, /@media\(max-width:1050px\)\{\.roulette-room,\.original-room/);
 });
 
-test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, dice, diceApi, diceEngine, baccarat, baccaratApi, baccaratEngine, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+test("ships the procedural model, fair games, custodial liquidity flow, and interaction hooks", async () => {
+  const [scene, games, dice, diceApi, diceEngine, baccarat, baccaratApi, baccaratEngine, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, custodyClient, custodyDeposit, custodyClaim, custodySwap, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/dice/page.tsx", import.meta.url), "utf8"),
@@ -205,10 +205,10 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     readFile(new URL("../lib/games/slots.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
-    readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
-    readFile(new URL("../app/api/protocol/transactions/route.ts", import.meta.url), "utf8"),
-    readFile(new URL("../lib/solana/readiness.ts", import.meta.url), "utf8"),
-    readFile(new URL("../programs/solcage_lending/src/lib.rs", import.meta.url), "utf8"),
+    readFile(new URL("../lib/solana/custodyClient.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/custody/deposits/confirm/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/custody/claims/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/custody/swap.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/health/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -288,26 +288,21 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(fairReveal, /randomInts\(1, 36, 0\)/);
   assert.doesNotMatch(fairReveal, /slotSymbols/);
   assert.match(fairReveal, /randomInts\(11, 1, 0\)/);
-  assert.match(lending, /COLLATERAL MARKET/);
+  assert.match(lending, /CUSTODY MARKET/);
   assert.match(lending, /LIVE READINESS PROOF/);
-  assert.match(lending, /sendLendingTransaction/);
-  assert.match(lendingClient, /findProgramAddressSync/);
-  assert.match(lendingClient, /signAndSendTransaction/);
-  assert.match(lendingClient, /buildLendingInstruction/);
-  assert.match(lendingClient, /"deposit" \| "borrow" \| "repay" \| "withdraw"/);
-  assert.match(protocolApi, /getTransaction/);
-  assert.match(protocolApi, /protocol_transactions/);
-  assert.match(protocolApi, /commitment: "finalized"/);
-  assert.match(protocolApi, /instruction\.accounts\.length !== expectedAccounts\.length/);
-  assert.match(readiness, /programAccount\?\.executable/);
-  assert.match(readiness, /Protocol account type/);
-  assert.match(readiness, /collateral vault/);
-  assert.match(readiness, /Pyth feed ID/);
-  assert.match(protocolProgram, /deposit_collateral/);
-  assert.match(protocolProgram, /withdraw_collateral/);
-  assert.match(protocolProgram, /get_price_no_older_than/);
-  assert.match(protocolProgram, /borrow_token_program/);
-  assert.match(protocolProgram, /collateral_token_program/);
+  assert.match(lending, /sendCustodyDeposit/);
+  assert.match(lending, /\/api\/custody\/claims/);
+  assert.match(custodyClient, /findProgramAddressSync/);
+  assert.match(custodyClient, /signAndSendTransaction/);
+  assert.match(custodyClient, /transferChecked/);
+  assert.match(custodyDeposit, /verifyIncomingTransfer/);
+  assert.match(custodyDeposit, /collateral_sold/);
+  assert.match(custodyDeposit, /advance_sent/);
+  assert.match(custodyClaim, /buyCollateral/);
+  assert.match(custodyClaim, /collateral_claimed/);
+  assert.match(custodySwap, /api\.jup\.ag\/swap\/v2/);
+  assert.match(custodySwap, /\/order\?/);
+  assert.match(custodySwap, /simulated/);
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
   assert.match(notices, /thomasthaddeus\/BlackjackFlask/);

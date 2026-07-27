@@ -122,6 +122,51 @@ const schemaStatements = [
   )`,
   `CREATE INDEX IF NOT EXISTS protocol_transactions_user_created_idx
    ON protocol_transactions (user_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS custody_positions (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    wallet_address VARCHAR(64) NOT NULL,
+    collateral_symbol VARCHAR(16) NOT NULL,
+    collateral_mint VARCHAR(64) NOT NULL,
+    collateral_decimals SMALLINT NOT NULL,
+    collateral_raw NUMERIC(20,0) NOT NULL,
+    sale_proceeds_raw NUMERIC(20,0),
+    advance_raw NUMERIC(20,0),
+    reserve_raw NUMERIC(20,0),
+    repaid_raw NUMERIC(20,0) NOT NULL DEFAULT 0,
+    repurchase_cost_raw NUMERIC(20,0),
+    repurchased_raw NUMERIC(20,0),
+    status VARCHAR(24) NOT NULL,
+    deposit_signature VARCHAR(96) NOT NULL UNIQUE,
+    sell_signature VARCHAR(128),
+    advance_signature VARCHAR(96),
+    repay_signature VARCHAR(96) UNIQUE,
+    buy_signature VARCHAR(128),
+    claim_signature VARCHAR(96),
+    failure_reason VARCHAR(240),
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS custody_positions_user_created_idx
+   ON custody_positions (user_id, created_at DESC)`,
+  `CREATE INDEX IF NOT EXISTS custody_positions_status_idx
+   ON custody_positions (status, updated_at)`,
+  `CREATE TABLE IF NOT EXISTS custody_events (
+    id UUID PRIMARY KEY,
+    position_id UUID NOT NULL REFERENCES custody_positions(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    event_key VARCHAR(140) NOT NULL UNIQUE,
+    action VARCHAR(32) NOT NULL,
+    signature VARCHAR(128),
+    asset_symbol VARCHAR(16) NOT NULL,
+    mint_address VARCHAR(64) NOT NULL,
+    raw_amount NUMERIC(20,0) NOT NULL,
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS custody_events_user_created_idx
+   ON custody_events (user_id, created_at DESC)`,
 ];
 
 export async function ensureSchema() {
