@@ -31,6 +31,9 @@ jobs:
         run: sh -c "$(curl -sSfL https://release.anza.xyz/v3.0.10/install)"
       - name: Add Solana tools to PATH
         run: echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
       - name: Restore protected devnet keypairs
         shell: bash
         run: |
@@ -57,9 +60,9 @@ jobs:
             --url "$SOLANA_URL" \
             --keypair "$RUNNER_TEMP/solcage/deployer.json"
           current_balance="$(solana balance --lamports | awk '{print $1}')"
-          required_balance=5000000000
+          required_balance=6000000000
           attempt=1
-          while [ "$current_balance" -lt "$required_balance" ] && [ "$attempt" -le 5 ]; do
+          while [ "$current_balance" -lt "$required_balance" ] && [ "$attempt" -le 2 ]; do
             solana airdrop 2 \
               "$(solana-keygen pubkey "$RUNNER_TEMP/solcage/deployer.json")" \
               --url "$SOLANA_URL" || true
@@ -68,7 +71,16 @@ jobs:
             attempt=$((attempt + 1))
           done
           echo "Devnet deployer balance: $current_balance lamports"
-          test "$current_balance" -ge "$required_balance"
+          if [ "$current_balance" -lt "$required_balance" ]; then
+            {
+              echo "## Devnet funding required"
+              echo
+              echo "Fund \`$(solana-keygen pubkey "$RUNNER_TEMP/solcage/deployer.json")\` with at least 6 devnet SOL, then rerun this workflow."
+              echo
+              echo "Official faucet: https://faucet.solana.com"
+            } >> "$GITHUB_STEP_SUMMARY"
+            exit 1
+          fi
       - name: Deploy and attest program
         shell: bash
         run: |
