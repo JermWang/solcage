@@ -1,12 +1,12 @@
-import { db, transaction } from "./db";
+import { db, transaction } from "./db.ts";
 import {
   InsufficientFunds,
   lockWithdrawal,
   refundWithdrawal,
   settleWithdrawalSent,
-} from "./bankroll";
-import { houseConfig } from "./house";
-import { sendHouseSol } from "./house-solana";
+} from "./bankroll.ts";
+import { houseConfig } from "./house.ts";
+import { sendHouseSol } from "./house-solana.ts";
 
 /**
  * Withdrawal lifecycle:

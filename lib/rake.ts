@@ -1,7 +1,7 @@
-import { transaction } from "./db";
-import { platformRevenue, recordRakeSweep } from "./bankroll";
-import { houseConfig } from "./house";
-import { HOUSE_RESERVE_LAMPORTS, houseTreasuryOnChain, sendHouseSol } from "./house-solana";
+import { transaction } from "./db.ts";
+import { platformRevenue, recordRakeSweep } from "./bankroll.ts";
+import { houseConfig } from "./house.ts";
+import { HOUSE_RESERVE_LAMPORTS, houseTreasuryOnChain, sendHouseSol } from "./house-solana.ts";
 
 /**
  * Rake sweeping.

@@ -1,5 +1,5 @@
 import { PublicKey } from "@solana/web3.js";
-import type { WagerLimits } from "./bankroll";
+import type { WagerLimits } from "./bankroll.ts";
 
 /**
  * House bankroll configuration.
@@ -89,22 +89,24 @@ export function houseReadiness(config: HouseConfig) {
 }
 
 /**
- * Effective stake ceiling per game, and whether the game is playable at all.
+ * Where the win ceiling starts biting, per game.
  *
- * The payout cap divided by a game's top multiplier can land below the table
- * minimum — at which point every bet on that game is rejected. That is a
- * configuration problem, not a player problem, so surface it instead of letting
- * it show up as a run of errors.
+ * Exposure is bounded at settlement, not by refusing stakes, so every game is
+ * playable at any stake within min/max. What varies is the point past which a
+ * top-multiplier win would exceed the ceiling and be paid at it instead —
+ * which players should be able to see before they bet.
  */
 export function gameLimits(config: HouseConfig) {
   return Object.entries(MAX_MULTIPLIER).map(([game, multiplier]) => {
-    const maxStakeRaw = config.limits.maxPayoutRaw / BigInt(Math.ceil(multiplier));
-    const capped = maxStakeRaw > config.limits.maxStakeRaw ? config.limits.maxStakeRaw : maxStakeRaw;
+    const uncappedStakeRaw = config.limits.maxPayoutRaw / BigInt(Math.ceil(multiplier));
     return {
       game,
       multiplier,
-      maxStakeRaw: capped.toString(),
-      playable: capped >= config.limits.minStakeRaw,
+      // Stakes at or below this can pay their full top multiplier.
+      uncappedStakeRaw: uncappedStakeRaw.toString(),
+      maxStakeRaw: config.limits.maxStakeRaw.toString(),
+      // True when even the table minimum could hit the ceiling on a top win.
+      topWinAlwaysCapped: uncappedStakeRaw < config.limits.minStakeRaw,
     };
   });
 }

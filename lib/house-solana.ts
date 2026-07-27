@@ -7,7 +7,7 @@ import {
   SystemProgram,
   Transaction,
 } from "@solana/web3.js";
-import { houseConfig } from "./house";
+import { houseConfig } from "./house.ts";
 
 /**
  * Native SOL movement for the house bankroll.
