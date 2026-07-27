@@ -761,9 +761,9 @@ pub struct Position {
     pub bump: u8,
 }
 
-fn validated_price<'a>(
+fn validated_price(
     market: &Market,
-    price_update: &'a Account<PriceUpdateV2>,
+    price_update: &Account<PriceUpdateV2>,
 ) -> Result<pyth_solana_receiver_sdk::price_update::Price> {
     let price = price_update.get_price_no_older_than(
         &Clock::get()?,
