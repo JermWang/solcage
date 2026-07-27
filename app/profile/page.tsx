@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import bs58 from "bs58";
+import { BrandMark } from "@/components/BrandMark";
 
 type History = { kind: string; points: number; multiplier: number; description: string; created_at: string };
 type Profile = { username: string; displayName: string; avatarUrl: string | null; bio: string; walletAddress: string | null; walletVerified: boolean; referralCode: string; points: number; rank: number | null; referrals: number; multiplier: number; history: History[] };
@@ -71,7 +72,7 @@ export default function ProfilePage() {
     }
   }
   return <main className="account-page">
-    <nav className="account-nav"><Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div></nav>
+    <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div></nav>
     {!profile ? <div className="profile-loading">{status}</div> : <>
       <section className="profile-top">
         <div className="profile-avatar">{form.avatarUrl ? <Image src={form.avatarUrl} alt="Your profile" width={145} height={145} unoptimized /> : <span>{form.displayName.slice(0, 1)}</span>}<label>CHANGE PFP<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={avatar} /></label></div>

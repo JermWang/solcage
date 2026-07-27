@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 type GameId = "dice" | "mines" | "roulette";
 
@@ -120,7 +121,7 @@ export default function GamesPage() {
     <main className="games-page">
       <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA FLOOR — OPEN</b></div>
       <nav className="games-nav">
-        <Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link>
+        <Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link>
         <div className="nav-links"><Link href="/">Home</Link><Link href="/?view=vault">Cage</Link><Link className="active" href="/games">Games</Link><Link href="/leaderboard">Leaderboard</Link></div>
         <div className="game-bank"><small>TABLE BALANCE</small><b>{money(bank)} CHIPS</b></div>
         <Link className="wallet" href="/profile">Profile</Link>

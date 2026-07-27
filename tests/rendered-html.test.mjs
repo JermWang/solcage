@@ -40,6 +40,8 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /Choose your bag/);
   assert.match(html, /\/coin-art\/jimothy\.webp/);
   assert.match(html, /\/coin-art\/triplet\.webp/);
+  assert.match(html, /solcage-logo\.png/);
+  assert.match(html, /favicon\.png/);
   assert.doesNotMatch(html, /Animated SolCage casino chip/);
   assert.match(html, /\/game-art\/roulette\.webp/);
   assert.match(html, /href="\/games"/);
@@ -63,10 +65,11 @@ test("server-renders all three game experiences without Coin Flip", async () => 
 });
 
 test("ships the procedural model, optimized art, and interaction hooks", async () => {
-  const [scene, games, page, css, packageJson] = await Promise.all([
+  const [scene, games, page, health, css, packageJson] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/health/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
   ]);
@@ -77,6 +80,8 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   assert.match(scene, /prefers-reduced-motion/);
   assert.match(page, /addEventListener\("wheel", captureWheel, \{ passive: false \}\)/);
   assert.match(page, /target\.closest\("\.coin-card"\)/);
+  assert.match(health, /database: "connected"/);
+  assert.match(health, /readyTables !== 6/);
   assert.match(games, /kind: "game_round"/);
   assert.match(games, /Array\.from\(\{ length: 25 \}/);
   assert.doesNotMatch(games, /SolCageChipScene/);
@@ -94,6 +99,9 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
     access(new URL("../public/coin-art/jimothy.webp", import.meta.url)),
     access(new URL("../public/coin-art/kins.webp", import.meta.url)),
     access(new URL("../public/coin-art/wif.jpg", import.meta.url)),
+    access(new URL("../public/solcage-logo.png", import.meta.url)),
+    access(new URL("../public/favicon.png", import.meta.url)),
+    access(new URL("../public/apple-touch-icon.png", import.meta.url)),
     access(new URL("../artifacts/chip-model/chip-sculpt-spec.json", import.meta.url)),
   ]);
 });

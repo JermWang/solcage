@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 
 type Leader = { rank: number; username: string; displayName: string; avatarUrl: string | null; points: number; events: number; referrals: number };
 
@@ -40,7 +41,7 @@ function Avatar({ leader }: { leader: Leader }) {
 }
 
 function AccountNav() {
-  return <nav className="account-nav"><Link className="brand" href="/"><span className="brand-mark">SC</span><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div></nav>;
+  return <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div></nav>;
 }
 
 function Rules() {

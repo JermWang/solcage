@@ -42,6 +42,7 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+/tmp/
 *.tar.gz
 /artifacts/dev.log
 /artifacts/dev.err

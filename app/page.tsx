@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
+import { BrandMark } from "@/components/BrandMark";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -100,7 +101,7 @@ export default function Home() {
       <div className="ticker" aria-hidden="true"><span>S</span><span>O</span><span>L</span><span>C</span><span>A</span><span>G</span><span>E</span><b>SOLANA CREDIT + GAMES</b></div>
       <nav>
         <button className="brand" onClick={() => go("home")} aria-label="SolCage home">
-          <span className="brand-mark">SC</span><span>SOLCAGE</span>
+          <BrandMark /><span>SOLCAGE</span>
         </button>
         <div className="nav-links">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Home</button>
@@ -164,7 +165,7 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
       <p>Deposit an eligible Solana memecoin, open a collateralized credit position, and take that liquidity to the floor. Every position and round builds your account history and loyalty score.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("games")}>Play now <span>↗</span></button><button className="secondary" onClick={() => go("vault")}>Open the cage</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
-      <div className="orbit" aria-hidden="true"><div className="coin"><span>◎</span><b>SOL</b></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
+      <div className="orbit" aria-hidden="true"><div className="coin hero-logo-coin"><BrandMark size={384} /></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
     </header>
     <div className="lobby-marquee" aria-label="Floor status"><b><span /> LIVE TABLES 03</b><b>SOLANA CREDIT MARKET</b><b>LOYALTY ACTIVE</b><b>PROFILE HISTORY ON</b></div>
     <section className="floor reveal">
