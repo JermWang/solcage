@@ -22,6 +22,48 @@ declare global {
   }
 }
 
+/** Longest data URL the /api/me avatar validator accepts, with headroom. */
+const AVATAR_URL_BUDGET = 480_000;
+
+async function loadBitmap(file: File) {
+  if (typeof createImageBitmap === "function") return createImageBitmap(file);
+  // Safari fallback: decode through an object URL instead.
+  const url = URL.createObjectURL(file);
+  try {
+    const image = new window.Image();
+    await new Promise<void>((resolve, reject) => {
+      image.onload = () => resolve();
+      image.onerror = () => reject(new Error("decode failed"));
+      image.src = url;
+    });
+    return image;
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+
+async function shrinkImage(file: File, maxEdge: number) {
+  const source = await loadBitmap(file);
+  const width = "width" in source ? source.width : 0;
+  const height = "height" in source ? source.height : 0;
+  if (!width || !height) throw new Error("empty image");
+  const scale = Math.min(1, maxEdge / Math.max(width, height));
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, Math.round(width * scale));
+  canvas.height = Math.max(1, Math.round(height * scale));
+  const context = canvas.getContext("2d");
+  if (!context) throw new Error("canvas unavailable");
+  context.drawImage(source as CanvasImageSource, 0, 0, canvas.width, canvas.height);
+  if ("close" in source) source.close();
+  // Step the quality down until it fits; every candidate type is one the
+  // server validator accepts, and toDataURL falls back to PNG if unsupported.
+  for (const [type, quality] of [["image/webp", 0.86], ["image/webp", 0.7], ["image/jpeg", 0.8], ["image/jpeg", 0.6]] as const) {
+    const url = canvas.toDataURL(type, quality);
+    if (url.length <= AVATAR_URL_BUDGET) return url;
+  }
+  throw new Error("image too large after resizing");
+}
+
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [form, setForm] = useState({ username: "", displayName: "", bio: "", avatarUrl: "" });
@@ -48,13 +90,22 @@ export default function ProfilePage() {
     if (!response.ok) return setStatus(data.error ?? "Unable to save");
     setProfile(data); setStatus("Profile saved.");
   }
-  function avatar(event: ChangeEvent<HTMLInputElement>) {
+  async function avatar(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) return;
-    if (file.size > 375_000) return setStatus("Avatar must be under 375KB.");
-    const reader = new FileReader();
-    reader.onload = () => setForm((value) => ({ ...value, avatarUrl: String(reader.result) }));
-    reader.readAsDataURL(file);
+    if (!file.type.startsWith("image/")) return setStatus("Choose an image file.");
+    setStatus("Preparing image…");
+    try {
+      // Real photos are megabytes; rejecting them made the picker look broken.
+      // Downscale and re-encode so any image fits the stored-avatar budget.
+      const resized = await shrinkImage(file, 512);
+      setForm((value) => ({ ...value, avatarUrl: resized }));
+      setStatus("Image ready — press SAVE PROFILE to apply it.");
+    } catch {
+      setStatus("That image could not be read. Try a PNG, JPEG, or WebP.");
+    } finally {
+      event.target.value = "";
+    }
   }
   async function copyReferral() {
     if (!profile) return;
