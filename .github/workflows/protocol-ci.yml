@@ -8,6 +8,8 @@ on:
       - "Cargo.lock"
       - "Anchor.toml"
       - "programs/**"
+      - "lib/solana/lendingClient.ts"
+      - "scripts/protocol-local-smoke.mjs"
       - ".github/workflows/protocol-ci.yml"
   pull_request:
     paths:
@@ -15,6 +17,8 @@ on:
       - "Cargo.lock"
       - "Anchor.toml"
       - "programs/**"
+      - "lib/solana/lendingClient.ts"
+      - "scripts/protocol-local-smoke.mjs"
       - ".github/workflows/protocol-ci.yml"
 
 permissions:
@@ -72,3 +76,53 @@ jobs:
             Cargo.lock
           if-no-files-found: error
           retention-days: 14
+
+  localnet-flow:
+    needs: sbf
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install web client dependencies
+        run: npm ci
+      - name: Install pinned Solana toolchain
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v3.0.10/install)"
+      - name: Add Solana tools to PATH
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+      - name: Download compiled protocol
+        uses: actions/download-artifact@v4
+        with:
+          name: solcage-lending-sbf-${{ github.sha }}
+          path: target/deploy
+      - name: Build deterministic oracle fixtures
+        run: node --experimental-strip-types scripts/protocol-local-smoke.mjs fixtures "$RUNNER_TEMP/solcage-fixtures"
+      - name: Start isolated validator
+        run: |
+          solana-test-validator \
+            --reset \
+            --quiet \
+            --ledger "$RUNNER_TEMP/solcage-ledger" \
+            --bpf-program 3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At target/deploy/solcage_lending.so \
+            --account HqznL4EpJTbWZmqqetb4sJPftBUN1s6uNdQURBAfAsBr "$RUNNER_TEMP/solcage-fixtures/pyth-high.json" \
+            --account 2iXtA8oeZqUU5pofxK971TCEvFGfems2AcDRaZHKD2pQ "$RUNNER_TEMP/solcage-fixtures/pyth-low.json" \
+            > "$RUNNER_TEMP/solcage-validator.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/solcage-validator.pid"
+          for attempt in {1..30}; do
+            if solana cluster-version --url http://127.0.0.1:8899; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat "$RUNNER_TEMP/solcage-validator.log"
+          exit 1
+      - name: Exercise complete lending lifecycle
+        env:
+          SOLANA_RPC_URL: http://127.0.0.1:8899
+        run: node --experimental-strip-types scripts/protocol-local-smoke.mjs run
+      - name: Print validator log on failure
+        if: failure()
+        run: cat "$RUNNER_TEMP/solcage-validator.log"
