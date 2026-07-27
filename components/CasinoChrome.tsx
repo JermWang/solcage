@@ -39,7 +39,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
           <Link className={active === "casino" ? "active" : ""} href="/games"><i>⌁</i> Casino</Link>
           <Link href="/games/roulette"><i>◉</i> Originals</Link>
           <span className="casino-nav-muted"><i>♠</i> Live tables</span>
-          <Link href="/games/play?game=slots"><i>⚡</i> Slots</Link>
+          <Link href="/games/slots"><i>⚡</i> Slots</Link>
 
           <small>FINANCE</small>
           <Link className={active === "lending" ? "active" : ""} href="/lending"><i>◇</i> Lending</Link>

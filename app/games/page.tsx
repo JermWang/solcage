@@ -17,7 +17,7 @@ type LobbyGame = {
 const games: LobbyGame[] = [
   { name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "TRENDING", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet", categories: ["Originals", "Table games", "High limit"] },
   { name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "lime", categories: ["Originals", "Instant"] },
-  { name: "Cage Slots", studio: "PROVABLE.IO ENGINE", tag: "HOT", image: "/og.png", href: "/games/play?game=slots", tone: "gold", categories: ["Originals", "Slots", "Instant"] },
+  { name: "Neon Vault", studio: "KRYSITS + JOHAKR FOUNDATION", tag: "96.03% RTP", image: "/game-art/slots.webp", href: "/games/slots", tone: "gold", categories: ["Originals", "Slots", "Instant", "High limit"] },
   { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
   { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
   { name: "Crystal Mines", studio: "MINES CASINO FOUNDATION", tag: "NEW", image: "/game-art/mines.webp", href: "/games/mines", tone: "cyan", categories: ["Originals", "Instant"] },
@@ -144,7 +144,7 @@ export default function GamesLobby() {
         <section className="casino-integrity">
           <div><span>PROVABLY FAIR FLOOR</span><h2>Commit first. Reveal after.</h2></div>
           <p>Keno, Crash, Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
-          <Link href="/games/keno">Play the newest game ↗</Link>
+          <Link href="/games/slots">Play the newest game ↗</Link>
         </section>
       </div>
     </CasinoChrome>

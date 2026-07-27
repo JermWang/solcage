@@ -13,7 +13,6 @@ type FairResult = {
 };
 
 const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
-const slotSymbols = ["CAGE", "SOL", "LIME", "CHIP", "SEVEN", "CROWN", "JACKPOT"];
 const plinkoMultipliers = [30, 9, 3, 1.5, 0.7, 0.5, 0.5, 0.7, 1.5, 3, 9, 30];
 
 function roundMoney(value: number) {
@@ -52,19 +51,6 @@ function settle(
       won,
       payout: won ? roundMoney(bet * multiplier) : 0,
       outcome: { number, color, choice, multiplier },
-    };
-  }
-
-  if (game === "slots") {
-    const reels = randomInts(3, slotSymbols.length - 1, 0).map((index) => slotSymbols[index]);
-    const allMatch = reels.every((symbol) => symbol === reels[0]);
-    const pair = !allMatch && new Set(reels).size === 2;
-    const multiplier = allMatch ? (reels[0] === "JACKPOT" ? 50 : 12) : pair ? 2 : 0;
-    return {
-      game,
-      won: multiplier > 0,
-      payout: multiplier > 0 ? roundMoney(bet * multiplier) : 0,
-      outcome: { reels, multiplier },
     };
   }
 

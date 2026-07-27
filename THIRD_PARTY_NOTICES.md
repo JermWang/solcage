@@ -21,6 +21,32 @@ settlement do not use the package's random helpers.
 SolCage uses the HMAC-SHA256 byte generator for deterministic, reproducible
 roulette, dice, and slot outcomes.
 
+## Casino Client
+
+- Source: https://github.com/krysits/casino-client
+- Revision reviewed: `776ed64062f40d3acda88769328bfc60dff81638`
+- License: MIT
+- Copyright: 2018 Kristaps Ledins
+
+The five-reel, three-row matrix, nine win-line vectors, configurable line bet,
+and winning-cell highlight structure informed Neon Vault. SolCage replaces the
+original MD5 demo hash, browser credit state, and count-only award calculation
+with fixed weighted reel strips, symbol-specific wild substitution, scatter
+awards, exact return analysis, committed HMAC-SHA256 stops, a PostgreSQL row
+lock, idempotent settlement, and atomic loyalty credit.
+
+## HTML5 Slot Machine
+
+- Source: https://github.com/johakr/html5-slot-machine
+- Revision reviewed: `347fc31ddd227674d8dc93e238d6664784e1872d`
+- License: MIT
+- Copyright: 2017 Johannes Kronmüller
+
+The responsive cabinet, staggered reel-stop motion, spin lifecycle, and Web
+Animations presentation informed Neon Vault's dedicated game room. SolCage
+renders original branded symbols and uses the server result as the only source
+of reel stops and payouts.
+
 ## Plinko.rng
 
 - Source: https://github.com/jasonca2023/Plinko.rng
@@ -85,6 +111,10 @@ proof reveal, and atomic loyalty credit.
 Copyright (c) 2026 Jason Guo
 
 Copyright (c) 2026 Sinan Bolel
+
+Copyright (c) 2018 Kristaps Ledins
+
+Copyright (c) 2017 Johannes Kronmüller
 
 Copyright (c) 2025 Thiago Ferreira
 

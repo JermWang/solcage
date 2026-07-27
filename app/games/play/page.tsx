@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 
 type Game = "dice" | "slots";
@@ -38,6 +38,12 @@ export default function OriginalGamePage() {
   const [pending, setPending] = useState(false);
   const [result, setResult] = useState<GameResult | null>(null);
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("game") === "slots") {
+      window.location.replace("/games/slots");
+    }
+  }, []);
 
   async function play() {
     if (pending || bet > bank || bank <= 0) return;
