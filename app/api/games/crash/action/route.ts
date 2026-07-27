@@ -144,7 +144,7 @@ export async function POST(request: Request) {
         state = {
           bet,
           clientSeed,
-          crashPoint: crashPointFromInt(generator.ints(1, CRASH_RANDOM_MAX, 0)[0]),
+          crashPoint: crashPointFromInt(generator.ints(1, CRASH_RANDOM_MAX - 1, 0)[0]),
           startedAt: new Date().toISOString(),
           autoCashout: requestedAutoCashout === null
             ? null

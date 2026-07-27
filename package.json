@@ -9,7 +9,7 @@
     "dev": "vinext dev",
     "build": "vinext build",
     "start": "vinext start",
-    "test": "npm run build && node --test tests/crash-engine.test.mjs tests/rendered-html.test.mjs",
+    "test": "npm run build && node --test tests/crash-engine.test.mjs tests/keno-engine.test.mjs tests/rendered-html.test.mjs",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern tmp --ignore-pattern node_modules_* --ignore-pattern target --ignore-pattern build",
     "db:generate": "drizzle-kit generate"
   },

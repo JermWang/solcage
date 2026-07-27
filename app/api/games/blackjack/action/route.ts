@@ -99,7 +99,7 @@ export async function POST(request: Request) {
           nonce: 0,
           cursor: 0,
         });
-        const deck = createShuffledDeck((max) => generator.ints(1, max, 0)[0]);
+        const deck = createShuffledDeck((max) => generator.ints(1, max - 1, 0)[0]);
         state = {
           bet,
           clientSeed,

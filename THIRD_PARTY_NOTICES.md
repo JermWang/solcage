@@ -67,6 +67,19 @@ Crash. SolCage replaces client-timed multiplier and settlement behavior with a
 PostgreSQL-backed row lock, committed HMAC-SHA256 crash point, server clock,
 idempotent persisted settlement, proof reveal, and atomic loyalty credit.
 
+## Keno Server
+
+- Source: https://github.com/charliegdev/keno-server
+- Revision reviewed: `48557c9f754430e89ddb82c219847185132641f5`
+- License: MIT
+- Copyright: 2018 Charlie Guan
+
+The pick, draw, hit, reward, and 80-number game structure informed Cage Keno.
+SolCage replaces `Math.random()`, the original approximately 67–71% return
+tables, and stateless Express response with a committed HMAC-SHA256 draw,
+approximately 96% paytables, a PostgreSQL row lock, idempotent settlement,
+proof reveal, and atomic loyalty credit.
+
 ## MIT license text for adapted game foundations
 
 Copyright (c) 2026 Jason Guo
@@ -76,6 +89,8 @@ Copyright (c) 2026 Sinan Bolel
 Copyright (c) 2025 Thiago Ferreira
 
 Copyright (c) 2024 Solana Crash Game
+
+Copyright (c) 2018 Charlie Guan
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

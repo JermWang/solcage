@@ -43,7 +43,7 @@ function settle(
   if (game === "roulette") {
     const choice = String(params.choice ?? "").toUpperCase();
     if (!["RED", "BLACK", "ZERO"].includes(choice)) throw new Error("Invalid roulette choice");
-    const number = randomInts(1, 37, 0)[0];
+    const number = randomInts(1, 36, 0)[0];
     const color = number === 0 ? "ZERO" : redNumbers.has(number) ? "RED" : "BLACK";
     const won = color === choice;
     const multiplier = choice === "ZERO" ? 36 : 2;
@@ -56,7 +56,7 @@ function settle(
   }
 
   if (game === "slots") {
-    const reels = randomInts(3, slotSymbols.length, 0).map((index) => slotSymbols[index]);
+    const reels = randomInts(3, slotSymbols.length - 1, 0).map((index) => slotSymbols[index]);
     const allMatch = reels.every((symbol) => symbol === reels[0]);
     const pair = !allMatch && new Set(reels).size === 2;
     const multiplier = allMatch ? (reels[0] === "JACKPOT" ? 50 : 12) : pair ? 2 : 0;
@@ -69,7 +69,7 @@ function settle(
   }
 
   if (game === "plinko") {
-    const path = randomInts(11, 2, 0);
+    const path = randomInts(11, 1, 0);
     const slot = path.reduce((total, direction) => total + direction, 0);
     const multiplier = plinkoMultipliers[slot];
     return {

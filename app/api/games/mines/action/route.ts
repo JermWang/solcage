@@ -105,7 +105,7 @@ export async function POST(request: Request) {
           bet,
           clientSeed,
           mineCount,
-          mines: generateMinePositions(mineCount, (max) => generator.ints(1, max, 0)[0]),
+          mines: generateMinePositions(mineCount, (max) => generator.ints(1, max - 1, 0)[0]),
           revealed: [],
           multiplier: 1,
         };

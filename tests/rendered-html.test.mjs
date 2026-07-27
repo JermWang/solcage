@@ -56,7 +56,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash"]) {
+  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
@@ -68,16 +68,18 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /href="\/games\/blackjack"/);
   assert.match(html, /href="\/games\/mines"/);
   assert.match(html, /href="\/games\/crash"/);
+  assert.match(html, /href="\/games\/keno"/);
   assert.match(html, /href="\/lending"/);
   assert.match(html, /\/game-art\/plinko\.webp/);
   assert.match(html, /\/game-art\/blackjack\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/crash\.webp/);
+  assert.match(html, /\/game-art\/keno\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
@@ -90,6 +92,9 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     readFile(new URL("../app/games/crash/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/crash/action/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/games/crash.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/keno/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/keno/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/keno.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
@@ -120,18 +125,29 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(plinko, /already-settled HMAC path/i);
   assert.match(blackjack, /BLACKJACK PARTY FOUNDATION/);
   assert.match(blackjackApi, /createShuffledDeck/);
+  assert.match(blackjackApi, /generator\.ints\(1, max - 1, 0\)/);
   assert.match(mines, /Crystal Mines/);
   assert.match(minesApi, /generateMinePositions/);
   assert.match(minesApi, /awardPoints/);
+  assert.match(minesApi, /generator\.ints\(1, max - 1, 0\)/);
   assert.match(minesEngine, /mineMultiplier/);
   assert.match(crash, /SERVER-TIMED ROUND/);
   assert.match(crashApi, /FOR UPDATE/);
   assert.match(crashApi, /awardPoints/);
+  assert.match(crashApi, /CRASH_RANDOM_MAX - 1/);
   assert.match(crashEngine, /crashPointFromInt/);
+  assert.match(keno, /HMAC DRAW LOCKED/);
+  assert.match(kenoApi, /FOR UPDATE/);
+  assert.match(kenoApi, /awardPoints/);
+  assert.match(kenoApi, /KENO_NUMBER_COUNT, 1/);
+  assert.match(kenoEngine, /kenoExpectedReturn/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
   assert.match(fairReveal, /plinko/);
   assert.match(fairReveal, /game_fair_rounds/);
+  assert.match(fairReveal, /randomInts\(1, 36, 0\)/);
+  assert.match(fairReveal, /slotSymbols\.length - 1/);
+  assert.match(fairReveal, /randomInts\(11, 1, 0\)/);
   assert.match(lending, /COLLATERAL MARKET/);
   assert.match(lending, /sendLendingTransaction/);
   assert.match(lendingClient, /findProgramAddressSync/);
@@ -147,6 +163,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(notices, /sbolel\/blackjack-party/);
   assert.match(notices, /iamThiagoo\/mines-casino/);
   assert.match(notices, /casinocutup\/Solana-Crash-Game/);
+  assert.match(notices, /charliegdev\/keno-server/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);
@@ -159,6 +176,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
     access(new URL("../public/game-art/mines.webp", import.meta.url)),
     access(new URL("../public/game-art/crash.webp", import.meta.url)),
+    access(new URL("../public/game-art/keno.webp", import.meta.url)),
     access(new URL("../public/game-art/dice.webp", import.meta.url)),
     access(new URL("../public/game-art/plinko.webp", import.meta.url)),
     access(new URL("../public/game-art/blackjack.webp", import.meta.url)),

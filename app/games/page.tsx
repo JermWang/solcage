@@ -22,11 +22,30 @@ const games: LobbyGame[] = [
   { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
   { name: "Crystal Mines", studio: "MINES CASINO FOUNDATION", tag: "NEW", image: "/game-art/mines.webp", href: "/games/mines", tone: "cyan", categories: ["Originals", "Instant"] },
   { name: "Cage Crash", studio: "SOLANA CRASH FOUNDATION", tag: "LIVE", image: "/game-art/crash.webp", href: "/games/crash", tone: "red", categories: ["Originals", "Instant", "High limit"] },
+  { name: "Cage Keno", studio: "CHARLIE GUAN FOUNDATION", tag: "NEW", image: "/game-art/keno.webp", href: "/games/keno", tone: "lime", categories: ["Originals", "Instant", "High limit"] },
   { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red", categories: ["Table games", "High limit"] },
   { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "FAST", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple", categories: ["Originals", "Instant"] },
 ];
 
 const categories = ["Lobby", "Originals", "Slots", "Table games", "Instant", "High limit", "All games"];
+
+function GameCards({ items }: { items: LobbyGame[] }) {
+  return (
+    <div className="casino-game-grid">
+      {items.map((game, index) => (
+        <Link className={`casino-game-card ${game.tone}`} href={game.href} key={`${game.name}-${index}`}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={game.image} alt="" />
+          <span className="game-card-shade" />
+          <span className="game-card-index">{String(index + 1).padStart(2, "0")}</span>
+          <span className="game-card-tag">{game.tag}</span>
+          <span className="game-card-play">▶</span>
+          <footer><small>{game.studio}</small><b>{game.name}</b></footer>
+        </Link>
+      ))}
+    </div>
+  );
+}
 
 export default function GamesLobby() {
   const [category, setCategory] = useState("Lobby");
@@ -48,6 +67,21 @@ export default function GamesLobby() {
       return categoryMatch && searchMatch;
     });
   }, [category, query]);
+
+  const shelves = useMemo(() => {
+    if (category === "Lobby" && !query.trim()) {
+      return [
+        { eyebrow: "LIVE FLOOR", title: "Trending now", items: games.slice(0, 8) },
+        { eyebrow: "SOLCAGE ORIGINALS", title: "Instant games", items: games.filter((game) => game.categories.includes("Instant")) },
+        { eyebrow: "TABLES", title: "Table games & high limit", items: games.filter((game) => game.categories.includes("Table games") || game.categories.includes("High limit")) },
+      ];
+    }
+    return [{
+      eyebrow: query ? "SEARCH RESULTS" : "CASINO",
+      title: query ? `Games matching “${query}”` : category,
+      items: visibleGames,
+    }];
+  }, [category, query, visibleGames]);
 
   return (
     <CasinoChrome active="casino" searchValue={query} onSearchChange={setQuery}>
@@ -95,32 +129,22 @@ export default function GamesLobby() {
           {categories.map((item) => <button key={item} className={category === item ? "active" : ""} onClick={() => setCategory(item)}>{item}</button>)}
         </nav>
 
-        <section className="casino-game-section" id="games">
-          <header>
-            <div><span>{query ? "SEARCH RESULTS" : "CASINO"}</span><h2>{query ? `Games matching “${query}”` : category === "Lobby" ? "Trending on the floor" : category}</h2></div>
-            <small>{visibleGames.length} OPEN GAMES</small>
-          </header>
-          {visibleGames.length ? (
-            <div className="casino-game-grid">
-              {visibleGames.map((game, index) => (
-                <Link className={`casino-game-card ${game.tone}`} href={game.href} key={game.name}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={game.image} alt="" />
-                  <span className="game-card-shade" />
-                  <span className="game-card-index">{String(index + 1).padStart(2, "0")}</span>
-                  <span className="game-card-tag">{game.tag}</span>
-                  <span className="game-card-play">▶</span>
-                  <footer><small>{game.studio}</small><b>{game.name}</b></footer>
-                </Link>
-              ))}
-            </div>
-          ) : <div className="casino-empty-search"><b>NO GAMES FOUND</b><span>Try crash, roulette, mines, dice, Plinko, blackjack, or slots.</span></div>}
-        </section>
+        <div id="games">
+          {shelves.map((shelf) => (
+            <section className="casino-game-section" key={shelf.title}>
+              <header>
+                <div><span>{shelf.eyebrow}</span><h2>{shelf.title}</h2></div>
+                <small>{shelf.items.length} OPEN GAMES</small>
+              </header>
+              {shelf.items.length ? <GameCards items={shelf.items} /> : <div className="casino-empty-search"><b>NO GAMES FOUND</b><span>Try Keno, crash, roulette, mines, dice, Plinko, blackjack, or slots.</span></div>}
+            </section>
+          ))}
+        </div>
 
         <section className="casino-integrity">
           <div><span>PROVABLY FAIR FLOOR</span><h2>Commit first. Reveal after.</h2></div>
-          <p>Crash, Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
-          <Link href="/games/crash">Play the newest game ↗</Link>
+          <p>Keno, Crash, Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
+          <Link href="/games/keno">Play the newest game ↗</Link>
         </section>
       </div>
     </CasinoChrome>
