@@ -16,7 +16,7 @@ type LobbyGame = {
 
 const games: LobbyGame[] = [
   { name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "TRENDING", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet", categories: ["Originals", "Table games", "High limit"] },
-  { name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "lime", categories: ["Originals", "Instant"] },
+  { name: "Neon Dice", studio: "JDLEO DICE FOUNDATION", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/dice", tone: "lime", categories: ["Originals", "Instant"] },
   { name: "Neon Vault", studio: "KRYSITS + JOHAKR FOUNDATION", tag: "96.03% RTP", image: "/game-art/slots.webp", href: "/games/slots", tone: "gold", categories: ["Originals", "Slots", "Instant", "High limit"] },
   { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
   { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
@@ -24,7 +24,7 @@ const games: LobbyGame[] = [
   { name: "Cage Crash", studio: "SOLANA CRASH FOUNDATION", tag: "LIVE", image: "/game-art/crash.webp", href: "/games/crash", tone: "red", categories: ["Originals", "Instant", "High limit"] },
   { name: "Cage Keno", studio: "CHARLIE GUAN FOUNDATION", tag: "NEW", image: "/game-art/keno.webp", href: "/games/keno", tone: "lime", categories: ["Originals", "Instant", "High limit"] },
   { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red", categories: ["Table games", "High limit"] },
-  { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "FAST", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple", categories: ["Originals", "Instant"] },
+  { name: "Turbo Dice", studio: "JDLEO DICE FOUNDATION", tag: "FAST", image: "/game-art/dice.webp", href: "/games/dice", tone: "purple", categories: ["Originals", "Instant"] },
 ];
 
 const categories = ["Lobby", "Originals", "Slots", "Table games", "Instant", "High limit", "All games"];

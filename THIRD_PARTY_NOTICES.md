@@ -21,6 +21,21 @@ settlement do not use the package's random helpers.
 SolCage uses the HMAC-SHA256 byte generator for deterministic, reproducible
 roulette, dice, and slot outcomes.
 
+## Provably Fair Dice
+
+- Source: https://github.com/jdleo/provably-fair-dice
+- Revision reviewed: `4297f223cd1289a40c43ab715ee14ec907666773`
+- License: MIT
+- Copyright: 2026 John Leonardo
+
+The coupled win-chance, multiplier and target controls, editable client seed,
+keyboard controls, roll history, and per-round verification presentation
+informed Neon Dice. SolCage replaces the original one-request SHA calculation,
+random nonce, browser-only balance and unpersisted history with a prior server
+commitment, player seed, deterministic HMAC-SHA256 entropy, exact 10,000-outcome
+math, a PostgreSQL row lock, idempotent settlement, persisted receipts, and
+atomic loyalty credit.
+
 ## Casino Client
 
 - Source: https://github.com/krysits/casino-client
@@ -121,6 +136,8 @@ Copyright (c) 2025 Thiago Ferreira
 Copyright (c) 2024 Solana Crash Game
 
 Copyright (c) 2018 Charlie Guan
+
+Copyright (c) 2026 John Leonardo
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

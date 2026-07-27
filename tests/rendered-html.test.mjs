@@ -64,6 +64,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /HMAC-SHA256/i);
   assert.match(html, /PROVABLY FAIR FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
+  assert.match(html, /href="\/games\/dice"/);
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
   assert.match(html, /href="\/games\/mines"/);
@@ -80,10 +81,28 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
+test("server-renders the dedicated sourced Neon Dice room", async () => {
+  const response = await render("/games/dice");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /Neon Dice/);
+  assert.match(html, /PROVABLY FAIR \/ 98% RTP/);
+  assert.match(html, /ROLL UNDER/);
+  assert.match(html, /ROLL OVER/);
+  assert.match(html, /CLIENT SEED/);
+  assert.match(html, /SESSION LEDGER/);
+  assert.match(html, /SOURCED FOUNDATION/);
+  assert.match(html, /PostgreSQL/);
+});
+
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, dice, diceApi, diceEngine, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/dice/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/dice/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/dice.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/plinko/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/blackjack/page.tsx", import.meta.url), "utf8"),
@@ -125,6 +144,14 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(health, /database: "connected"/);
   assert.match(health, /readyTables !== 8/);
   assert.match(games, /PROVABLY FAIR FLOOR/);
+  assert.match(dice, /SOURCED FOUNDATION/);
+  assert.match(dice, /SESSION LEDGER/);
+  assert.match(dice, /\/api\/games\/dice\/action/);
+  assert.match(diceApi, /FOR UPDATE/);
+  assert.match(diceApi, /DICE_ROLL_MAX, 0/);
+  assert.match(diceApi, /awardPoints/);
+  assert.match(diceEngine, /DICE_RTP_PERCENT = 98/);
+  assert.match(diceEngine, /diceTarget/);
   assert.match(roulette, /RouletteWheel/);
   assert.match(roulette, /\/api\/games\/fair\/commit/);
   assert.match(plinko, /VERIFIED PLINKO/);
@@ -156,6 +183,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(slotsEngine, /slotExpectedReturn/);
   assert.match(games, /\/game-art\/slots\.webp/);
   assert.match(games, /href: "\/games\/slots"/);
+  assert.match(games, /href: "\/games\/dice"/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
   assert.match(fairReveal, /plinko/);
@@ -190,6 +218,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(notices, /charliegdev\/keno-server/);
   assert.match(notices, /krysits\/casino-client/);
   assert.match(notices, /johakr\/html5-slot-machine/);
+  assert.match(notices, /jdleo\/provably-fair-dice/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);

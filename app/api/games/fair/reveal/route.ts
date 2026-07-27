@@ -25,20 +25,6 @@ function settle(
   bet: number,
   params: Record<string, unknown>,
 ): FairResult {
-  if (game === "dice") {
-    const target = Number(params.target);
-    if (!Number.isInteger(target) || target < 2 || target > 95) throw new Error("Invalid dice target");
-    const roll = randomInts(1, 100, 1)[0];
-    const won = roll < target;
-    const multiplier = 98 / (target - 1);
-    return {
-      game,
-      won,
-      payout: won ? roundMoney(bet * multiplier) : 0,
-      outcome: { roll, target, multiplier: roundMoney(multiplier) },
-    };
-  }
-
   if (game === "roulette") {
     const choice = String(params.choice ?? "").toUpperCase();
     if (!["RED", "BLACK", "ZERO"].includes(choice)) throw new Error("Invalid roulette choice");
