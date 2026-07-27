@@ -13,7 +13,8 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next --ignore-pattern tmp --ignore-pattern node_modules_* --ignore-pattern target --ignore-pattern build",
     "custody:devnet-smoke": "node scripts/custody-devnet-smoke.mjs",
     "protocol:verify-markets": "node --experimental-strip-types scripts/verify-collateral-markets.mjs",
-    "db:generate": "drizzle-kit generate"
+    "db:generate": "drizzle-kit generate",
+    "house:devnet-smoke": "node scripts/house-devnet-smoke.mjs"
   },
   "dependencies": {
     "@provableio/provable-core": "^1.0.1",

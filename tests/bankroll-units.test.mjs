@@ -111,3 +111,40 @@ test("the win ceiling bounds every payout", () => {
   assert.equal(capPayout(500_000_000n, limits), 500_000_000n);
   assert.equal(capPayout(0n, limits), 0n);
 });
+
+test("rake splits a stake without creating or losing value", () => {
+  const stake = 1_000_000_000n; // 1 SOL
+  const rake = (stake * 200n) / 10_000n; // 2%
+  assert.equal(rake, 20_000_000n);
+  const legs = [
+    { account: "USER_AVAILABLE", userId: "u1", amountRaw: -stake },
+    { account: "HOUSE_TREASURY", amountRaw: stake - rake },
+    { account: "PLATFORM_REVENUE", amountRaw: rake },
+  ];
+  assert.doesNotThrow(() => assertBalanced(legs));
+  assert.equal(legs.reduce((s, l) => s + l.amountRaw, 0n), 0n);
+});
+
+test("rake rounds down and the remainder stays with the house", () => {
+  // 2% of 3 base units is 0.06 -> integer division yields 0, never 1.
+  const stake = 3n;
+  const rake = (stake * 200n) / 10_000n;
+  assert.equal(rake, 0n);
+  assert.equal(stake - rake, 3n);
+  // A stake small enough to rake nothing still balances.
+  assert.doesNotThrow(() =>
+    assertBalanced([
+      { account: "USER_AVAILABLE", userId: "u1", amountRaw: -stake },
+      { account: "HOUSE_TREASURY", amountRaw: stake },
+    ]),
+  );
+});
+
+test("rake lowers effective RTP by its own rate", () => {
+  // Dice is designed at 98% RTP. A 2% turnover rake compounds on top.
+  const designedRtp = 0.98;
+  const rakeRate = 0.02;
+  const effective = designedRtp * (1 - rakeRate);
+  assert.ok(effective < designedRtp);
+  assert.equal(Math.round(effective * 10000) / 100, 96.04);
+});

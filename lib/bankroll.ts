@@ -184,6 +184,8 @@ export async function takeStake(
     userId: string;
     stakeRaw: bigint;
     maxMultiplier: number;
+    /** House rake in basis points, taken off the stake as it enters. */
+    rakeBps?: number;
     correlationId: string;
     limits: WagerLimits;
     metadata?: Record<string, unknown>;
@@ -201,17 +203,50 @@ export async function takeStake(
   const available = await availableBalance(client, input.userId);
   if (available < stakeRaw) throw new InsufficientFunds(available, stakeRaw);
 
+  // Rake is taken off the stake as it enters, so it is never part of the
+  // treasury the house can lose back to the player. Integer division; any
+  // remainder stays with the treasury rather than being invented.
+  const rakeRaw = (stakeRaw * BigInt(input.rakeBps ?? 0)) / 10_000n;
+  const toTreasury = stakeRaw - rakeRaw;
+  const legs: Leg[] = [
+    { account: "USER_AVAILABLE", userId: input.userId, amountRaw: -stakeRaw },
+    { account: "HOUSE_TREASURY", amountRaw: toTreasury },
+  ];
+  if (rakeRaw > 0n) legs.push({ account: "PLATFORM_REVENUE", amountRaw: rakeRaw });
+
   const written = await postLedger(client, {
     correlationId: input.correlationId,
     reason: "BET",
-    metadata: input.metadata,
-    legs: [
-      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: -stakeRaw },
-      { account: "HOUSE_TREASURY", amountRaw: stakeRaw },
-    ],
+    metadata: { ...input.metadata, rakeRaw: rakeRaw.toString() },
+    legs,
   });
   if (!written) throw new StakeRejected("This round was already settled");
-  return available - stakeRaw;
+  return { balanceRaw: available - stakeRaw, rakeRaw };
+}
+
+/** Rake accrued and not yet swept out to the custody wallet. */
+export function platformRevenue(client: PoolClient) {
+  return accountBalance(client, "PLATFORM_REVENUE");
+}
+
+/**
+ * Record rake leaving the system after it has actually moved on-chain. Call
+ * only once the transfer is confirmed — the ledger must not claim money left
+ * the house if it never did.
+ */
+export async function recordRakeSweep(
+  client: PoolClient,
+  input: { amountRaw: bigint; signature: string },
+) {
+  return postLedger(client, {
+    correlationId: `rake-sweep:${input.signature}`,
+    reason: "ADJUSTMENT",
+    metadata: { signature: input.signature, kind: "rake_sweep" },
+    legs: [
+      { account: "PLATFORM_REVENUE", amountRaw: -input.amountRaw },
+      { account: "EXTERNAL", amountRaw: input.amountRaw },
+    ],
+  });
 }
 
 /**

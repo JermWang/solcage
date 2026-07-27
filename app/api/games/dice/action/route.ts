@@ -109,6 +109,7 @@ export async function POST(request: Request) {
           userId: identity.userId,
           stakeRaw,
           maxMultiplier: MAX_MULTIPLIER.dice,
+          rakeBps: house.rakeBps,
           correlationId: `bet:${roundId}`,
           limits: house.limits,
           metadata: { game: "dice", chanceBps, direction },

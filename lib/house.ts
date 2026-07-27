@@ -32,12 +32,21 @@ export type HouseConfig = {
   decimals: number;
   symbol: string;
   limits: WagerLimits;
+  /** House rake in basis points, taken off every stake. 200 = 2%. */
+  rakeBps: number;
+  /** Where swept rake is sent. Defaults to the custody wallet. */
+  rakeDestination: string | null;
 };
 
 export function houseConfig(): HouseConfig {
   const decimals = Number(process.env.SOLCAGE_HOUSE_DECIMALS ?? "9");
   const mint = publicKey(process.env.SOLCAGE_HOUSE_MINT);
+  const rake = Number(process.env.SOLCAGE_RAKE_BPS ?? "0");
   return {
+    // Capped at 10% so a typo cannot quietly take a third of every stake.
+    rakeBps: Number.isInteger(rake) && rake >= 0 && rake <= 1_000 ? rake : 0,
+    rakeDestination: publicKey(process.env.SOLCAGE_RAKE_DESTINATION)
+      ?? publicKey(process.env.SOLCAGE_CUSTODY_WALLET),
     enabled: process.env.SOLCAGE_HOUSE_ENABLED === "true",
     wallet: publicKey(process.env.SOLCAGE_HOUSE_WALLET),
     hasSigningKey: Boolean(process.env.SOLCAGE_HOUSE_SECRET_KEY),
