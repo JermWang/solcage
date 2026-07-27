@@ -2,6 +2,8 @@ import { Provable } from "@provableio/provable-core";
 import { transaction } from "@/lib/db";
 import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -97,7 +99,33 @@ export async function POST(request: Request) {
         nonce: 0,
         cursor: 0,
       });
+      // Stake and settlement share this transaction, so a failure anywhere
+      // rolls the debit back with the round.
+      const house = houseConfig();
+      const wagering = house.enabled && houseReadiness(house).ready;
+      if (wagering) {
+        await takeStake(client, {
+          userId: identity.userId,
+          stakeRaw: toBaseUnits(bet.toFixed(house.decimals), house.decimals),
+          maxMultiplier: MAX_MULTIPLIER[round.game] ?? 36,
+          rakeBps: house.rakeBps,
+          correlationId: `bet:${roundId}`,
+          limits: house.limits,
+          metadata: { game: round.game },
+        });
+      }
+
       const result = settle(round.game, generator.ints.bind(generator), bet, params);
+
+      if (wagering && result.payout > 0) {
+        await payWinnings(client, {
+          userId: identity.userId,
+          payoutRaw: toBaseUnits(result.payout.toFixed(house.decimals), house.decimals),
+          limits: house.limits,
+          correlationId: `win:${roundId}`,
+          metadata: { game: result.game },
+        });
+      }
 
       await client.query(
         `UPDATE game_fair_rounds
@@ -135,6 +163,10 @@ export async function POST(request: Request) {
     return json({ ...settled, points: profile.points, rank: profile.rank }, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) {
+      return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    }
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Unable to reveal round" }, 400);
   }
 }
