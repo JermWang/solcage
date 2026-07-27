@@ -1,0 +1,17 @@
+.git
+.github
+.next
+.vinext
+.wrangler
+.anchor
+dist
+node_modules
+node_modules_*
+target
+tmp
+work
+outputs
+*.tar.gz
+*.log
+*.pem
+**/*-keypair.json
