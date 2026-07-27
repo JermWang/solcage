@@ -5,6 +5,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
+import { ProfileMenu } from "@/components/ProfileMenu";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards" | "docs";
@@ -16,8 +17,16 @@ type CasinoChromeProps = {
 export function CasinoChrome({ active, children, searchValue, onSearchChange }: CasinoChromeProps) {
   const [profileName, setProfileName] = useState("Profile");
   const [points, setPoints] = useState(0);
+  const [walletAddress, setWalletAddress] = useState<string | null>(null);
   // null while unknown, so the chrome does not flash a signed-out state.
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+
+  function adopt(profile: { displayName?: string; points?: number; walletAddress?: string | null }) {
+    setSignedIn(true);
+    setProfileName(profile.displayName ?? "Profile");
+    setPoints(profile.points ?? 0);
+    setWalletAddress(profile.walletAddress ?? null);
+  }
 
   useEffect(() => {
     fetch("/api/me")
@@ -25,9 +34,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
         if (response.status === 401) return setSignedIn(false);
         const profile = await response.json();
         if (profile.error) return;
-        setSignedIn(true);
-        setProfileName(profile.displayName ?? "Profile");
-        setPoints(profile.points ?? 0);
+        adopt(profile);
       })
       .catch(() => undefined);
   }, []);
@@ -82,9 +89,12 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             <XLink />
             <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{signedIn === false ? "—" : `${points.toLocaleString()} XP`}</b></Link>
             <Link className="casino-deposit" href="/lending">Deposit</Link>
-            {signedIn === false
-              ? <Link className="casino-connect" href="/profile">Connect wallet</Link>
-              : <Link className="casino-profile" href="/profile">{profileName.slice(0, 1).toUpperCase()}</Link>}
+            <ProfileMenu
+              signedIn={signedIn !== false}
+              displayName={profileName}
+              walletAddress={walletAddress}
+              onSignedIn={adopt}
+            />
           </div>
         </header>
         {children}

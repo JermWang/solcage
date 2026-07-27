@@ -11,10 +11,34 @@ function databaseUrl() {
   return value;
 }
 
+/**
+ * Railway's private network terminates inside the VPC and offers no TLS, while
+ * managed providers (Supabase, Neon, RDS) refuse plaintext. Decide per host so
+ * the same build works against either.
+ */
+function sslConfig(connectionString: string) {
+  let host = "";
+  try {
+    host = new URL(connectionString).hostname;
+  } catch {
+    host = "";
+  }
+  const isPrivate = host.endsWith(".railway.internal")
+    || host === "localhost"
+    || host === "127.0.0.1"
+    || host === "";
+  if (isPrivate) return undefined;
+  // Verify by default; set DATABASE_SSL_NO_VERIFY=true only if a provider
+  // presents a chain Node cannot validate.
+  return { rejectUnauthorized: process.env.DATABASE_SSL_NO_VERIFY !== "true" };
+}
+
 export function db() {
   if (!globalThis.__solcagePool) {
+    const connectionString = databaseUrl();
     globalThis.__solcagePool = new Pool({
-      connectionString: databaseUrl(),
+      connectionString,
+      ssl: sslConfig(connectionString),
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 10_000,

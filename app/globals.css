@@ -474,6 +474,17 @@ main>footer p a:hover{background:var(--lime)}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
 .casino-deposit{height:40px;padding:0 20px;border-radius:9px;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em}
 .casino-profile{width:40px;height:40px;border:1px solid #4d4655;border-radius:50%;background:var(--purple);display:grid;place-items:center;font-weight:900}
+.profile-menu{position:relative;flex:0 0 auto}
+.profile-menu>.casino-profile{border:1px solid #4d4655;cursor:pointer;padding:0}
+.profile-menu-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:40;min-width:212px;padding:7px;border:1px solid var(--casino-line);border-radius:12px;background:#14121a;box-shadow:0 24px 48px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:2px}
+.profile-menu-head{padding:9px 11px 11px;margin-bottom:4px;border-bottom:1px solid var(--casino-line);display:flex;flex-direction:column;gap:5px}
+.profile-menu-head b{font-size:12px;color:var(--casino-text)}
+.profile-menu-head code{color:#8f8998;font:10px var(--font-geist-mono)}
+.profile-menu-panel a,.profile-menu-panel button{width:100%;padding:9px 11px;border:0;border-radius:8px;background:transparent;color:#b3adba!important;text-align:left;font:700 10px var(--font-geist-mono);letter-spacing:.05em;cursor:pointer}
+.profile-menu-panel a:hover,.profile-menu-panel button:hover{background:rgba(255,255,255,.06);color:white!important}
+.profile-menu-panel a:focus-visible,.profile-menu-panel button:focus-visible{outline:2px solid var(--purple);outline-offset:-2px}
+.profile-menu-panel button.danger:hover{background:rgba(255,107,120,.14);color:#ff9aa4!important}
+.profile-menu-status{padding:8px 11px 4px;color:#8f8998;font:9px/1.5 var(--font-geist-mono)}
 .casino-connect{height:40px;padding:0 16px;border:1px solid var(--purple);border-radius:9px;background:rgba(141,101,255,.16);color:#e7dfff!important;display:grid;place-items:center;font:800 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;white-space:nowrap}
 .casino-connect:hover{background:var(--purple);color:white!important}
 .casino-content{padding:24px 30px 70px}

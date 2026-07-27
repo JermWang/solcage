@@ -3,24 +3,16 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import bs58 from "bs58";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
+import { signInWithWallet, signOut as walletSignOut, switchWallet as walletSwitch } from "@/lib/wallet";
 
 type History = { kind: string; points: number; multiplier: number; description: string; created_at: string };
 type Profile = { username: string; displayName: string; avatarUrl: string | null; bio: string; walletAddress: string | null; walletVerified: boolean; referralCode: string; points: number; rank: number | null; referrals: number; multiplier: number; history: History[] };
 
-declare global {
-  interface Window {
-    solana?: {
-      isPhantom?: boolean;
-      connect(): Promise<{ publicKey: { toString(): string } }>;
-      disconnect?(): Promise<void>;
-      signMessage(message: Uint8Array, encoding: string): Promise<{ signature: Uint8Array }>;
-    };
-  }
-}
+/** Largest file accepted from the picker. Anything under this is downscaled. */
+const MAX_AVATAR_BYTES = 5 * 1024 * 1024;
 
 /** Longest data URL the /api/me avatar validator accepts, with headroom. */
 const AVATAR_URL_BUDGET = 480_000;
@@ -94,6 +86,9 @@ export default function ProfilePage() {
     const file = event.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) return setStatus("Choose an image file.");
+    if (file.size > MAX_AVATAR_BYTES) {
+      return setStatus(`That image is ${(file.size / 1024 / 1024).toFixed(1)}MB. Pick one under 5MB.`);
+    }
     setStatus("Preparing image…");
     try {
       // Real photos are megabytes; rejecting them made the picker look broken.
@@ -136,14 +131,10 @@ export default function ProfilePage() {
     }
   }
 
-  async function signOut() {
+  async function endSession() {
     setStatus("Signing out…");
     try {
-      const response = await fetch("/api/session", { method: "DELETE" });
-      if (!response.ok) throw new Error("Unable to sign out");
-      // Disconnect the wallet too, otherwise Phantom silently reconnects the
-      // same account and "switch wallet" appears to do nothing.
-      try { await window.solana?.disconnect?.(); } catch { /* wallet already detached */ }
+      await walletSignOut();
       location.assign("/");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Unable to sign out");
@@ -156,43 +147,19 @@ export default function ProfilePage() {
     (field as HTMLInputElement | null)?.focus({ preventScroll: true });
   }
 
-  async function switchWallet() {
+  async function runWallet(action: () => Promise<Profile>, pending: string) {
+    setStatus(pending);
     try {
-      // Phantom re-connects the active account unless it is released first.
-      await window.solana?.disconnect?.();
-    } catch {
-      /* nothing connected */
-    }
-    await verifyWallet();
-  }
-
-  async function verifyWallet() {
-    try {
-      const provider = window.solana;
-      if (!provider?.isPhantom) return setStatus("Install or open Phantom to verify a Solana wallet.");
-      setStatus("Connecting to Phantom…");
-      const connection = await provider.connect();
-      const wallet = connection.publicKey.toString();
-      const challengeResponse = await fetch("/api/wallet/challenge", {
-        method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ wallet }),
-      });
-      const challenge = await challengeResponse.json();
-      if (!challengeResponse.ok) throw new Error(challenge.error);
-      const signed = await provider.signMessage(new TextEncoder().encode(challenge.message), "utf8");
-      const verifyResponse = await fetch("/api/wallet/verify", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ wallet, nonce: challenge.nonce, signature: bs58.encode(signed.signature) }),
-      });
-      const verified = await verifyResponse.json();
-      if (!verifyResponse.ok) throw new Error(verified.error);
-      adopt(verified.profile);
+      adopt(await action());
       setStatus("Wallet ownership verified.");
       await redeemHeldReferral();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Wallet verification cancelled.");
     }
   }
+
+  const verifyWallet = () => runWallet(signInWithWallet, "Connecting to Phantom…");
+  const changeWallet = () => runWallet(walletSwitch, "Select a different wallet in Phantom…");
   return <main className="account-page">
     <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div><div className="nav-social"><ContractAddress /><XLink /></div></nav>
     {signedIn === false ? (
@@ -210,8 +177,8 @@ export default function ProfilePage() {
         <div className="profile-score"><span>LOYALTY BALANCE</span><b>{profile.points.toLocaleString()}</b><small>POINTS · {profile.multiplier.toFixed(2)}× MULTIPLIER</small></div>
         <div className="profile-actions">
           <button type="button" onClick={editProfile}>EDIT PROFILE</button>
-          <button type="button" onClick={switchWallet}>{profile.walletVerified ? "SWITCH WALLET" : "CONNECT WALLET"}</button>
-          <button type="button" className="danger" onClick={signOut}>SIGN OUT</button>
+          <button type="button" onClick={changeWallet}>{profile.walletVerified ? "SWITCH WALLET" : "CONNECT WALLET"}</button>
+          <button type="button" className="danger" onClick={endSession}>SIGN OUT</button>
         </div>
       </section>
       <section className="profile-grid">
