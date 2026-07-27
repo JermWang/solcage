@@ -7,12 +7,16 @@
 export type Suit = "hearts" | "diamonds" | "clubs" | "spades";
 export type Rank = "A" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" | "10" | "J" | "Q" | "K";
 export type PlayingCard = { suit: Suit; rank: Rank };
+export const BLACKJACK_DECK_COUNT = 6;
 
 const suits: Suit[] = ["hearts", "diamonds", "clubs", "spades"];
 const ranks: Rank[] = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"];
 
-export function createShuffledDeck(randomInt: (max: number) => number) {
-  const deck = suits.flatMap((suit) => ranks.map((rank) => ({ suit, rank })));
+export function createShuffledDeck(randomInt: (max: number) => number, deckCount = 1) {
+  const deck = Array.from(
+    { length: deckCount },
+    () => suits.flatMap((suit) => ranks.map((rank) => ({ suit, rank }))),
+  ).flat();
   for (let index = deck.length - 1; index > 0; index -= 1) {
     const swapIndex = randomInt(index + 1);
     [deck[index], deck[swapIndex]] = [deck[swapIndex], deck[index]];

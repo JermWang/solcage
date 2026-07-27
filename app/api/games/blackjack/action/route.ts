@@ -3,6 +3,7 @@ import { transaction } from "@/lib/db";
 import { json, requireIdentity } from "@/lib/identity";
 import {
   createShuffledDeck,
+  BLACKJACK_DECK_COUNT,
   handValue,
   isBlackjack,
   settleHands,
@@ -20,6 +21,7 @@ type StoredBlackjack = {
   cursor: number;
   player: PlayingCard[];
   dealer: PlayingCard[];
+  doubledDown?: boolean;
   outcome?: "win" | "loss" | "push";
   payout?: number;
   label?: string;
@@ -39,6 +41,9 @@ function publicState(
   return {
     roundId,
     phase: settled ? "settled" : "playing",
+    stake: state.bet,
+    doubledDown: Boolean(state.doubledDown),
+    canDouble: !settled && !state.doubledDown && state.player.length === 2,
     player: state.player,
     playerValue: handValue(state.player),
     dealer: settled ? state.dealer : [state.dealer[0], null],
@@ -63,7 +68,7 @@ export async function POST(request: Request) {
     const roundId = String(body.roundId ?? "");
     const action = String(body.action ?? "").toLowerCase();
     if (!/^[0-9a-f-]{36}$/i.test(roundId)) return json({ error: "Invalid round" }, 400, identity);
-    if (!["deal", "hit", "stand"].includes(action)) return json({ error: "Invalid action" }, 400, identity);
+    if (!["deal", "hit", "stand", "double"].includes(action)) return json({ error: "Invalid action" }, 400, identity);
 
     const response = await transaction(async (client) => {
       const found = await client.query<{
@@ -84,7 +89,9 @@ export async function POST(request: Request) {
       const round = found.rows[0];
       if (!round || round.game !== "blackjack") throw new Error("Blackjack round not found");
       if (Date.now() - new Date(round.created_at).getTime() > 10 * 60 * 1000) throw new Error("Round commitment expired");
-      if (round.status === "revealed") throw new Error("Round already settled");
+      if (round.status === "revealed" && round.result) {
+        return publicState(roundId, round.server_seed_hash, round.server_seed, round.result, true);
+      }
 
       let state = round.result;
       if (action === "deal") {
@@ -99,7 +106,7 @@ export async function POST(request: Request) {
           nonce: 0,
           cursor: 0,
         });
-        const deck = createShuffledDeck((max) => generator.ints(1, max - 1, 0)[0]);
+        const deck = createShuffledDeck((max) => generator.ints(1, max - 1, 0)[0], BLACKJACK_DECK_COUNT);
         state = {
           bet,
           clientSeed,
@@ -115,11 +122,16 @@ export async function POST(request: Request) {
         }
       } else {
         if (round.status !== "active" || !state) throw new Error("Deal cards before acting");
-        if (action === "hit") {
+        if (action === "double") {
+          if (state.doubledDown || state.player.length !== 2) throw new Error("Double down is only available on the first two cards");
+          state.bet = roundMoney(state.bet * 2);
+          state.doubledDown = true;
+        }
+        if (action === "hit" || action === "double") {
           state.player = [...state.player, state.deck[state.cursor]];
           state.cursor += 1;
         }
-        if (action === "stand" || handValue(state.player) >= 21) {
+        if (action === "stand" || action === "double" || handValue(state.player) >= 21) {
           if (handValue(state.player) <= 21) {
             while (shouldDealerHit(state.dealer)) {
               state.dealer = [...state.dealer, state.deck[state.cursor]];

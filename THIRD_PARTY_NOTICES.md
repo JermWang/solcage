@@ -84,6 +84,19 @@ table/card presentation are being adapted for SolCage. Randomness and settlement
 are replaced by the server-commitment and client-seed verification model used by
 SolCage Originals.
 
+## BlackjackFlask
+
+- Source: https://github.com/thomasthaddeus/BlackjackFlask
+- Revision reviewed: `bd96635b2b632e39b7ced3400966660a5377f720`
+- License: MIT
+- Copyright: Thaddeus Thomas
+
+The semicircular felt table, table lettering, active-seat treatment, chip
+controls, status guidance, and responsive presentation informed Cage
+Blackjack's upgraded game room. SolCage retains its committed HMAC-SHA256
+six-deck shoe, PostgreSQL row lock, idempotent settlement, persisted receipt,
+and atomic loyalty credit as the authoritative game and settlement path.
+
 ## Probability Prediction using Randomization Algorithms
 
 - Source: https://github.com/namanadlakha3/An-Application-based-on-Probability-Prediction-using-Randomization-Algorithms
@@ -169,6 +182,8 @@ proof reveal, and atomic loyalty credit.
 Copyright (c) 2026 Jason Guo
 
 Copyright (c) 2026 Sinan Bolel
+
+Copyright (c) Thaddeus Thomas
 
 Copyright (c) 2018 Kristaps Ledins
 

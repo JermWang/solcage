@@ -249,7 +249,10 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(plinko, /VERIFIED PLINKO/);
   assert.match(plinko, /already-settled HMAC path/i);
   assert.match(blackjack, /BLACKJACK PARTY FOUNDATION/);
+  assert.match(blackjack, /blackjack-double/);
+  assert.match(blackjack, /ACTIVE SEAT/);
   assert.match(blackjackApi, /createShuffledDeck/);
+  assert.match(blackjackApi, /BLACKJACK_DECK_COUNT/);
   assert.match(blackjackApi, /generator\.ints\(1, max - 1, 0\)/);
   assert.match(mines, /Crystal Mines/);
   assert.match(mines, /aria-hidden="true"/);
@@ -307,6 +310,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(protocolProgram, /collateral_token_program/);
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
+  assert.match(notices, /thomasthaddeus\/BlackjackFlask/);
   assert.match(notices, /iamThiagoo\/mines-casino/);
   assert.match(notices, /crystal and bomb raster assets/);
   assert.match(notices, /casinocutup\/Solana-Crash-Game/);

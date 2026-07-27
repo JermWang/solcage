@@ -8,6 +8,9 @@ type Card = { rank: string; suit: "hearts" | "diamonds" | "clubs" | "spades" };
 type BlackjackState = {
   roundId: string;
   phase: "playing" | "settled";
+  stake: number;
+  doubledDown: boolean;
+  canDouble: boolean;
   player: Card[];
   playerValue: number;
   dealer: Array<Card | null>;
@@ -37,7 +40,7 @@ export default function BlackjackPage() {
   const [commitment, setCommitment] = useState("");
   const [error, setError] = useState("");
 
-  async function requestAction(action: "deal" | "hit" | "stand") {
+  async function requestAction(action: "deal" | "hit" | "stand" | "double") {
     if (pending) return;
     setPending(true);
     setError("");
@@ -64,6 +67,7 @@ export default function BlackjackPage() {
       }).then((response) => response.json()) as BlackjackState & { error?: string };
       if (!next.roundId) throw new Error(next.error ?? "Blackjack action failed");
       if (action === "deal") setBank((value) => Math.max(0, value - bet));
+      if (action === "double") setBank((value) => Math.max(0, value - (state?.stake ?? bet)));
       if (next.phase === "settled") setBank((value) => value + (next.payout ?? 0));
       setState(next);
     } catch (caught) {
@@ -91,9 +95,11 @@ export default function BlackjackPage() {
           <div className="blackjack-table">
             <span className="verified-badge"><i /> COMMITTED SHOE</span>
             <div className="table-rule">BLACKJACK PAYS 3 TO 2 · DEALER STANDS ON 17</div>
+            <div className="blackjack-table-lettering"><b>HOUSE TABLE</b><span>Dealer must draw to 16 and stand on all 17s</span></div>
             <Hand label="DEALER" cards={state?.dealer ?? []} value={state?.dealerValue ?? 0} />
             <div className="blackjack-mark"><span>SC</span><small>BLACKJACK</small></div>
             <Hand label="PLAYER" cards={state?.player ?? []} value={state?.playerValue ?? 0} />
+            <div className="blackjack-seat"><i /><span>ACTIVE SEAT</span><b>YOU</b></div>
             {state?.phase === "settled" && <div className={`blackjack-outcome ${state.outcome}`}><span>{state.label}</span><b>{state.payout ? `+${state.payout.toFixed(2)} CHIPS` : "NO PAYOUT"}</b></div>}
           </div>
 
@@ -115,7 +121,8 @@ export default function BlackjackPage() {
               <p><span>Shoe</span><b>HMAC SHUFFLED</b></p>
             </div>
             {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => requestAction("deal")}>{pending ? "DEALING…" : `DEAL ${bet.toFixed(2)} CHIPS`}</button>}
-            {state?.phase === "playing" && <div className="blackjack-actions"><button disabled={pending} onClick={() => requestAction("hit")}>HIT</button><button disabled={pending} onClick={() => requestAction("stand")}>STAND</button></div>}
+            <div className="blackjack-status"><span>TABLE STATUS</span><b>{pending ? "DEALER IS ACTING" : !state ? "PLACE YOUR STAKE" : state.phase === "settled" ? state.label : state.canDouble ? "HIT, STAND, OR DOUBLE" : "HIT OR STAND"}</b><small>{state?.phase === "playing" ? (state.playerValue <= 11 ? "Drawing cannot bust this hand." : state.playerValue >= 17 ? "Standing is often the conservative play." : "Weigh the dealer up-card before acting.") : "Single-hand practice table; no insurance, split, or surrender."}</small></div>
+            {state?.phase === "playing" && <div className={`blackjack-actions ${state.canDouble && bank >= state.stake ? "has-double" : ""}`}><button disabled={pending} onClick={() => requestAction("hit")}>HIT</button><button disabled={pending} onClick={() => requestAction("stand")}>STAND</button>{state.canDouble && bank >= state.stake && <button className="blackjack-double" disabled={pending} onClick={() => requestAction("double")}>DOUBLE <small>+{state.stake.toFixed(2)}</small></button>}</div>}
             {state?.phase === "settled" && <button className="roulette-spin-button" onClick={newHand}>NEW HAND</button>}
             {error && <p className="roulette-error">{error}</p>}
           </aside>
