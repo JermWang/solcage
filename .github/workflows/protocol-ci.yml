@@ -97,7 +97,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: solcage-lending-sbf-${{ github.sha }}
-          path: target/deploy
+          path: .
       - name: Build deterministic oracle fixtures
         run: node --experimental-strip-types scripts/protocol-local-smoke.mjs fixtures "$RUNNER_TEMP/solcage-fixtures"
       - name: Start isolated validator
