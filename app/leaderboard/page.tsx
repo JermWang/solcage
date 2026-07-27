@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
+import { XLink } from "@/components/XLink";
 
 type Leader = { rank: number; username: string; displayName: string; avatarUrl: string | null; points: number; events: number; referrals: number };
 
@@ -42,7 +43,7 @@ function Avatar({ leader }: { leader: Leader }) {
 }
 
 function AccountNav() {
-  return <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div><ContractAddress /></nav>;
+  return <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div><div className="nav-social"><ContractAddress /><XLink /></div></nav>;
 }
 
 function Rules() {

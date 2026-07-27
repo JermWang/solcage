@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
+import { XLink } from "@/components/XLink";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -12,7 +13,6 @@ const assets: Asset[] = [
   { symbol: "FARTCOIN", name: "Fartcoin", price: 0.1312, marketCap: 131_200_000, ltv: 30, tone: "green", origin: "PUMP · 1 YR", image: "/coin-art/fartcoin.webp" },
   { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", price: 0.01748, marketCap: 17_480_000, ltv: 20, tone: "orange", origin: "PUMP · 5 MO", image: "/coin-art/triplet.webp" },
   { symbol: "KINS", name: "Kintara", price: 0.0151, marketCap: 15_100_000, ltv: 18, tone: "pink", origin: "PUMP · RECENT", image: "/coin-art/kins.webp" },
-  { symbol: "TBB", name: "The Bitcoin Bull", price: 0.04535, marketCap: 45_350_000, ltv: 22, tone: "orange", origin: "PUMP · 26 D", image: "/coin-art/tbb.webp" },
   { symbol: "JIMOTHY", name: "Jimothy the Raccoon", price: 0.0171, marketCap: 17_100_000, ltv: 15, tone: "green", origin: "PUMP · NEW", image: "/coin-art/jimothy.webp" },
   { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple", origin: "SOLANA", image: "/coin-art/pengu.webp" },
   { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange", origin: "SOLANA", image: "/coin-art/bonk.webp" },
@@ -95,10 +95,11 @@ export default function Home() {
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Home</button>
           <a href="/lending">Lending</a>
           <a href="/games">Games</a>
+          <a href="/docs">Docs</a>
           <a href="/leaderboard">Leaderboard</a>
         </div>
         <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{loyaltyPoints.toLocaleString()} PTS</b></span></div>
-        <ContractAddress />
+        <div className="nav-social"><ContractAddress /><XLink /></div>
         <a className="wallet" href="/profile">{profileName}</a>
       </nav>
 
@@ -143,7 +144,7 @@ export default function Home() {
         </section>
       )}
       <a className="floating-play" href="/games"><span>PLAY THE FLOOR</span><b>↗</b></a>
-      <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Solana-native memecoin credit, game settlement and loyalty in one wallet-connected platform.</p><span>BUILT FOR SOLANA · 2026</span></footer>
+      <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Solana-native memecoin credit, game settlement and loyalty in one wallet-connected platform. <a href="/docs">Read how lending works ↗</a></p><div className="footer-social"><XLink withHandle /><span>BUILT FOR SOLANA · 2026</span></div></footer>
     </main>
   );
 }

@@ -24,6 +24,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
+    site: "@solcage_",
+    creator: "@solcage_",
     title: "SolCage — Keep your bag. Borrow the thrill.",
     description: "Solana-native memecoin credit, game settlement and loyalty in one wallet-connected platform.",
     images: ["/og.png"],

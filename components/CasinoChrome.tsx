@@ -4,9 +4,10 @@ import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
+import { XLink } from "@/components/XLink";
 
 type CasinoChromeProps = {
-  active: "casino" | "lending" | "rewards";
+  active: "casino" | "lending" | "rewards" | "docs";
   children: ReactNode;
   searchValue?: string;
   onSearchChange?: (value: string) => void;
@@ -44,6 +45,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
 
           <small>FINANCE</small>
           <Link className={active === "lending" ? "active" : ""} href="/lending"><i>◇</i> Lending</Link>
+          <Link className={active === "docs" ? "active" : ""} href="/docs"><i>❋</i> How it works</Link>
           <Link href="/profile"><i>◎</i> Wallet</Link>
 
           <small>EARN</small>
@@ -73,7 +75,8 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
           </div>
           <div className="casino-top-actions">
             <ContractAddress />
-            <Link href="/leaderboard"><small>WEEKLY RACE</small><b>{points.toLocaleString()} XP</b></Link>
+            <XLink />
+            <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{points.toLocaleString()} XP</b></Link>
             <Link className="casino-deposit" href="/lending">Deposit</Link>
             <Link className="casino-profile" href="/profile">{profileName.slice(0, 1).toUpperCase()}</Link>
           </div>

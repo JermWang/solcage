@@ -230,7 +230,7 @@ export default function LendingPage() {
           <div>
             <span>CUSTODIAL LIQUIDITY / SOLANA</span>
             <h1>The Cage</h1>
-            <p>Transfer approved collateral to SolCage custody, receive a risk-adjusted USDC advance, repay it, and claim the same token quantity after buyback.</p>
+            <p>Transfer approved collateral to SolCage custody, receive a risk-adjusted USDC advance, repay it, and claim the same token quantity after buyback. <Link className="lending-docs-link" href="/docs">How it works ↗</Link></p>
           </div>
           <div className="protocol-status">
             <span><i className={config?.ready ? "online" : ""} /> CUSTODY</span>
