@@ -155,7 +155,7 @@ export default function SlotsPage() {
             <div className="vault-cabinet">
               <header>
                 <div><span>NEON</span><b>VAULT</b></div>
-                <p><span>9 LINES</span><span>96.03% RTP</span><span>1,500× TOP SYMBOL</span></p>
+                <p><span>9 LINES</span><span>96.03% BASE RTP</span><span>1,500× TOP SYMBOL</span></p>
               </header>
               <div className="vault-screen">
                 <span className="vault-screen-glare" />

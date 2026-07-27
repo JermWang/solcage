@@ -32,6 +32,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
   // displayed ceiling can never drift from the one actually applied.
   const [maxWin, setMaxWin] = useState<string | null>(null);
   const [houseSymbol, setHouseSymbol] = useState("SOL");
+  const [rakeBps, setRakeBps] = useState(0);
 
   useEffect(() => {
     fetch("/api/me")
@@ -56,6 +57,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
         const fraction = (cap % scale).toString().padStart(decimals, "0").replace(/0+$/, "");
         setMaxWin(fraction ? `${whole}.${fraction}` : `${whole}`);
         setHouseSymbol(String(data.symbol ?? "SOL"));
+        setRakeBps(Number(data.rakeBps ?? 0));
       })
       .catch(() => undefined);
   }, []);
@@ -108,7 +110,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
           <div className="casino-top-actions">
             {maxWin && (
               <Link className="casino-maxwin" href="/docs#limits" title="Temporary while the bankroll grows — see the docs">
-                <small>MAX WIN / ROUND</small>
+                <small>{rakeBps > 0 ? `${rakeBps / 100}% RAKE · MAX WIN` : "MAX WIN / ROUND"}</small>
                 <b>{maxWin} {houseSymbol}</b>
               </Link>
             )}

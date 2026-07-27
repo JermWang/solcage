@@ -96,7 +96,9 @@ test("server-renders the dedicated sourced Neon Dice room", async () => {
   const html = await response.text();
 
   assert.match(html, /Neon Dice/);
-  assert.match(html, /PROVABLY FAIR \/ 98% RTP/);
+  // "BASE" is load-bearing: the displayed figure is the game's own return
+  // before the house rake, which is disclosed separately.
+  assert.match(html, /PROVABLY FAIR \/ 98% BASE RTP/);
   assert.match(html, /ROLL UNDER/);
   assert.match(html, /ROLL OVER/);
   assert.match(html, /CLIENT SEED/);

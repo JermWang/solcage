@@ -217,10 +217,17 @@ const schemaStatements = [
     id UUID PRIMARY KEY,
     posting_id UUID NOT NULL REFERENCES ledger_postings(id) ON DELETE CASCADE,
     account VARCHAR(32) NOT NULL,
-    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID REFERENCES users(id) ON DELETE RESTRICT,
     amount_raw NUMERIC(20,0) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
+  // Deleting a user must never remove one side of a posting and leave the
+  // other: that destroys the balance invariant and makes money appear created.
+  // RESTRICT forces an explicit decision about a player's financial history
+  // instead of silently shredding half of it. Idempotent re-application.
+  `ALTER TABLE ledger_entries DROP CONSTRAINT IF EXISTS ledger_entries_user_id_fkey`,
+  `ALTER TABLE ledger_entries ADD CONSTRAINT ledger_entries_user_id_fkey
+     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE RESTRICT`,
   `CREATE INDEX IF NOT EXISTS ledger_entries_user_account_idx
    ON ledger_entries (user_id, account)`,
   `CREATE INDEX IF NOT EXISTS ledger_entries_posting_idx

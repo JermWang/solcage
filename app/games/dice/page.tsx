@@ -125,7 +125,7 @@ export default function DicePage() {
         <header className="game-room-header">
           <div>
             <Link href="/games">← Casino</Link>
-            <span>PROVABLY FAIR / 98% RTP</span>
+            <span>PROVABLY FAIR / 98% BASE RTP</span>
             <h1>Neon Dice</h1>
           </div>
           <div className="game-room-balance">

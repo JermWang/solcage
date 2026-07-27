@@ -24,6 +24,7 @@ export async function GET(request: Request) {
       depositAddress: readiness.ready ? config.wallet : null,
       wagering: readiness.ready ? "open" : "closed",
       checks: readiness.checks,
+      rakeBps: config.rakeBps,
       games: gameLimits(config),
       limits: {
         minStakeRaw: config.limits.minStakeRaw.toString(),

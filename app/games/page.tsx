@@ -36,10 +36,10 @@ type FloorTotals = {
 const games: LobbyGame[] = [
   { id: "roulette", name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "TRENDING", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet", categories: ["Originals", "Table games", "High limit"] },
   { id: "baccarat", name: "Cage Baccarat", studio: "SOLCAGE ORIGINALS", tag: "NEW TABLE", image: "/game-art/baccarat.webp", href: "/games/baccarat", tone: "gold", categories: ["Originals", "Table games", "High limit"] },
-  { id: "video-poker", name: "Neon Draw", studio: "SOLCAGE ORIGINALS", tag: "99.54% RTP", image: "/game-art/video-poker.webp", href: "/games/video-poker", tone: "purple", categories: ["Originals", "Table games", "High limit", "Video poker"] },
-  { id: "dice", name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/dice", tone: "lime", categories: ["Originals", "Instant"] },
-  { id: "slots", name: "Neon Vault", studio: "SOLCAGE ORIGINALS", tag: "96.03% RTP", image: "/game-art/slots.webp", href: "/games/slots", tone: "gold", categories: ["Originals", "Slots", "Instant", "High limit"] },
-  { id: "plinko", name: "Neon Plinko", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
+  { id: "video-poker", name: "Neon Draw", studio: "SOLCAGE ORIGINALS", tag: "99.54% base RTP", image: "/game-art/video-poker.webp", href: "/games/video-poker", tone: "purple", categories: ["Originals", "Table games", "High limit", "Video poker"] },
+  { id: "dice", name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "98% base RTP", image: "/game-art/dice.webp", href: "/games/dice", tone: "lime", categories: ["Originals", "Instant"] },
+  { id: "slots", name: "Neon Vault", studio: "SOLCAGE ORIGINALS", tag: "96.03% base RTP", image: "/game-art/slots.webp", href: "/games/slots", tone: "gold", categories: ["Originals", "Slots", "Instant", "High limit"] },
+  { id: "plinko", name: "Neon Plinko", studio: "SOLCAGE ORIGINALS", tag: "98% base RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
   { id: "blackjack", name: "Cage Blackjack", studio: "SOLCAGE ORIGINALS", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
   { id: "mines", name: "Crystal Mines", studio: "SOLCAGE ORIGINALS", tag: "25 TILES", image: "/game-art/mines.webp", href: "/games/mines", tone: "cyan", categories: ["Originals", "Instant"] },
   { id: "crash", name: "Cage Crash", studio: "SOLCAGE ORIGINALS", tag: "LIVE", image: "/game-art/crash.webp", href: "/games/crash", tone: "red", categories: ["Originals", "Instant", "High limit"] },
@@ -63,7 +63,7 @@ const heroSlides = [
   },
   {
     game: gameById.plinko,
-    eyebrow: "SOLCAGE ORIGINAL / 98% RTP",
+    eyebrow: "SOLCAGE ORIGINAL / 98% BASE RTP",
     title: <>Neon Plinko.<br /><em>Let it fall.</em></>,
     copy: "Pick the risk, commit the path, and watch every peg settle against the proof.",
   },
