@@ -198,21 +198,33 @@ const schemaStatements = [
   `CREATE INDEX IF NOT EXISTS wallet_challenge_wallet_idx
    ON wallet_challenges (wallet_address, expires_at)`,
 
-  // ---- Player bankroll -------------------------------------------------
-  // Append-only. A balance is SUM(amount_raw) for a user; nothing mutates a
-  // stored total, so a partial failure can never leave a wrong number behind.
-  // amount_raw is signed and denominated in the house token's base units.
-  `CREATE TABLE IF NOT EXISTS wallet_ledger (
+  // ---- Player bankroll (double-entry) ----------------------------------
+  // Superseded by ledger_postings/ledger_entries below. Never carried data:
+  // wagering has never been enabled.
+  `DROP TABLE IF EXISTS wallet_ledger`,
+  // One posting per economic event. correlation_id is UNIQUE, so replaying a
+  // settlement inserts nothing and the legs are skipped.
+  `CREATE TABLE IF NOT EXISTS ledger_postings (
     id UUID PRIMARY KEY,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    kind VARCHAR(24) NOT NULL,
-    amount_raw NUMERIC(20,0) NOT NULL,
-    event_key VARCHAR(160) NOT NULL UNIQUE,
+    correlation_id VARCHAR(160) NOT NULL UNIQUE,
+    reason VARCHAR(32) NOT NULL,
     metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
-  `CREATE INDEX IF NOT EXISTS wallet_ledger_user_created_idx
-   ON wallet_ledger (user_id, created_at DESC)`,
+  // Legs of a posting. Every posting's legs sum to zero, so no bug can create
+  // or destroy value without the imbalance being visible.
+  `CREATE TABLE IF NOT EXISTS ledger_entries (
+    id UUID PRIMARY KEY,
+    posting_id UUID NOT NULL REFERENCES ledger_postings(id) ON DELETE CASCADE,
+    account VARCHAR(32) NOT NULL,
+    user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+    amount_raw NUMERIC(20,0) NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS ledger_entries_user_account_idx
+   ON ledger_entries (user_id, account)`,
+  `CREATE INDEX IF NOT EXISTS ledger_entries_posting_idx
+   ON ledger_entries (posting_id)`,
   // Credited deposits, keyed by signature so a replayed confirmation is a no-op.
   `CREATE TABLE IF NOT EXISTS house_deposits (
     signature VARCHAR(96) PRIMARY KEY,

@@ -1,29 +1,48 @@
 import type { PoolClient } from "pg";
 
 /**
- * Player bankroll.
+ * Player bankroll — double-entry.
  *
- * Every balance is derived: SUM(amount_raw) over wallet_ledger. Nothing stores
- * a running total, so a crash between two writes can never leave a balance that
- * disagrees with its own history.
+ * Every economic event is one posting whose legs sum to zero. Money is only
+ * ever moved between accounts, never created or destroyed, so a bug shows up as
+ * an imbalance instead of silently minting value. `postLedger` refuses to write
+ * an unbalanced posting at all.
  *
- * Every write carries an event_key with a UNIQUE constraint. Replaying the same
- * settlement is a no-op rather than a double credit — the same idempotency
- * pattern the reward ledger already uses.
+ * A balance is derived: SUM(amount_raw) over the account's legs. Nothing caches
+ * a total, so a crash between writes cannot leave a number that disagrees with
+ * its own history.
+ *
+ * Idempotency lives on ledger_postings.correlation_id (UNIQUE). Replaying a
+ * settlement inserts nothing and posts no legs.
  */
 
-export type LedgerKind =
-  | "deposit"
-  | "bet"
-  | "win"
-  | "refund"
-  | "withdrawal"
-  | "withdrawal_reversal"
-  | "adjustment";
+/** Where value sits. USER_* accounts are per-player; the rest are the house's. */
+export type Account =
+  | "USER_AVAILABLE"
+  | "WITHDRAWAL_PENDING"
+  | "HOUSE_TREASURY"
+  | "PLATFORM_REVENUE"
+  | "EXTERNAL";
+
+export type Reason =
+  | "DEPOSIT"
+  | "BET"
+  | "WIN"
+  | "WITHDRAWAL_REQUESTED"
+  | "WITHDRAWAL_SENT"
+  | "WITHDRAWAL_REFUND"
+  | "ADJUSTMENT";
+
+export type Leg = { account: Account; userId?: string | null; amountRaw: bigint };
+
+export class LedgerError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "LedgerError";
+  }
+}
 
 export class InsufficientFunds extends Error {
-  // Written out rather than declared as parameter properties: the repo's test
-  // runner uses --experimental-strip-types, which rejects that syntax.
   balanceRaw: bigint;
   requestedRaw: bigint;
   constructor(balanceRaw: bigint, requestedRaw: bigint) {
@@ -41,65 +60,123 @@ export class StakeRejected extends Error {
   }
 }
 
-/**
- * Serialise every balance-changing operation for one player. Without this two
- * concurrent bets can both read the same balance and both pass the funds check.
- * Transaction-scoped, so it releases on commit or rollback.
- */
-async function lockPlayer(client: PoolClient, userId: string) {
-  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`bankroll:${userId}`]);
+const USER_SCOPED: Account[] = ["USER_AVAILABLE", "WITHDRAWAL_PENDING"];
+
+/** Refuse anything that would not balance, before it reaches the database. */
+export function assertBalanced(legs: Leg[]) {
+  if (!legs.length) throw new LedgerError("Posting has no legs");
+  const total = legs.reduce((sum, l) => sum + l.amountRaw, 0n);
+  if (total !== 0n) throw new LedgerError(`Posting does not balance (net ${total})`);
+  for (const leg of legs) {
+    if (leg.amountRaw === 0n) throw new LedgerError("Posting contains a zero leg");
+    if (USER_SCOPED.includes(leg.account) && !leg.userId) {
+      throw new LedgerError(`${leg.account} requires a userId`);
+    }
+  }
 }
 
-export async function balanceRaw(client: PoolClient, userId: string) {
-  const result = await client.query(
-    "SELECT COALESCE(SUM(amount_raw), 0)::text AS balance FROM wallet_ledger WHERE user_id = $1",
-    [userId],
+/**
+ * Post a balanced set of legs. Returns false when correlationId was already
+ * used, in which case nothing is written.
+ */
+export async function postLedger(
+  client: PoolClient,
+  input: { correlationId: string; reason: Reason; legs: Leg[]; metadata?: Record<string, unknown> },
+) {
+  assertBalanced(input.legs);
+  const posting = await client.query(
+    `INSERT INTO ledger_postings (id, correlation_id, reason, metadata)
+     VALUES ($1, $2, $3, $4::jsonb)
+     ON CONFLICT (correlation_id) DO NOTHING
+     RETURNING id`,
+    [crypto.randomUUID(), input.correlationId, input.reason, JSON.stringify(input.metadata ?? {})],
   );
+  if (!posting.rowCount) return false;
+  const postingId = posting.rows[0].id as string;
+  for (const leg of input.legs) {
+    await client.query(
+      `INSERT INTO ledger_entries (id, posting_id, account, user_id, amount_raw)
+       VALUES ($1, $2, $3, $4, $5)`,
+      [crypto.randomUUID(), postingId, leg.account, leg.userId ?? null, leg.amountRaw.toString()],
+    );
+  }
+  return true;
+}
+
+async function accountBalance(client: PoolClient, account: Account, userId?: string) {
+  const result = userId
+    ? await client.query(
+        `SELECT COALESCE(SUM(amount_raw), 0)::text AS balance
+         FROM ledger_entries WHERE account = $1 AND user_id = $2`,
+        [account, userId],
+      )
+    : await client.query(
+        `SELECT COALESCE(SUM(amount_raw), 0)::text AS balance
+         FROM ledger_entries WHERE account = $1 AND user_id IS NULL`,
+        [account],
+      );
   return BigInt(result.rows[0].balance);
 }
 
-type EntryInput = {
-  userId: string;
-  kind: LedgerKind;
-  amountRaw: bigint;
-  eventKey: string;
-  metadata?: Record<string, unknown>;
-};
+/** Spendable balance — excludes anything locked behind a withdrawal. */
+export function availableBalance(client: PoolClient, userId: string) {
+  return accountBalance(client, "USER_AVAILABLE", userId);
+}
 
-/** Append one entry. Returns false when the event_key was already recorded. */
-export async function appendEntry(client: PoolClient, input: EntryInput) {
-  const inserted = await client.query(
-    `INSERT INTO wallet_ledger (id, user_id, kind, amount_raw, event_key, metadata)
-     VALUES ($1, $2, $3, $4, $5, $6::jsonb)
-     ON CONFLICT (event_key) DO NOTHING`,
-    [
-      crypto.randomUUID(),
-      input.userId,
-      input.kind,
-      input.amountRaw.toString(),
-      input.eventKey,
-      JSON.stringify(input.metadata ?? {}),
+export function lockedBalance(client: PoolClient, userId: string) {
+  return accountBalance(client, "WITHDRAWAL_PENDING", userId);
+}
+
+export function treasuryBalance(client: PoolClient) {
+  return accountBalance(client, "HOUSE_TREASURY");
+}
+
+/**
+ * Serialise balance-changing work for one player. Without this, two concurrent
+ * bets both read the same balance and both pass the funds check.
+ * Transaction-scoped: released on commit or rollback.
+ */
+export async function lockPlayer(client: PoolClient, userId: string) {
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`bankroll:${userId}`]);
+}
+
+/** Credit a confirmed on-chain deposit. Value enters from EXTERNAL. */
+export async function creditDeposit(
+  client: PoolClient,
+  input: { userId: string; amountRaw: bigint; signature: string; metadata?: Record<string, unknown> },
+) {
+  if (input.amountRaw <= 0n) throw new LedgerError("Deposit must be positive");
+  return postLedger(client, {
+    correlationId: `deposit:${input.signature}`,
+    reason: "DEPOSIT",
+    metadata: input.metadata,
+    legs: [
+      { account: "EXTERNAL", amountRaw: -input.amountRaw },
+      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: input.amountRaw },
     ],
-  );
-  return Boolean(inserted.rowCount);
+  });
 }
 
 export type WagerLimits = {
-  /** Smallest accepted stake, in base units. */
   minStakeRaw: bigint;
-  /** Largest accepted stake, in base units. */
   maxStakeRaw: bigint;
   /**
-   * Largest amount a single round may return. Checked against the stake and the
-   * game's top multiplier, so one 30x hit cannot exceed what the house can pay.
+   * Hard ceiling on what any single round can pay out, applied at settlement.
+   * This is what bounds tail risk — not the stake — so an 800x game can be
+   * offered at a real stake without one hand taking the bankroll. A capped win
+   * is a material term and must be shown to players before they bet.
    */
   maxPayoutRaw: bigint;
 };
 
+/** Apply the house's per-round win ceiling. Returns the amount actually paid. */
+export function capPayout(payoutRaw: bigint, limits: WagerLimits) {
+  return payoutRaw > limits.maxPayoutRaw ? limits.maxPayoutRaw : payoutRaw;
+}
+
 /**
- * Take a stake. Locks the player, verifies the stake against the limits and the
- * player's own funds, then writes the debit. Must be called inside the same
- * transaction that settles the round.
+ * Take a stake: player -> treasury. Must run inside the transaction that settles
+ * the round, so a failure anywhere rolls the debit back with it.
  */
 export async function takeStake(
   client: PoolClient,
@@ -107,7 +184,7 @@ export async function takeStake(
     userId: string;
     stakeRaw: bigint;
     maxMultiplier: number;
-    eventKey: string;
+    correlationId: string;
     limits: WagerLimits;
     metadata?: Record<string, unknown>;
   },
@@ -117,44 +194,122 @@ export async function takeStake(
   if (stakeRaw < limits.minStakeRaw) throw new StakeRejected("Stake is below the table minimum");
   if (stakeRaw > limits.maxStakeRaw) throw new StakeRejected("Stake is above the table maximum");
 
-  // Cap exposure by what this round could pay, not by the stake alone: a small
-  // stake on a 30x game still commits the house to 30x.
-  const worstCasePayout = stakeRaw * BigInt(Math.ceil(input.maxMultiplier));
-  if (worstCasePayout > limits.maxPayoutRaw) {
-    throw new StakeRejected("Stake exceeds the maximum exposure for this game");
-  }
+  // Exposure is bounded by the payout ceiling applied at settlement, not by
+  // refusing the stake — so high-multiplier games stay playable at real sizes.
 
   await lockPlayer(client, input.userId);
-  const available = await balanceRaw(client, input.userId);
+  const available = await availableBalance(client, input.userId);
   if (available < stakeRaw) throw new InsufficientFunds(available, stakeRaw);
 
-  const written = await appendEntry(client, {
-    userId: input.userId,
-    kind: "bet",
-    amountRaw: -stakeRaw,
-    eventKey: input.eventKey,
+  const written = await postLedger(client, {
+    correlationId: input.correlationId,
+    reason: "BET",
     metadata: input.metadata,
+    legs: [
+      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: -stakeRaw },
+      { account: "HOUSE_TREASURY", amountRaw: stakeRaw },
+    ],
   });
   if (!written) throw new StakeRejected("This round was already settled");
   return available - stakeRaw;
 }
 
-/** Credit a winning round. Safe to call with zero — a loss writes nothing. */
+/**
+ * Pay a winning round: treasury -> player. A loss posts nothing.
+ * The win ceiling is enforced here rather than at each call site, so no game
+ * can pay past it by forgetting to check. Returns what was actually paid.
+ */
 export async function payWinnings(
   client: PoolClient,
-  input: { userId: string; payoutRaw: bigint; eventKey: string; metadata?: Record<string, unknown> },
+  input: {
+    userId: string;
+    payoutRaw: bigint;
+    limits: WagerLimits;
+    correlationId: string;
+    metadata?: Record<string, unknown>;
+  },
 ) {
-  if (input.payoutRaw <= 0n) return false;
-  return appendEntry(client, {
-    userId: input.userId,
-    kind: "win",
-    amountRaw: input.payoutRaw,
-    eventKey: input.eventKey,
-    metadata: input.metadata,
+  const paidRaw = capPayout(input.payoutRaw, input.limits);
+  if (paidRaw <= 0n) return { paidRaw: 0n, capped: false, posted: false };
+  const capped = paidRaw < input.payoutRaw;
+  const posted = await postLedger(client, {
+    correlationId: input.correlationId,
+    reason: "WIN",
+    metadata: { ...input.metadata, uncappedRaw: input.payoutRaw.toString(), capped },
+    legs: [
+      { account: "HOUSE_TREASURY", amountRaw: -paidRaw },
+      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: paidRaw },
+    ],
+  });
+  return { paidRaw, capped, posted };
+}
+
+/**
+ * Lock funds at the moment a withdrawal is requested, not when it is sent.
+ * Until it settles the balance is unspendable but still the player's.
+ */
+export async function lockWithdrawal(
+  client: PoolClient,
+  input: { userId: string; amountRaw: bigint; correlationId: string },
+) {
+  if (input.amountRaw <= 0n) throw new LedgerError("Withdrawal must be positive");
+  await lockPlayer(client, input.userId);
+  const available = await availableBalance(client, input.userId);
+  if (available < input.amountRaw) throw new InsufficientFunds(available, input.amountRaw);
+  return postLedger(client, {
+    correlationId: input.correlationId,
+    reason: "WITHDRAWAL_REQUESTED",
+    legs: [
+      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: -input.amountRaw },
+      { account: "WITHDRAWAL_PENDING", userId: input.userId, amountRaw: input.amountRaw },
+    ],
   });
 }
 
-/** Convert a decimal amount of the house token into base units without float drift. */
+/** Withdrawal confirmed on-chain: the locked amount leaves the system. */
+export async function settleWithdrawalSent(
+  client: PoolClient,
+  input: { userId: string; amountRaw: bigint; correlationId: string; metadata?: Record<string, unknown> },
+) {
+  return postLedger(client, {
+    correlationId: input.correlationId,
+    reason: "WITHDRAWAL_SENT",
+    metadata: input.metadata,
+    legs: [
+      { account: "WITHDRAWAL_PENDING", userId: input.userId, amountRaw: -input.amountRaw },
+      { account: "EXTERNAL", amountRaw: input.amountRaw },
+    ],
+  });
+}
+
+/** Rejected or failed withdrawal: unlock back to spendable. */
+export async function refundWithdrawal(
+  client: PoolClient,
+  input: { userId: string; amountRaw: bigint; correlationId: string },
+) {
+  return postLedger(client, {
+    correlationId: input.correlationId,
+    reason: "WITHDRAWAL_REFUND",
+    legs: [
+      { account: "WITHDRAWAL_PENDING", userId: input.userId, amountRaw: -input.amountRaw },
+      { account: "USER_AVAILABLE", userId: input.userId, amountRaw: input.amountRaw },
+    ],
+  });
+}
+
+/**
+ * Whole-system invariant: every leg ever written sums to zero. Any non-zero
+ * result means value was created or destroyed and needs investigating before
+ * anything else happens.
+ */
+export async function ledgerIsBalanced(client: PoolClient) {
+  const result = await client.query(
+    "SELECT COALESCE(SUM(amount_raw), 0)::text AS net FROM ledger_entries",
+  );
+  return BigInt(result.rows[0].net) === 0n;
+}
+
+/** Convert a decimal amount into base units without float drift. */
 export function toBaseUnits(amount: string, decimals: number) {
   const trimmed = amount.trim();
   if (!/^\d+(\.\d+)?$/.test(trimmed)) throw new StakeRejected("Invalid amount");

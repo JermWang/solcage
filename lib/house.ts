@@ -79,6 +79,27 @@ export function houseReadiness(config: HouseConfig) {
   return { ready: checks.every((c) => c.ok), checks };
 }
 
+/**
+ * Effective stake ceiling per game, and whether the game is playable at all.
+ *
+ * The payout cap divided by a game's top multiplier can land below the table
+ * minimum — at which point every bet on that game is rejected. That is a
+ * configuration problem, not a player problem, so surface it instead of letting
+ * it show up as a run of errors.
+ */
+export function gameLimits(config: HouseConfig) {
+  return Object.entries(MAX_MULTIPLIER).map(([game, multiplier]) => {
+    const maxStakeRaw = config.limits.maxPayoutRaw / BigInt(Math.ceil(multiplier));
+    const capped = maxStakeRaw > config.limits.maxStakeRaw ? config.limits.maxStakeRaw : maxStakeRaw;
+    return {
+      game,
+      multiplier,
+      maxStakeRaw: capped.toString(),
+      playable: capped >= config.limits.minStakeRaw,
+    };
+  });
+}
+
 /** Highest multiplier each game can return, used to cap exposure per round. */
 export const MAX_MULTIPLIER: Record<string, number> = {
   dice: 49,

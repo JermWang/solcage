@@ -65,6 +65,8 @@ export async function POST(request: Request) {
       return json({ error: "Invalid dice direction" }, 400, identity);
     }
 
+    let payoutCapped = false;
+    let creditedRaw = null;
     const settled = await transaction(async (client) => {
       const found = await client.query<{
         game: string;
@@ -107,7 +109,7 @@ export async function POST(request: Request) {
           userId: identity.userId,
           stakeRaw,
           maxMultiplier: MAX_MULTIPLIER.dice,
-          eventKey: `bet:${roundId}`,
+          correlationId: `bet:${roundId}`,
           limits: house.limits,
           metadata: { game: "dice", chanceBps, direction },
         });
@@ -118,12 +120,17 @@ export async function POST(request: Request) {
       const payout = outcome.won ? roundMoney(bet * outcome.multiplier) : 0;
 
       if (wagering && payout > 0) {
-        await payWinnings(client, {
+        const paid = await payWinnings(client, {
           userId: identity.userId,
           payoutRaw: toBaseUnits(payout.toFixed(house.decimals), house.decimals),
-          eventKey: `win:${roundId}`,
+          limits: house.limits,
+          correlationId: `win:${roundId}`,
           metadata: { game: "dice", roll, multiplier: outcome.multiplier },
         });
+        // Report what was actually credited, so a capped win is never shown as
+        // the uncapped figure.
+        payoutCapped = paid.capped;
+        creditedRaw = paid.paidRaw.toString();
       }
       const result: StoredDice = {
         bet,
@@ -168,7 +175,7 @@ export async function POST(request: Request) {
     });
 
     const profile = await profileSnapshot(identity.userId);
-    return json({ ...settled, points: profile.points, rank: profile.rank }, 200, identity);
+    return json({ ...settled, payoutCapped, creditedRaw, points: profile.points, rank: profile.rank }, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
     if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);

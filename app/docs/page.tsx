@@ -11,6 +11,7 @@ type DocsConfig = {
 };
 
 const SECTIONS = [
+  ["why", "Why not just sell?"],
   ["overview", "The short version"],
   ["before", "Before you start"],
   ["open", "Opening a position"],
@@ -70,6 +71,50 @@ export default function DocsPage() {
           </aside>
 
           <div className="docs-body">
+            <section id="why">
+              <h2>Why not just sell?</h2>
+              <p>
+                You could sell your bag, take the cash to any table, and buy back afterwards. Nothing
+                stops you. But that plan has a second decision buried in it, and the second one is the
+                hard one — because by the time you make it you have either lost the money or watched
+                the entry get away from you. Selling to play is a bet on the tables <em>and</em> a bet
+                that you will still be able to rebuild your position afterwards.
+              </p>
+              <p>SolCage exists to take that second bet off the table.</p>
+              <ol className="docs-steps">
+                <li>
+                  <b>Only the advance is ever at risk</b>
+                  <span>
+                    {advancePct}% of your position&rsquo;s value reaches you as spendable USDC. The
+                    other {reservePct}% is ring-fenced against your position the moment you open it —
+                    it never enters your balance and cannot be wagered. A losing night costs you the
+                    advance. It cannot cost you your bag.
+                  </span>
+                </li>
+                <li>
+                  <b>Your position is counted in tokens, not dollars</b>
+                  <span>
+                    You get back the exact quantity you deposited. Sell your own supply and a run in
+                    the market means rebuying fewer coins than you started with — the same money no
+                    longer buys the same position.
+                  </span>
+                </li>
+                <li>
+                  <b>Nothing is liquidated and nothing accrues</b>
+                  <span>
+                    No liquidation price, no funding rate, no clock. You repay exactly what you
+                    received, whenever you choose to.
+                  </span>
+                </li>
+              </ol>
+              <p className="docs-callout">
+                The honest trade: if {symbol} <b>falls</b> while your position is open, you do not
+                capture that dip — someone who sold their own supply could have rebought cheaper.
+                You are exchanging that discount for a fixed cost, a fixed quantity, and never having
+                to time the way back in.
+              </p>
+            </section>
+
             <section id="overview">
               <h2>The short version</h2>
               <p>
