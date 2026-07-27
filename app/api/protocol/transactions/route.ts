@@ -5,8 +5,10 @@ import { json, requireIdentity } from "@/lib/identity";
 import {
   collateralMarketsFromEnvironment,
   isSolanaPublicKey,
+  SPL_TOKEN_PROGRAM_ID,
   type CollateralMarket,
 } from "@/lib/solana/markets";
+import { cachedProtocolReadiness } from "@/lib/solana/readiness";
 
 export const dynamic = "force-dynamic";
 
@@ -15,6 +17,8 @@ const BORROW_DISCRIMINATOR = new Uint8Array([228, 253, 131, 202, 207, 116, 89, 1
 const REPAY_DISCRIMINATOR = new Uint8Array([234, 103, 67, 82, 208, 234, 219, 166]);
 const WITHDRAW_DISCRIMINATOR = new Uint8Array([115, 135, 168, 106, 139, 214, 138, 150]);
 const POSITION_DISCRIMINATOR = new Uint8Array([170, 188, 143, 228, 122, 64, 247, 208]);
+const ASSOCIATED_TOKEN_PROGRAM_ID = new PublicKey("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+const SYSTEM_PROGRAM_ID = "11111111111111111111111111111111";
 
 type RpcResponse<T> = { result?: T; error?: { message?: string } };
 type ParsedInstruction = { programId?: string; accounts?: string[]; data?: string };
@@ -76,6 +80,13 @@ function lendingAccounts(programId: PublicKey, market: CollateralMarket, owner: 
   return { protocol, marketAddress, position };
 }
 
+function associatedTokenAddress(mint: PublicKey, owner: PublicKey, tokenProgram: PublicKey) {
+  return PublicKey.findProgramAddressSync(
+    [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
+    ASSOCIATED_TOKEN_PROGRAM_ID,
+  )[0];
+}
+
 async function verifiedWallet(userId: string) {
   const result = await db().query(
     `SELECT wallet_address FROM users
@@ -95,7 +106,7 @@ async function currentPositions(wallet: string, programIdValue: string, markets:
     owner: string;
   } | null>>("getMultipleAccounts", [
     addresses,
-    { encoding: "base64", commitment: "confirmed" },
+    { encoding: "base64", commitment: "finalized" },
   ]);
 
   return accounts.flatMap((account, index) => {
@@ -121,6 +132,9 @@ export async function GET(request: Request) {
     const identity = await requireIdentity(request);
     const wallet = await verifiedWallet(identity.userId);
     const programId = process.env.SOLCAGE_LENDING_PROGRAM_ID ?? "";
+    const borrowMint = process.env.SOLCAGE_BORROW_MINT ?? "";
+    const borrowDecimals = Number(process.env.SOLCAGE_BORROW_DECIMALS ?? "6");
+    const borrowTokenProgram = process.env.SOLCAGE_BORROW_TOKEN_PROGRAM ?? SPL_TOKEN_PROGRAM_ID;
     const markets = collateralMarketsFromEnvironment().filter((market) => market.enabled);
     const history = await db().query(
       `SELECT signature, action, asset_symbol, mint_address, raw_amount::text,
@@ -131,9 +145,17 @@ export async function GET(request: Request) {
     );
 
     let positions: Awaited<ReturnType<typeof currentPositions>> = [];
-    let reconciliationStatus: "connected" | "configuration-required" | "rpc-unavailable" =
-      wallet && isSolanaPublicKey(programId) && markets.length ? "connected" : "configuration-required";
-    if (reconciliationStatus === "connected" && wallet) {
+    const readiness = await cachedProtocolReadiness({
+      rpcUrl: rpcUrl(),
+      programId,
+      borrowMint,
+      borrowDecimals,
+      borrowTokenProgram,
+      markets,
+    });
+    let reconciliationStatus: "connected" | "configuration-required" | "rpc-unavailable" | "on-chain-mismatch" =
+      readiness.ready && wallet ? "connected" : readiness.state;
+    if (readiness.ready && wallet) {
       try {
         positions = await currentPositions(wallet, programId, markets);
       } catch {
@@ -167,6 +189,8 @@ export async function POST(request: Request) {
 
     const programIdValue = process.env.SOLCAGE_LENDING_PROGRAM_ID ?? "";
     const borrowMint = process.env.SOLCAGE_BORROW_MINT ?? "";
+    const borrowDecimals = Number(process.env.SOLCAGE_BORROW_DECIMALS ?? "6");
+    const borrowTokenProgram = process.env.SOLCAGE_BORROW_TOKEN_PROGRAM ?? SPL_TOKEN_PROGRAM_ID;
     if (!isSolanaPublicKey(programIdValue)) {
       return json({ error: "The production lending program is not configured" }, 503, identity);
     }
@@ -177,12 +201,26 @@ export async function POST(request: Request) {
     if (!markets.length) {
       return json({ error: "No production collateral markets are configured" }, 503, identity);
     }
+    const readiness = await cachedProtocolReadiness({
+      rpcUrl: rpcUrl(),
+      programId: programIdValue,
+      borrowMint,
+      borrowDecimals,
+      borrowTokenProgram,
+      markets,
+    });
+    if (!readiness.ready) {
+      return json({
+        error: "The configured lending deployment did not pass on-chain readiness checks",
+        readiness: readiness.state,
+      }, 503, identity);
+    }
 
     const chainTransaction = await rpc<ParsedTransaction | null>("getTransaction", [
       body.signature,
       {
         encoding: "jsonParsed",
-        commitment: "confirmed",
+        commitment: "finalized",
         maxSupportedTransactionVersion: 0,
       },
     ]);
@@ -197,9 +235,13 @@ export async function POST(request: Request) {
       return json({ error: "The verified wallet did not sign this transaction" }, 403, identity);
     }
 
-    const instruction = chainTransaction.transaction.message.instructions.find(
+    const lendingInstructions = chainTransaction.transaction.message.instructions.filter(
       (candidate) => candidate.programId === programIdValue && typeof candidate.data === "string",
     );
+    if (lendingInstructions.length !== 1) {
+      return json({ error: "Transaction must contain exactly one SolCage lending instruction" }, 422, identity);
+    }
+    const instruction = lendingInstructions[0];
     if (!instruction?.data || !instruction.accounts || instruction.accounts.length < 8) {
       return json({ error: "No supported SolCage lending instruction was found" }, 422, identity);
     }
@@ -221,14 +263,37 @@ export async function POST(request: Request) {
       : markets.find((candidate) => candidate.mint === instruction.accounts?.[2]);
     if (!market) return json({ error: "Transaction uses an unsupported collateral mint" }, 422, identity);
     const expected = lendingAccounts(programId, market, owner);
-    const expectedAccounts = action === "deposit" || action === "withdraw"
+    const collateralMint = new PublicKey(market.mint);
+    const collateralTokenProgram = new PublicKey(market.tokenProgram);
+    const borrowMintKey = new PublicKey(borrowMint);
+    const borrowTokenProgramKey = new PublicKey(borrowTokenProgram);
+    const ownerCollateralAccount = associatedTokenAddress(collateralMint, owner, collateralTokenProgram);
+    const collateralVault = associatedTokenAddress(collateralMint, expected.marketAddress, collateralTokenProgram);
+    const ownerBorrowAccount = associatedTokenAddress(borrowMintKey, owner, borrowTokenProgramKey);
+    const liquidityVault = associatedTokenAddress(borrowMintKey, expected.protocol, borrowTokenProgramKey);
+    const expectedAccounts = action === "deposit"
       ? [
           wallet,
           expected.protocol.toBase58(),
           market.mint,
           expected.marketAddress.toBase58(),
           expected.position.toBase58(),
+          ownerCollateralAccount.toBase58(),
+          collateralVault.toBase58(),
+          market.tokenProgram,
+          SYSTEM_PROGRAM_ID,
         ]
+      : action === "withdraw"
+        ? [
+            wallet,
+            expected.protocol.toBase58(),
+            market.mint,
+            expected.marketAddress.toBase58(),
+            expected.position.toBase58(),
+            ownerCollateralAccount.toBase58(),
+            collateralVault.toBase58(),
+            market.tokenProgram,
+          ]
       : action === "borrow"
         ? [
             wallet,
@@ -238,6 +303,9 @@ export async function POST(request: Request) {
             expected.marketAddress.toBase58(),
             expected.position.toBase58(),
             market.priceFeedAccount,
+            liquidityVault.toBase58(),
+            ownerBorrowAccount.toBase58(),
+            borrowTokenProgram,
           ]
         : [
             wallet,
@@ -245,13 +313,15 @@ export async function POST(request: Request) {
             borrowMint,
             expected.marketAddress.toBase58(),
             expected.position.toBase58(),
+            ownerBorrowAccount.toBase58(),
+            liquidityVault.toBase58(),
+            borrowTokenProgram,
           ];
-    if (!expectedAccounts.every((address, index) => instruction.accounts?.[index] === address)) {
+    if (
+      instruction.accounts.length !== expectedAccounts.length
+      || !expectedAccounts.every((address, index) => instruction.accounts?.[index] === address)
+    ) {
       return json({ error: "Transaction accounts do not match the configured lending market" }, 422, identity);
-    }
-    const tokenProgramIndex = action === "borrow" ? 9 : 7;
-    if (instruction.accounts[tokenProgramIndex] !== market.tokenProgram) {
-      return json({ error: "Transaction uses an unexpected token program" }, 422, identity);
     }
     const settledSymbol = action === "borrow" || action === "repay" ? "USDC" : market.symbol;
     const settledMint = action === "borrow" || action === "repay" ? borrowMint : market.mint;

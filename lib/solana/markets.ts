@@ -34,6 +34,10 @@ export function isSolanaPublicKey(value: unknown): value is string {
   return isPublicKey(value);
 }
 
+export function isSupportedTokenProgram(value: unknown): value is string {
+  return value === SPL_TOKEN_PROGRAM_ID || value === SPL_TOKEN_2022_PROGRAM_ID;
+}
+
 export function collateralMarketsFromEnvironment(): CollateralMarket[] {
   const source = process.env.SOLCAGE_COLLATERAL_MARKETS;
   if (!source) return [];
@@ -64,7 +68,7 @@ export function collateralMarketsFromEnvironment(): CollateralMarket[] {
       !/^[A-Z0-9]{2,16}$/.test(symbol)
       || !isPublicKey(entry.mint)
       || !isPublicKey(entry.priceFeedAccount)
-      || !isPublicKey(tokenProgram)
+      || !isSupportedTokenProgram(tokenProgram)
       || decimals === null
       || ltvBps === null
       || liquidationLtvBps === null

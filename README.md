@@ -43,8 +43,16 @@ required for profiles, sessions, rewards, games, and protocol history.
 
 `SOLCAGE_COLLATERAL_MARKETS` is a JSON array. A market is ignored unless its
 mint, Pyth price-update account, Pyth feed ID, decimal count, LTV limits, and
-token program all pass validation. The web transaction button stays disabled
-unless both a valid program ID and at least one enabled market exist.
+token program all pass validation. `SOLCAGE_BORROW_TOKEN_PROGRAM` identifies
+the token program used by the borrow mint independently of each collateral
+mint, so Token-2022 collateral can borrow classic SPL USDC safely.
+
+The web transaction button stays disabled until a finalized RPC attestation
+proves that the program is executable, the protocol and market PDAs contain the
+configured mints, Pyth feed IDs, risk limits, and enabled state, both mint
+accounts have the configured decimals and token programs, and the
+program-controlled associated-token vaults exist with the expected authorities.
+Environment strings alone cannot enable deposits or withdrawals.
 
 Never configure an upgradeable production program until its upgrade authority,
 auditor report, oracle feeds, liquidity vault, monitoring, and liquidator

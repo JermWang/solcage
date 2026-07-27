@@ -79,7 +79,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
@@ -99,6 +99,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/protocol/transactions/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/solana/readiness.ts", import.meta.url), "utf8"),
     readFile(new URL("../programs/solcage_lending/src/lib.rs", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/health/route.ts", import.meta.url), "utf8"),
@@ -149,6 +150,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(fairReveal, /slotSymbols\.length - 1/);
   assert.match(fairReveal, /randomInts\(11, 1, 0\)/);
   assert.match(lending, /COLLATERAL MARKET/);
+  assert.match(lending, /LIVE READINESS PROOF/);
   assert.match(lending, /sendLendingTransaction/);
   assert.match(lendingClient, /findProgramAddressSync/);
   assert.match(lendingClient, /signAndSendTransaction/);
@@ -156,9 +158,17 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(lendingClient, /"deposit" \| "borrow" \| "repay" \| "withdraw"/);
   assert.match(protocolApi, /getTransaction/);
   assert.match(protocolApi, /protocol_transactions/);
+  assert.match(protocolApi, /commitment: "finalized"/);
+  assert.match(protocolApi, /instruction\.accounts\.length !== expectedAccounts\.length/);
+  assert.match(readiness, /programAccount\?\.executable/);
+  assert.match(readiness, /Protocol account type/);
+  assert.match(readiness, /collateral vault/);
+  assert.match(readiness, /Pyth feed ID/);
   assert.match(protocolProgram, /deposit_collateral/);
   assert.match(protocolProgram, /withdraw_collateral/);
   assert.match(protocolProgram, /get_price_no_older_than/);
+  assert.match(protocolProgram, /borrow_token_program/);
+  assert.match(protocolProgram, /collateral_token_program/);
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
   assert.match(notices, /iamThiagoo\/mines-casino/);

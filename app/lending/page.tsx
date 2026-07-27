@@ -29,6 +29,16 @@ const collateralAssets: Asset[] = [
 type ConfiguredMarket = ClientMarket & {
   ltvBps: number;
   liquidationLtvBps: number;
+  attested: boolean;
+  marketAddress: string | null;
+  collateralVault: string | null;
+};
+
+type ReadinessCheck = {
+  key: string;
+  label: string;
+  status: "pass" | "fail";
+  detail: string;
 };
 
 type ProtocolConfig = {
@@ -36,11 +46,20 @@ type ProtocolConfig = {
   rpcHost: string;
   clientRpcUrl: string;
   programId: string | null;
-  vaultAuthority: string | null;
+  protocolAddress: string | null;
+  liquidityVault: string | null;
   borrowMint: string | null;
   borrowDecimals: number;
+  borrowTokenProgram: string;
   programConfigured: boolean;
-  transactionMode: "enabled" | "configuration-required";
+  transactionMode: "enabled" | "configuration-required" | "rpc-unavailable" | "on-chain-mismatch";
+  readiness: {
+    ready: boolean;
+    state: "ready" | "configuration-required" | "rpc-unavailable" | "on-chain-mismatch";
+    checkedAt: string;
+    checks: ReadinessCheck[];
+    markets: Array<{ symbol: string; ready: boolean; checks: ReadinessCheck[] }>;
+  };
   markets: ConfiguredMarket[];
 };
 
@@ -68,7 +87,7 @@ type ProtocolHistory = {
 type ProtocolData = {
   history: ProtocolHistory[];
   positions: ProtocolPosition[];
-  reconciliationStatus: "connected" | "configuration-required" | "rpc-unavailable";
+  reconciliationStatus: "connected" | "configuration-required" | "rpc-unavailable" | "on-chain-mismatch";
 };
 
 function formatBaseUnits(raw: string, decimals: number, precision = 4) {
@@ -116,16 +135,13 @@ export default function LendingPage() {
   }, [refreshProtocolData]);
 
   const configuredMarket = useMemo(
-    () => config?.markets.find((market) => market.symbol === asset.symbol && market.enabled) ?? null,
+    () => config?.markets.find((market) => market.symbol === asset.symbol && market.enabled && market.attested) ?? null,
     [asset.symbol, config],
   );
-  const displayLtv = configuredMarket ? configuredMarket.ltvBps / 100 : asset.ltv;
+  const displayLtv = configuredMarket ? configuredMarket.ltvBps / 100 : 0;
   const amountNumber = Number(amount) || 0;
-  const maxBorrow = useMemo(
-    () => amountNumber * displayLtv / 100,
-    [amountNumber, displayLtv],
-  );
   const openPosition = protocolData.positions.find((position) => position.symbol === asset.symbol);
+  const amountValid = /^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(amount.trim()) && amountNumber > 0;
   const canSubmit = Boolean(
     wallet
     && config?.transactionMode === "enabled"
@@ -133,6 +149,7 @@ export default function LendingPage() {
     && config.borrowMint
     && configuredMarket
     && asset.status === "ACTIVE"
+    && amountValid
     && !submitting,
   );
   const actionLabel = submitting
@@ -145,7 +162,9 @@ export default function LendingPage() {
           ? `${asset.symbol} market is not enabled`
           : asset.status !== "ACTIVE"
             ? `${asset.symbol} is under risk review`
-            : `${mode} ${mode === "borrow" || mode === "repay" ? "USDC" : asset.symbol}`;
+            : !amountValid
+              ? "Enter an amount greater than zero"
+              : `${mode} ${mode === "borrow" || mode === "repay" ? "USDC" : asset.symbol}`;
 
   async function submitPosition() {
     if (!canSubmit || !wallet || !config?.programId || !config.borrowMint || !configuredMarket) return;
@@ -159,6 +178,7 @@ export default function LendingPage() {
         programId: config.programId,
         borrowMint: config.borrowMint,
         borrowDecimals: config.borrowDecimals,
+        borrowTokenProgram: config.borrowTokenProgram,
         rpcUrl: config.clientRpcUrl,
         verifiedWallet: wallet,
         market: configuredMarket,
@@ -188,7 +208,13 @@ export default function LendingPage() {
           <div><span>MEMECOIN CREDIT / SOLANA</span><h1>The Cage</h1><p>Deposit eligible collateral, monitor position health, borrow against the approved value, and withdraw after obligations are cleared.</p></div>
           <div className="protocol-status">
             <span><i className={config?.transactionMode === "enabled" ? "online" : ""} /> PROGRAM</span>
-            <b>{config?.transactionMode === "enabled" ? "TRANSACTIONS ENABLED" : "CONFIGURATION REQUIRED"}</b>
+            <b>{config?.transactionMode === "enabled"
+              ? "ON-CHAIN ATTESTED"
+              : config?.transactionMode === "rpc-unavailable"
+                ? "RPC ATTESTATION UNAVAILABLE"
+                : config?.transactionMode === "on-chain-mismatch"
+                  ? "ON-CHAIN STATE MISMATCH"
+                  : "CONFIGURATION REQUIRED"}</b>
             <small>{config?.network ?? "mainnet-beta"} · {config?.rpcHost ?? "loading"}</small>
           </div>
         </header>
@@ -207,8 +233,8 @@ export default function LendingPage() {
             <div className="collateral-table">
               {collateralAssets.map((item) => {
                 const liveMarket = config?.markets.find((market) => market.symbol === item.symbol && market.enabled);
-                const status = liveMarket && item.status === "ACTIVE" ? "ACTIVE" : "WATCH";
-                const ltv = liveMarket ? liveMarket.ltvBps / 100 : item.ltv;
+                const status = liveMarket?.attested && item.status === "ACTIVE" ? "ACTIVE" : "WATCH";
+                const ltv = liveMarket?.attested ? liveMarket.ltvBps / 100 : 0;
                 return (
                   <button key={item.symbol} className={asset.symbol === item.symbol ? "selected" : ""} onClick={() => setAsset(item)}>
                     <span className="asset-cell">
@@ -243,9 +269,10 @@ export default function LendingPage() {
               </span>
             </div>
             <div className="position-summary">
-              <p><span>Market configuration</span><b className={configuredMarket ? "good" : ""}>{configuredMarket ? "ENABLED" : "NOT ENABLED"}</b></p>
+              <p><span>On-chain market</span><b className={configuredMarket ? "good" : ""}>{configuredMarket ? "ATTESTED" : "NOT READY"}</b></p>
               <p><span>Maximum LTV</span><b>{displayLtv ? `${displayLtv}%` : "Disabled"}</b></p>
-              <p><span>{mode === "borrow" ? "Requested credit" : "Estimated borrow capacity"}</span><b>{mode === "borrow" ? amountNumber.toFixed(2) : maxBorrow.toFixed(2)} USDC</b></p>
+              <p><span>Position collateral</span><b>{openPosition ? formatBaseUnits(openPosition.collateralAmount, openPosition.decimals) : "0"} {asset.symbol}</b></p>
+              <p><span>Outstanding debt</span><b>{openPosition ? formatBaseUnits(openPosition.debtAmount, config?.borrowDecimals ?? 6) : "0"} USDC</b></p>
               <p><span>Liquidation threshold</span><b>{configuredMarket ? `${configuredMarket.liquidationLtvBps / 100}%` : "—"}</b></p>
             </div>
             {!wallet
@@ -257,7 +284,20 @@ export default function LendingPage() {
         </section>
 
         <section className="position-history">
-          <header><div><span>YOUR POSITIONS</span><h2>On-chain activity</h2></div><b>{protocolData.positions.length} ACTIVE</b></header>
+          <header><div><span>YOUR POSITIONS</span><h2>Program account balances</h2></div><b>{protocolData.positions.length} ACTIVE</b></header>
+          {protocolData.positions.length ? (
+            <div className="protocol-position-grid">
+              {protocolData.positions.map((position) => (
+                <article key={position.positionAddress}>
+                  <span>{position.symbol} COLLATERAL</span>
+                  <b>{formatBaseUnits(position.collateralAmount, position.decimals)}</b>
+                  <small>{formatBaseUnits(position.debtAmount, config?.borrowDecimals ?? 6)} USDC debt</small>
+                  <a href={`https://solscan.io/account/${position.positionAddress}`} target="_blank" rel="noreferrer">View program account ↗</a>
+                </article>
+              ))}
+            </div>
+          ) : <div className="protocol-empty-position"><span>NO ACTIVE PROGRAM ACCOUNTS</span><p>A verified deposit creates a wallet-owned position PDA. Its collateral and debt balances appear here directly from Solana.</p></div>}
+          <header className="protocol-history-head"><div><span>TRANSACTION JOURNAL</span><h2>Finalized actions</h2></div><b>{protocolData.history.length} RECORDED</b></header>
           {protocolData.history.length ? (
             <div className="protocol-history-list">
               {protocolData.history.map((entry) => {
@@ -274,17 +314,20 @@ export default function LendingPage() {
               })}
             </div>
           ) : (
-            <div><span>NO ON-CHAIN POSITIONS FOUND</span><p>Confirmed deposits and withdrawals appear here after their program instruction and verified signer are reconciled from Solana.</p></div>
+            <div><span>NO FINALIZED ACTIONS FOUND</span><p>Deposits, borrows, repayments, and withdrawals appear here after their instruction and verified signer are reconciled from finalized Solana state.</p></div>
           )}
         </section>
 
         <section className="protocol-readiness" id="protocol-readiness">
-          <div><span>PROTOCOL CONTROLS</span><h2>Program-owned funds. Verifiable state.</h2></div>
+          <div><span>LIVE READINESS PROOF</span><h2>Program-owned funds. Attested state.</h2><p>Transactions unlock only when every configured address matches finalized Solana state.</p></div>
           <div className="readiness-list">
-            <p className="done"><i>✓</i><span><b>Persistent identity and history</b><small>Profiles, referrals, rewards, games, and program actions are backed by PostgreSQL.</small></span></p>
-            <p className={config?.programId ? "done" : ""}><i>{config?.programId ? "✓" : "2"}</i><span><b>Lending program deployment</b><small>The configured program ID controls the protocol state and instruction surface.</small></span></p>
-            <p className={configuredMarket ? "done" : ""}><i>{configuredMarket ? "✓" : "3"}</i><span><b>Program-controlled token vaults</b><small>Collateral vault authority is a market PDA, never a server hot wallet.</small></span></p>
-            <p className={configuredMarket?.priceFeedAccount ? "done" : ""}><i>{configuredMarket?.priceFeedAccount ? "✓" : "4"}</i><span><b>Manipulation-resistant pricing</b><small>Enabled markets require a Pyth feed ID, staleness limit, confidence limit, and liquidation threshold.</small></span></p>
+            <p className="done"><i>✓</i><span><b>Persistent identity and finalized journal</b><small>Wallet ownership and every accepted signature are persisted by PostgreSQL.</small></span></p>
+            {(config?.readiness.checks ?? []).slice(0, 3).map((check) => (
+              <p className={check.status === "pass" ? "done" : ""} key={check.key}>
+                <i>{check.status === "pass" ? "✓" : "!"}</i><span><b>{check.label}</b><small>{check.detail}</small></span>
+              </p>
+            ))}
+            <p className={configuredMarket ? "done" : ""}><i>{configuredMarket ? "✓" : "!"}</i><span><b>{asset.symbol} market, vault, mint, and oracle</b><small>{configuredMarket ? "Every configured account matches the enabled on-chain market." : "This market has not passed the full on-chain attestation gate."}</small></span></p>
           </div>
         </section>
       </div>

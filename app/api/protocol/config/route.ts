@@ -1,22 +1,28 @@
 import { json } from "@/lib/identity";
-import { collateralMarketsFromEnvironment, isSolanaPublicKey } from "@/lib/solana/markets";
+import {
+  collateralMarketsFromEnvironment,
+  SPL_TOKEN_PROGRAM_ID,
+} from "@/lib/solana/markets";
+import { cachedProtocolReadiness } from "@/lib/solana/readiness";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   const programId = process.env.SOLCAGE_LENDING_PROGRAM_ID ?? "";
-  const vaultAuthority = process.env.SOLCAGE_VAULT_AUTHORITY ?? "";
   const borrowMint = process.env.SOLCAGE_BORROW_MINT ?? "";
   const borrowDecimals = Number(process.env.SOLCAGE_BORROW_DECIMALS ?? "6");
+  const borrowTokenProgram = process.env.SOLCAGE_BORROW_TOKEN_PROGRAM ?? SPL_TOKEN_PROGRAM_ID;
   const serverRpcUrl = process.env.SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
   const clientRpcUrl = process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
-  const markets = collateralMarketsFromEnvironment();
-  const programConfigured = isSolanaPublicKey(programId)
-    && isSolanaPublicKey(borrowMint)
-    && Number.isInteger(borrowDecimals)
-    && borrowDecimals >= 0
-    && borrowDecimals <= 12
-    && markets.some((market) => market.enabled);
+  const markets = collateralMarketsFromEnvironment().filter((market) => market.enabled);
+  const readiness = await cachedProtocolReadiness({
+    rpcUrl: serverRpcUrl,
+    programId,
+    borrowMint,
+    borrowDecimals,
+    borrowTokenProgram,
+    markets,
+  });
   let rpcHost = "api.mainnet-beta.solana.com";
   try {
     rpcHost = new URL(serverRpcUrl).host;
@@ -29,11 +35,14 @@ export async function GET() {
     rpcHost,
     clientRpcUrl,
     programId: programId || null,
-    vaultAuthority: vaultAuthority || null,
+    protocolAddress: readiness.protocolAddress,
+    liquidityVault: readiness.liquidityVault,
     borrowMint: borrowMint || null,
     borrowDecimals,
-    programConfigured,
-    transactionMode: programConfigured ? "enabled" : "configuration-required",
+    borrowTokenProgram,
+    programConfigured: readiness.ready,
+    transactionMode: readiness.ready ? "enabled" : readiness.state,
+    readiness,
     markets: markets.map((market) => ({
       symbol: market.symbol,
       mint: market.mint,
@@ -43,6 +52,9 @@ export async function GET() {
       priceFeedAccount: market.priceFeedAccount,
       tokenProgram: market.tokenProgram,
       enabled: market.enabled,
+      attested: readiness.markets.find((attestation) => attestation.symbol === market.symbol)?.ready ?? false,
+      marketAddress: readiness.markets.find((attestation) => attestation.symbol === market.symbol)?.marketAddress ?? null,
+      collateralVault: readiness.markets.find((attestation) => attestation.symbol === market.symbol)?.collateralVault ?? null,
     })),
   });
 }

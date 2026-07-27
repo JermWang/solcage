@@ -17,6 +17,7 @@ export type ClientMarket = {
   tokenProgram: string;
   priceFeedAccount: string;
   enabled: boolean;
+  attested?: boolean;
 };
 
 type WalletProvider = {
@@ -77,7 +78,7 @@ export function deriveLendingAccounts(programIdValue: string, mintValue: string,
   return { programId, mint, owner, protocol, market, position };
 }
 
-function associatedTokenAddress(mint: PublicKey, owner: PublicKey, tokenProgram: PublicKey) {
+export function deriveAssociatedTokenAddress(mint: PublicKey, owner: PublicKey, tokenProgram: PublicKey) {
   return PublicKey.findProgramAddressSync(
     [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
     ASSOCIATED_TOKEN_PROGRAM_ID,
@@ -90,6 +91,7 @@ export function buildLendingInstruction(input: {
   programId: string;
   owner: string;
   borrowMint: string;
+  borrowTokenProgram: string;
   market: ClientMarket;
 }) {
   const { programId, mint, owner, protocol, market, position } = deriveLendingAccounts(
@@ -98,11 +100,12 @@ export function buildLendingInstruction(input: {
     input.owner,
   );
   const borrowMint = new PublicKey(input.borrowMint);
-  const tokenProgram = new PublicKey(input.market.tokenProgram);
-  const ownerCollateralAccount = associatedTokenAddress(mint, owner, tokenProgram);
-  const collateralVault = associatedTokenAddress(mint, market, tokenProgram);
-  const ownerBorrowAccount = associatedTokenAddress(borrowMint, owner, tokenProgram);
-  const liquidityVault = associatedTokenAddress(borrowMint, protocol, tokenProgram);
+  const collateralTokenProgram = new PublicKey(input.market.tokenProgram);
+  const borrowTokenProgram = new PublicKey(input.borrowTokenProgram);
+  const ownerCollateralAccount = deriveAssociatedTokenAddress(mint, owner, collateralTokenProgram);
+  const collateralVault = deriveAssociatedTokenAddress(mint, market, collateralTokenProgram);
+  const ownerBorrowAccount = deriveAssociatedTokenAddress(borrowMint, owner, borrowTokenProgram);
+  const liquidityVault = deriveAssociatedTokenAddress(borrowMint, protocol, borrowTokenProgram);
 
   const keys = input.action === "deposit" || input.action === "withdraw"
     ? [
@@ -113,7 +116,7 @@ export function buildLendingInstruction(input: {
         { pubkey: position, isSigner: false, isWritable: true },
         { pubkey: ownerCollateralAccount, isSigner: false, isWritable: true },
         { pubkey: collateralVault, isSigner: false, isWritable: true },
-        { pubkey: tokenProgram, isSigner: false, isWritable: false },
+        { pubkey: collateralTokenProgram, isSigner: false, isWritable: false },
         ...(input.action === "deposit"
           ? [{ pubkey: SystemProgram.programId, isSigner: false, isWritable: false }]
           : []),
@@ -129,7 +132,7 @@ export function buildLendingInstruction(input: {
           { pubkey: new PublicKey(input.market.priceFeedAccount), isSigner: false, isWritable: false },
           { pubkey: liquidityVault, isSigner: false, isWritable: true },
           { pubkey: ownerBorrowAccount, isSigner: false, isWritable: true },
-          { pubkey: tokenProgram, isSigner: false, isWritable: false },
+          { pubkey: borrowTokenProgram, isSigner: false, isWritable: false },
         ]
       : [
           { pubkey: owner, isSigner: true, isWritable: true },
@@ -139,7 +142,7 @@ export function buildLendingInstruction(input: {
           { pubkey: position, isSigner: false, isWritable: true },
           { pubkey: ownerBorrowAccount, isSigner: false, isWritable: true },
           { pubkey: liquidityVault, isSigner: false, isWritable: true },
-          { pubkey: tokenProgram, isSigner: false, isWritable: false },
+          { pubkey: borrowTokenProgram, isSigner: false, isWritable: false },
         ];
 
   return new TransactionInstruction({
@@ -155,7 +158,7 @@ function createAssociatedTokenAccountIdempotent(input: {
   mint: PublicKey;
   tokenProgram: PublicKey;
 }) {
-  const account = associatedTokenAddress(input.mint, input.owner, input.tokenProgram);
+  const account = deriveAssociatedTokenAddress(input.mint, input.owner, input.tokenProgram);
   return new TransactionInstruction({
     programId: ASSOCIATED_TOKEN_PROGRAM_ID,
     keys: [
@@ -176,6 +179,7 @@ export async function sendLendingTransaction(input: {
   programId: string;
   borrowMint: string;
   borrowDecimals: number;
+  borrowTokenProgram: string;
   rpcUrl: string;
   verifiedWallet: string;
   market: ClientMarket;
@@ -201,6 +205,7 @@ export async function sendLendingTransaction(input: {
     programId: input.programId,
     owner,
     borrowMint: input.borrowMint,
+    borrowTokenProgram: input.borrowTokenProgram,
     market: input.market,
   });
   const latest = await connection.getLatestBlockhash("confirmed");
@@ -215,6 +220,15 @@ export async function sendLendingTransaction(input: {
       payer: ownerKey,
       owner: ownerKey,
       mint: new PublicKey(input.borrowMint),
+      tokenProgram: new PublicKey(input.borrowTokenProgram),
+    }));
+  }
+  if (input.action === "withdraw") {
+    const ownerKey = new PublicKey(owner);
+    transaction.add(createAssociatedTokenAccountIdempotent({
+      payer: ownerKey,
+      owner: ownerKey,
+      mint: new PublicKey(input.market.mint),
       tokenProgram: new PublicKey(input.market.tokenProgram),
     }));
   }
@@ -222,7 +236,7 @@ export async function sendLendingTransaction(input: {
   const signed = await provider.signAndSendTransaction(transaction);
   const confirmation = await connection.confirmTransaction(
     { signature: signed.signature, ...latest },
-    "confirmed",
+    "finalized",
   );
   if (confirmation.value.err) throw new Error("The transaction failed on Solana.");
   return { signature: signed.signature, rawAmount: rawAmount.toString() };

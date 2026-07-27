@@ -350,7 +350,7 @@ pub mod solcage_lending {
             authority: ctx.accounts.liquidator.to_account_info(),
         };
         token_interface::transfer_checked(
-            CpiContext::new(ctx.accounts.token_program.key(), repay_accounts),
+            CpiContext::new(ctx.accounts.borrow_token_program.key(), repay_accounts),
             debt,
             ctx.accounts.borrow_mint.decimals,
         )?;
@@ -369,7 +369,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.key(),
+                ctx.accounts.collateral_token_program.key(),
                 seize_accounts,
                 signer_seeds,
             ),
@@ -698,31 +698,32 @@ pub struct Liquidate<'info> {
         mut,
         token::mint = borrow_mint,
         token::authority = liquidator,
-        token::token_program = token_program
+        token::token_program = borrow_token_program
     )]
     pub liquidator_borrow_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = borrow_mint,
         associated_token::authority = protocol,
-        associated_token::token_program = token_program
+        associated_token::token_program = borrow_token_program
     )]
     pub liquidity_vault: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         token::mint = collateral_mint,
         token::authority = liquidator,
-        token::token_program = token_program
+        token::token_program = collateral_token_program
     )]
     pub liquidator_collateral_account: InterfaceAccount<'info, TokenAccount>,
     #[account(
         mut,
         associated_token::mint = collateral_mint,
         associated_token::authority = market,
-        associated_token::token_program = token_program
+        associated_token::token_program = collateral_token_program
     )]
     pub collateral_vault: InterfaceAccount<'info, TokenAccount>,
-    pub token_program: Interface<'info, TokenInterface>,
+    pub borrow_token_program: Interface<'info, TokenInterface>,
+    pub collateral_token_program: Interface<'info, TokenInterface>,
 }
 
 #[account]
