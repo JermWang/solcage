@@ -21,6 +21,12 @@
 .ca-copy.is-copied{background:var(--lime);border-color:var(--ink)}
 .ca-copy.is-copied>small,.ca-copy.is-copied>i{color:var(--ink)}
 .ca-copy-live{position:absolute;width:1px;height:1px;margin:-1px;padding:0;border:0;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+/* Off-screen rather than clipped: a clip-path'd node does not reliably survive
+   a manual Ctrl+C, and this is the last-resort copy path. */
+.ca-copy-full{position:fixed;left:-9999px;top:0;font:11px var(--font-geist-mono);white-space:nowrap;pointer-events:none}
+.ca-copy.is-manual{border-color:#ffb35c}
+.ca-copy.is-manual>i{color:#ffb35c}
+.casino-top-actions .ca-copy.is-manual{border-color:#ffb35c}
 .casino-top-actions .ca-copy{border-color:var(--casino-line);background:#111015;color:var(--casino-text)}
 .casino-top-actions .ca-copy>small{color:#766f7e;font:800 7px var(--font-geist-mono);letter-spacing:.14em}
 .casino-top-actions .ca-copy>i{color:#766f7e}
