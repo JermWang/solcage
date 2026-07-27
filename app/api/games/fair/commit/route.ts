@@ -4,7 +4,7 @@ import { json, requireIdentity } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
-const supportedGames = new Set(["dice", "roulette", "slots", "plinko", "blackjack", "mines", "crash", "keno"]);
+const supportedGames = new Set(["baccarat", "dice", "roulette", "slots", "plinko", "blackjack", "mines", "crash", "keno"]);
 
 export async function POST(request: Request) {
   try {

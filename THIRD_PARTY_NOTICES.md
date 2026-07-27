@@ -84,6 +84,21 @@ table/card presentation are being adapted for SolCage. Randomness and settlement
 are replaced by the server-commitment and client-seed verification model used by
 SolCage Originals.
 
+## Probability Prediction using Randomization Algorithms
+
+- Source: https://github.com/namanadlakha3/An-Application-based-on-Probability-Prediction-using-Randomization-Algorithms
+- Revision reviewed: `4ed8bd9e8aebdbb7ee9fa4d858a55978afce5d1b`
+- License: MIT
+- Copyright: 2020 Naman Adlakha
+
+The eight-deck, 416-card Baccarat model informed Cage Baccarat's shoe
+structure. SolCage combines that model with the already-approved Blackjack
+Party card/table presentation and independently implements regulated Punto
+Banco third-card rules. The original simulator RNG and probability-prediction
+workflow are replaced with a prior server commitment, player client seed,
+deterministic HMAC-SHA256 Fisher-Yates shuffle, PostgreSQL row lock,
+idempotent settlement, persisted receipts, and atomic loyalty credit.
+
 ## Mines Casino
 
 - Source: https://github.com/iamThiagoo/mines-casino
@@ -138,6 +153,8 @@ Copyright (c) 2024 Solana Crash Game
 Copyright (c) 2018 Charlie Guan
 
 Copyright (c) 2026 John Leonardo
+
+Copyright (c) 2020 Naman Adlakha
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

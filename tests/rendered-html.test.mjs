@@ -56,7 +56,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
+  for (const title of ["Cage Roulette", "Cage Baccarat", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
@@ -64,6 +64,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /HMAC-SHA256/i);
   assert.match(html, /PROVABLY FAIR FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
+  assert.match(html, /href="\/games\/baccarat"/);
   assert.match(html, /href="\/games\/dice"/);
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
@@ -74,6 +75,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /href="\/lending"/);
   assert.match(html, /\/game-art\/plinko\.webp/);
   assert.match(html, /\/game-art\/blackjack\.webp/);
+  assert.match(html, /\/game-art\/baccarat\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/crash\.webp/);
   assert.match(html, /\/game-art\/keno\.webp/);
@@ -96,13 +98,31 @@ test("server-renders the dedicated sourced Neon Dice room", async () => {
   assert.match(html, /PostgreSQL/);
 });
 
+test("server-renders the dedicated sourced Cage Baccarat room", async () => {
+  const response = await render("/games/baccarat");
+  assert.equal(response.status, 200);
+  const html = await response.text();
+
+  assert.match(html, /Cage Baccarat/);
+  assert.match(html, /EIGHT-DECK PUNTO BANCO/);
+  assert.match(html, /PLAYER/);
+  assert.match(html, /BANKER/);
+  assert.match(html, /TIE/);
+  assert.match(html, /BEAD ROAD/);
+  assert.match(html, /HMAC-SHA256/);
+  assert.match(html, /416 CARDS/);
+});
+
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, dice, diceApi, diceEngine, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, dice, diceApi, diceEngine, baccarat, baccaratApi, baccaratEngine, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, keno, kenoApi, kenoEngine, slots, slotsApi, slotsEngine, fairReveal, lending, lendingClient, protocolApi, readiness, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/dice/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/dice/action/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/games/dice.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/baccarat/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/baccarat/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/baccarat.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/plinko/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/blackjack/page.tsx", import.meta.url), "utf8"),
@@ -152,6 +172,14 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(diceApi, /awardPoints/);
   assert.match(diceEngine, /DICE_RTP_PERCENT = 98/);
   assert.match(diceEngine, /diceTarget/);
+  assert.match(baccarat, /EIGHT-DECK PUNTO BANCO/);
+  assert.match(baccarat, /BEAD ROAD/);
+  assert.match(baccaratApi, /FOR UPDATE/);
+  assert.match(baccaratApi, /createBaccaratShoe/);
+  assert.match(baccaratApi, /awardPoints/);
+  assert.match(baccaratEngine, /BACCARAT_DECK_COUNT = 8/);
+  assert.match(baccaratEngine, /shouldBankerDraw/);
+  assert.match(baccaratEngine, /settleBaccarat/);
   assert.match(roulette, /RouletteWheel/);
   assert.match(roulette, /\/api\/games\/fair\/commit/);
   assert.match(plinko, /VERIFIED PLINKO/);
@@ -184,6 +212,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(games, /\/game-art\/slots\.webp/);
   assert.match(games, /href: "\/games\/slots"/);
   assert.match(games, /href: "\/games\/dice"/);
+  assert.match(games, /href: "\/games\/baccarat"/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
   assert.match(fairReveal, /plinko/);
@@ -219,6 +248,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(notices, /krysits\/casino-client/);
   assert.match(notices, /johakr\/html5-slot-machine/);
   assert.match(notices, /jdleo\/provably-fair-dice/);
+  assert.match(notices, /namanadlakha3\/An-Application-based-on-Probability-Prediction-using-Randomization-Algorithms/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);
@@ -236,6 +266,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     access(new URL("../public/game-art/dice.webp", import.meta.url)),
     access(new URL("../public/game-art/plinko.webp", import.meta.url)),
     access(new URL("../public/game-art/blackjack.webp", import.meta.url)),
+    access(new URL("../public/game-art/baccarat.webp", import.meta.url)),
     access(new URL("../public/coin-art/jimothy.webp", import.meta.url)),
     access(new URL("../public/coin-art/kins.webp", import.meta.url)),
     access(new URL("../public/coin-art/wif.jpg", import.meta.url)),
