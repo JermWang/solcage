@@ -252,6 +252,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(blackjackApi, /createShuffledDeck/);
   assert.match(blackjackApi, /generator\.ints\(1, max - 1, 0\)/);
   assert.match(mines, /Crystal Mines/);
+  assert.match(mines, /aria-hidden="true"/);
   assert.match(minesApi, /generateMinePositions/);
   assert.match(minesApi, /awardPoints/);
   assert.match(minesApi, /generator\.ints\(1, max - 1, 0\)/);
@@ -307,6 +308,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
   assert.match(notices, /iamThiagoo\/mines-casino/);
+  assert.match(notices, /crystal and bomb raster assets/);
   assert.match(notices, /casinocutup\/Solana-Crash-Game/);
   assert.match(notices, /charliegdev\/keno-server/);
   assert.match(notices, /krysits\/casino-client/);
@@ -324,6 +326,8 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   await Promise.all([
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
     access(new URL("../public/game-art/mines.webp", import.meta.url)),
+    access(new URL("../public/game-assets/mines/gem.png", import.meta.url)),
+    access(new URL("../public/game-assets/mines/bomb.png", import.meta.url)),
     access(new URL("../public/game-art/crash.webp", import.meta.url)),
     access(new URL("../public/game-art/keno.webp", import.meta.url)),
     access(new URL("../public/game-art/slots.webp", import.meta.url)),

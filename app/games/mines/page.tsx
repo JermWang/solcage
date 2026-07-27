@@ -111,7 +111,7 @@ export default function MinesPage() {
                     key={cell}
                     onClick={() => action("reveal", cell)}
                   >
-                    <span>{mine ? "✹" : crystal ? "◆" : ""}</span>
+                    <span aria-hidden="true">{mine ? "mine" : crystal ? "crystal" : ""}</span>
                   </button>
                 );
               })}

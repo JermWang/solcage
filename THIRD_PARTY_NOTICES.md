@@ -132,10 +132,12 @@ and replacement cards.
 - License: MIT
 - Copyright: Thiago Ferreira
 
-The five-by-five board, progressive crystal reveals, and cashout interaction
-informed Crystal Mines. SolCage replaces the original socket and browser-state
-flow with a PostgreSQL-backed, row-locked action endpoint, HMAC-SHA256 board
-shuffle, hidden server commitment, persisted proof, and atomic reward settlement.
+The five-by-five board, progressive card flips, crystal and bomb raster assets,
+and cashout interaction are incorporated into Crystal Mines under the MIT
+license. SolCage reskins that presentation and replaces the original socket and
+browser-state flow with a PostgreSQL-backed, row-locked action endpoint,
+HMAC-SHA256 board shuffle, hidden server commitment, persisted proof, and
+atomic reward settlement.
 
 ## Solana Crash Game
 
