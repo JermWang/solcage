@@ -1,0 +1,82 @@
+name: Deploy SolCage lending to devnet
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solcage-lending-devnet
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      SOLANA_URL: https://api.devnet.solana.com
+      PROGRAM_ID: 3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At
+      DEPLOYER_KEYPAIR_JSON: ${{ secrets.SOLCAGE_DEVNET_DEPLOYER_KEYPAIR }}
+      PROGRAM_KEYPAIR_JSON: ${{ secrets.SOLCAGE_DEVNET_PROGRAM_KEYPAIR }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require deployment secrets
+        shell: bash
+        run: |
+          test -n "$DEPLOYER_KEYPAIR_JSON"
+          test -n "$PROGRAM_KEYPAIR_JSON"
+      - name: Install pinned Solana toolchain
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v3.0.10/install)"
+      - name: Add Solana tools to PATH
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+      - name: Restore protected devnet keypairs
+        shell: bash
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/solcage"
+          printf '%s' "$DEPLOYER_KEYPAIR_JSON" > "$RUNNER_TEMP/solcage/deployer.json"
+          printf '%s' "$PROGRAM_KEYPAIR_JSON" > "$RUNNER_TEMP/solcage/program.json"
+          chmod 600 "$RUNNER_TEMP/solcage/deployer.json" "$RUNNER_TEMP/solcage/program.json"
+          test "$(solana-keygen pubkey "$RUNNER_TEMP/solcage/program.json")" = "$PROGRAM_ID"
+          echo "Deployer: $(solana-keygen pubkey "$RUNNER_TEMP/solcage/deployer.json")"
+          echo "Program: $PROGRAM_ID"
+      - name: Build deployable SBF program
+        run: |
+          solana --version
+          cargo build-sbf \
+            --manifest-path programs/solcage_lending/Cargo.toml \
+            --sbf-out-dir target/deploy
+          test -s target/deploy/solcage_lending.so
+          sha256sum target/deploy/solcage_lending.so
+      - name: Fund devnet deployment authority
+        shell: bash
+        run: |
+          solana config set \
+            --url "$SOLANA_URL" \
+            --keypair "$RUNNER_TEMP/solcage/deployer.json"
+          current_balance="$(solana balance --lamports | awk '{print $1}')"
+          required_balance=5000000000
+          attempt=1
+          while [ "$current_balance" -lt "$required_balance" ] && [ "$attempt" -le 5 ]; do
+            solana airdrop 2 \
+              "$(solana-keygen pubkey "$RUNNER_TEMP/solcage/deployer.json")" \
+              --url "$SOLANA_URL" || true
+            sleep 5
+            current_balance="$(solana balance --lamports | awk '{print $1}')"
+            attempt=$((attempt + 1))
+          done
+          echo "Devnet deployer balance: $current_balance lamports"
+          test "$current_balance" -ge "$required_balance"
+      - name: Deploy and attest program
+        shell: bash
+        run: |
+          solana program deploy target/deploy/solcage_lending.so \
+            --program-id "$RUNNER_TEMP/solcage/program.json" \
+            --keypair "$RUNNER_TEMP/solcage/deployer.json" \
+            --url "$SOLANA_URL" \
+            --max-sign-attempts 10
+          solana program show "$PROGRAM_ID" --url "$SOLANA_URL"
+      - name: Remove key material
+        if: always()
+        shell: bash
+        run: rm -rf "$RUNNER_TEMP/solcage"

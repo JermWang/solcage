@@ -8,7 +8,7 @@ use anchor_spl::{
 };
 use pyth_solana_receiver_sdk::price_update::PriceUpdateV2;
 
-declare_id!("8cdX9Sv53BddvaqdB9N1qTwPd1YBrhh8x1iAo9DBMUFE");
+declare_id!("3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At");
 
 const BPS_DENOMINATOR: u128 = 10_000;
 const MAX_LTV_BPS: u16 = 5_000;

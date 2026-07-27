@@ -1,15 +1,16 @@
 [toolchain]
 anchor_version = "1.1.2"
+solana_version = "3.0.10"
 
 [features]
 resolution = true
 skip-lint = false
 
 [programs.localnet]
-solcage_lending = "8cdX9Sv53BddvaqdB9N1qTwPd1YBrhh8x1iAo9DBMUFE"
+solcage_lending = "3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At"
 
 [programs.devnet]
-solcage_lending = "8cdX9Sv53BddvaqdB9N1qTwPd1YBrhh8x1iAo9DBMUFE"
+solcage_lending = "3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At"
 
 [registry]
 url = "https://api.apr.dev"

@@ -38,3 +38,34 @@ jobs:
         run: cargo test --workspace --lib
       - name: Lint program
         run: cargo clippy --workspace --all-targets -- -D warnings
+
+  sbf:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install pinned Solana toolchain
+        run: sh -c "$(curl -sSfL https://release.anza.xyz/v3.0.10/install)"
+      - name: Add Solana tools to PATH
+        run: echo "$HOME/.local/share/solana/install/active_release/bin" >> "$GITHUB_PATH"
+      - name: Verify toolchain
+        run: |
+          solana --version
+          cargo build-sbf --version
+      - name: Build deployable SBF program
+        run: |
+          cargo build-sbf \
+            --manifest-path programs/solcage_lending/Cargo.toml \
+            --sbf-out-dir target/deploy
+          test -s target/deploy/solcage_lending.so
+          sha256sum target/deploy/solcage_lending.so
+      - name: Upload SBF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: solcage-lending-sbf-${{ github.sha }}
+          path: |
+            target/deploy/solcage_lending.so
+            Anchor.toml
+            Cargo.lock
+          if-no-files-found: error
+          retention-days: 14

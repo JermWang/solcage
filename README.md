@@ -70,10 +70,13 @@ anchor keys sync
 anchor test
 ```
 
-`Anchor.toml` contains a non-deployed placeholder public key for reproducible
-source builds. Generate the actual program keypair outside source control, run
-`anchor keys sync`, then commit the resulting public program ID before a
-deployment. Program keypairs are gitignored.
+The controlled devnet program identity is
+`3UmM2kDDvyJMNXULcH2m7ACfSLURWtQKmvW17S97U4At`. Its deployment keypairs are
+encrypted GitHub Actions secrets and never committed to source. CI builds and
+retains a deployable SBF artifact, while the manual devnet workflow restores
+the protected key material only for the duration of a deployment. Production
+must use a separate program identity and secured authority; the devnet
+authority must never be reused for mainnet.
 
 Program state:
 

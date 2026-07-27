@@ -63,6 +63,11 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.doesNotMatch(html, /pre-launch|integrating|production play/i);
   assert.match(html, /HMAC-SHA256/i);
   assert.match(html, /PROVABLY FAIR FLOOR/i);
+  assert.match(html, /LIVE WINS/i);
+  assert.match(html, /VERIFIED ROUNDS/i);
+  assert.match(html, /Recent bets/i);
+  assert.match(html, /HIGH ROLLERS/i);
+  assert.match(html, /FULL FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
   assert.match(html, /href="\/games\/baccarat"/);
   assert.match(html, /href="\/games\/video-poker"/);
@@ -147,6 +152,25 @@ test("ships row-locked Video Poker deal, hold, draw, and source notices", async 
   assert.match(notices, /pinkkis\/phaser-video-poker/);
   assert.match(notices, /jaredkjar\/video-poker/);
   await access(new URL("../public/game-art/video-poker.webp", import.meta.url));
+});
+
+test("ships a database-backed live casino activity floor", async () => {
+  const [lobby, activityApi, css] = await Promise.all([
+    readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/activity/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(lobby, /casino-live-wins/);
+  assert.match(lobby, /casino-floor-pulse/);
+  assert.match(lobby, /casino-bets-board/);
+  assert.match(lobby, /setInterval/);
+  assert.match(lobby, /HIGH ROLLERS/);
+  assert.match(activityApi, /FROM game_history/);
+  assert.match(activityApi, /SUM\(bet\)/);
+  assert.match(activityApi, /COUNT\(DISTINCT user_id\)/);
+  assert.match(activityApi, /LIMIT 40/);
+  assert.match(css, /\.casino-game-rail\{display:flex/);
+  assert.match(css, /\.casino-bets-board/);
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
