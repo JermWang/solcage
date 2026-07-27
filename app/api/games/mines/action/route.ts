@@ -1,6 +1,6 @@
 import { Provable } from "@provableio/provable-core";
 import { transaction } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import {
   ALLOWED_MINE_COUNTS,
   generateMinePositions,
@@ -171,6 +171,7 @@ export async function POST(request: Request) {
 
     return json(response, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Mines action failed" }, 400);
   }
 }

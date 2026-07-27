@@ -9,7 +9,7 @@ import {
   validateHoldMask,
   type VideoPokerRank,
 } from "@/lib/games/videoPoker";
-import { json, profileSnapshot, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
@@ -186,6 +186,7 @@ export async function POST(request: Request) {
     const profile = await profileSnapshot(identity.userId);
     return json({ ...response, points: profile.points, rankPosition: profile.rank }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Video Poker action failed" }, 400);
   }
 }

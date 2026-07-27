@@ -6,7 +6,7 @@ import {
   type DiceDirection,
   type DiceSettlement,
 } from "@/lib/games/dice";
-import { json, profileSnapshot, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
@@ -142,6 +142,7 @@ export async function POST(request: Request) {
     const profile = await profileSnapshot(identity.userId);
     return json({ ...settled, points: profile.points, rank: profile.rank }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Dice roll failed" }, 400);
   }
 }

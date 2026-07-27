@@ -1,6 +1,6 @@
 import { Provable } from "@provableio/provable-core";
 import { transaction } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import {
   createShuffledDeck,
   BLACKJACK_DECK_COUNT,
@@ -172,6 +172,7 @@ export async function POST(request: Request) {
 
     return json(response, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Blackjack action failed" }, 400);
   }
 }

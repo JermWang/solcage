@@ -1,5 +1,5 @@
 import type { PoolClient } from "pg";
-import { db, ensureSchema, transaction } from "./db";
+import { db, ensureSchema } from "./db";
 
 const COOKIE = "solcage_session";
 const MAX_AGE = 60 * 60 * 24 * 365;
@@ -38,9 +38,11 @@ function referralCode() {
 export type SessionIdentity = { userId: string; setCookie?: string };
 
 export async function readIdentity(request: Request): Promise<SessionIdentity | null> {
-  await ensureSchema();
+  // Check the cookie before touching the database: a signed-out visitor is now
+  // the common case and should cost no query at all.
   const token = cookieValue(request);
   if (!token || token.length !== 64) return null;
+  await ensureSchema();
   const result = await db().query(
     `SELECT user_id FROM sessions WHERE token_hash = $1 AND expires_at > NOW()`,
     [await sha256(token)],
@@ -48,36 +50,87 @@ export async function readIdentity(request: Request): Promise<SessionIdentity | 
   return result.rowCount ? { userId: result.rows[0].user_id } : null;
 }
 
+/**
+ * Invalidate the caller's session server-side and return a cookie that clears
+ * it in the browser. Dropping only the cookie would leave a usable token row.
+ */
+export async function destroySession(request: Request) {
+  await ensureSchema();
+  const token = cookieValue(request);
+  if (token && token.length === 64) {
+    await db().query("DELETE FROM sessions WHERE token_hash = $1", [await sha256(token)]);
+  }
+  return `${COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+}
+
+export const AUTH_REQUIRED = "AuthRequired";
+
+export class AuthRequiredError extends Error {
+  constructor() {
+    super("Connect and verify a Solana wallet to continue");
+    this.name = AUTH_REQUIRED;
+  }
+}
+
+export function isAuthRequired(error: unknown) {
+  return typeof error === "object" && error !== null && (error as Error).name === AUTH_REQUIRED;
+}
+
+export function authRequired() {
+  return json({ error: "Connect and verify a Solana wallet to continue", authRequired: true }, 401);
+}
+
+/**
+ * Wallet-gated: a session only exists once a wallet signature has been
+ * verified. This never creates an account — sign-in happens exclusively in
+ * /api/wallet/verify.
+ */
 export async function requireIdentity(request: Request): Promise<SessionIdentity> {
   const current = await readIdentity(request);
-  if (current) return current;
+  if (!current) throw new AuthRequiredError();
+  return current;
+}
 
-  return transaction(async (client) => {
-    const userId = crypto.randomUUID();
-    const suffix = userId.replaceAll("-", "").slice(0, 6);
-    const token = randomToken();
-    const code = await uniqueReferralCode(client);
-    await client.query(
-      `INSERT INTO users (id, username, display_name, referral_code)
-       VALUES ($1, $2, $3, $4)`,
-      [userId, `player_${suffix}`, `Player ${suffix.toUpperCase()}`, code],
-    );
-    await client.query(
-      `INSERT INTO sessions (token_hash, user_id, expires_at)
-       VALUES ($1, $2, NOW() + INTERVAL '365 days')`,
-      [await sha256(token), userId],
-    );
-    await client.query(
-      `INSERT INTO reward_ledger
-       (id, user_id, kind, base_points, multiplier, points, description, event_key)
-       VALUES ($1, $2, 'welcome', 100, 1, 100, 'Founding player bonus', $3)`,
-      [crypto.randomUUID(), userId, `welcome:${userId}`],
-    );
-    return {
-      userId,
-      setCookie: `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`,
-    };
-  });
+/** Issue a session for an account whose wallet signature has just been verified. */
+export async function startSession(client: PoolClient, userId: string) {
+  const token = randomToken();
+  await client.query(
+    `INSERT INTO sessions (token_hash, user_id, expires_at)
+     VALUES ($1, $2, NOW() + INTERVAL '365 days')`,
+    [await sha256(token), userId],
+  );
+  return `${COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${MAX_AGE}`;
+}
+
+/**
+ * Find the account owning a verified wallet, creating one on first sign-in.
+ * Serialised on the wallet address so two concurrent sign-ins cannot both
+ * insert an account for the same wallet.
+ */
+export async function accountForWallet(client: PoolClient, wallet: string) {
+  await client.query("SELECT pg_advisory_xact_lock(hashtext($1))", [`wallet-signin:${wallet}`]);
+  const existing = await client.query(
+    "SELECT id FROM users WHERE wallet_address = $1 ORDER BY created_at LIMIT 1",
+    [wallet],
+  );
+  if (existing.rowCount) return { userId: existing.rows[0].id as string, created: false };
+
+  const userId = crypto.randomUUID();
+  const suffix = wallet.slice(0, 6).toLowerCase().replace(/[^a-z0-9]/g, "").padEnd(6, "0");
+  const code = await uniqueReferralCode(client);
+  await client.query(
+    `INSERT INTO users (id, username, display_name, wallet_address, wallet_verified_at, referral_code)
+     VALUES ($1, $2, $3, $4, NOW(), $5)`,
+    [userId, `player_${suffix}`, `Player ${suffix.toUpperCase()}`, wallet, code],
+  );
+  await client.query(
+    `INSERT INTO reward_ledger
+     (id, user_id, kind, base_points, multiplier, points, description, event_key)
+     VALUES ($1, $2, 'welcome', 100, 1, 100, 'Founding player bonus', $3)
+     ON CONFLICT (event_key) DO NOTHING`,
+    [crypto.randomUUID(), userId, `welcome:${userId}`],
+  );
+  return { userId, created: true };
 }
 
 async function uniqueReferralCode(client: PoolClient) {

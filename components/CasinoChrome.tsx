@@ -16,12 +16,16 @@ type CasinoChromeProps = {
 export function CasinoChrome({ active, children, searchValue, onSearchChange }: CasinoChromeProps) {
   const [profileName, setProfileName] = useState("Profile");
   const [points, setPoints] = useState(0);
+  // null while unknown, so the chrome does not flash a signed-out state.
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   useEffect(() => {
     fetch("/api/me")
-      .then((response) => response.json())
-      .then((profile) => {
+      .then(async (response) => {
+        if (response.status === 401) return setSignedIn(false);
+        const profile = await response.json();
         if (profile.error) return;
+        setSignedIn(true);
         setProfileName(profile.displayName ?? "Profile");
         setPoints(profile.points ?? 0);
       })
@@ -55,9 +59,9 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
 
         <div className="casino-sidebar-card">
           <span>LOYALTY SCORE</span>
-          <b>{points.toLocaleString()} XP</b>
-          <small>Every verified round and lending position counts.</small>
-          <Link href="/leaderboard">View rewards ↗</Link>
+          <b>{signedIn === false ? "—" : `${points.toLocaleString()} XP`}</b>
+          <small>{signedIn === false ? "Connect a Solana wallet to start earning." : "Every verified round and lending position counts."}</small>
+          <Link href={signedIn === false ? "/profile" : "/leaderboard"}>{signedIn === false ? "Connect wallet ↗" : "View rewards ↗"}</Link>
         </div>
       </aside>
 
@@ -76,9 +80,11 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
           <div className="casino-top-actions">
             <ContractAddress />
             <XLink />
-            <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{points.toLocaleString()} XP</b></Link>
+            <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{signedIn === false ? "—" : `${points.toLocaleString()} XP`}</b></Link>
             <Link className="casino-deposit" href="/lending">Deposit</Link>
-            <Link className="casino-profile" href="/profile">{profileName.slice(0, 1).toUpperCase()}</Link>
+            {signedIn === false
+              ? <Link className="casino-connect" href="/profile">Connect wallet</Link>
+              : <Link className="casino-profile" href="/profile">{profileName.slice(0, 1).toUpperCase()}</Link>}
           </div>
         </header>
         {children}

@@ -5,7 +5,7 @@ import {
   crashPointFromInt,
   CRASH_RANDOM_MAX,
 } from "@/lib/games/crash";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
@@ -209,6 +209,7 @@ export async function POST(request: Request) {
 
     return json(response, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Crash action failed" }, 400);
   }
 }

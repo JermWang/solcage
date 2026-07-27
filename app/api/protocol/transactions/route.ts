@@ -1,7 +1,7 @@
 import bs58 from "bs58";
 import { PublicKey } from "@solana/web3.js";
 import { db, transaction as dbTransaction } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import {
   collateralMarketsFromEnvironment,
   isSolanaPublicKey,
@@ -165,6 +165,7 @@ export async function GET(request: Request) {
 
     return json({ history: history.rows, positions, reconciliationStatus }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Unable to load protocol history" }, 400);
   }
 }
@@ -392,6 +393,7 @@ export async function POST(request: Request) {
       slot: chainTransaction.slot,
     }, inserted ? 201 : 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Unable to verify transaction" }, 400);
   }
 }

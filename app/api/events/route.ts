@@ -1,4 +1,4 @@
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -12,7 +12,8 @@ export async function POST(request: Request) {
       410,
       identity,
     );
-  } catch {
+  } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: "Unable to verify identity" }, 400);
   }
 }

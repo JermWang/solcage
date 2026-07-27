@@ -10,7 +10,7 @@ import {
   type BaccaratOutcome,
   type BaccaratSelection,
 } from "@/lib/games/baccarat";
-import { json, profileSnapshot, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
 
 export const dynamic = "force-dynamic";
@@ -147,6 +147,7 @@ export async function POST(request: Request) {
     const profile = await profileSnapshot(identity.userId);
     return json({ ...settled, points: profile.points, rank: profile.rank }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Baccarat hand failed" }, 400);
   }
 }

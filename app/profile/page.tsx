@@ -16,6 +16,7 @@ declare global {
     solana?: {
       isPhantom?: boolean;
       connect(): Promise<{ publicKey: { toString(): string } }>;
+      disconnect?(): Promise<void>;
       signMessage(message: Uint8Array, encoding: string): Promise<{ signature: Uint8Array }>;
     };
   }
@@ -25,7 +26,21 @@ export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [form, setForm] = useState({ username: "", displayName: "", bio: "", avatarUrl: "" });
   const [status, setStatus] = useState("Loading your profile…");
-  useEffect(() => { fetch("/api/me").then(r => r.json()).then((data) => { if (data.error) return setStatus(data.error); setProfile(data); setForm({ username: data.username, displayName: data.displayName, bio: data.bio, avatarUrl: data.avatarUrl ?? "" }); setStatus(""); }); }, []);
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  function adopt(data: Profile) {
+    setSignedIn(true);
+    setProfile(data);
+    setForm({ username: data.username, displayName: data.displayName, bio: data.bio, avatarUrl: data.avatarUrl ?? "" });
+  }
+  useEffect(() => {
+    fetch("/api/me").then(async (response) => {
+      if (response.status === 401) { setSignedIn(false); return setStatus(""); }
+      const data = await response.json();
+      if (data.error) return setStatus(data.error);
+      adopt(data);
+      setStatus("");
+    }).catch(() => setStatus("Unable to reach SolCage."));
+  }, []);
   async function save(event: FormEvent) {
     event.preventDefault(); setStatus("Saving…");
     const response = await fetch("/api/me", { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify(form) });
@@ -47,6 +62,59 @@ export default function ProfilePage() {
     await navigator.clipboard.writeText(link);
     setStatus("Referral link copied.");
   }
+  /**
+   * A referral link visited before sign-in has no session to attribute, so the
+   * code is held client-side and redeemed once the wallet signature lands.
+   */
+  async function redeemHeldReferral() {
+    let code: string | null = null;
+    try { code = localStorage.getItem("solcage_ref"); } catch { return; }
+    if (!code) return;
+    try {
+      const response = await fetch("/api/referrals", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ code }),
+      });
+      const result = await response.json();
+      if (result.profile) adopt(result.profile);
+    } catch {
+      return;
+    } finally {
+      try { localStorage.removeItem("solcage_ref"); } catch { /* storage blocked */ }
+    }
+  }
+
+  async function signOut() {
+    setStatus("Signing out…");
+    try {
+      const response = await fetch("/api/session", { method: "DELETE" });
+      if (!response.ok) throw new Error("Unable to sign out");
+      // Disconnect the wallet too, otherwise Phantom silently reconnects the
+      // same account and "switch wallet" appears to do nothing.
+      try { await window.solana?.disconnect?.(); } catch { /* wallet already detached */ }
+      location.assign("/");
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "Unable to sign out");
+    }
+  }
+
+  function editProfile() {
+    const field = document.getElementById("profile-display-name");
+    field?.scrollIntoView({ behavior: "smooth", block: "center" });
+    (field as HTMLInputElement | null)?.focus({ preventScroll: true });
+  }
+
+  async function switchWallet() {
+    try {
+      // Phantom re-connects the active account unless it is released first.
+      await window.solana?.disconnect?.();
+    } catch {
+      /* nothing connected */
+    }
+    await verifyWallet();
+  }
+
   async function verifyWallet() {
     try {
       const provider = window.solana;
@@ -67,24 +135,38 @@ export default function ProfilePage() {
       });
       const verified = await verifyResponse.json();
       if (!verifyResponse.ok) throw new Error(verified.error);
-      setProfile(verified.profile);
+      adopt(verified.profile);
       setStatus("Wallet ownership verified.");
+      await redeemHeldReferral();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "Wallet verification cancelled.");
     }
   }
   return <main className="account-page">
     <nav className="account-nav"><Link className="brand" href="/"><BrandMark /><span>SOLCAGE</span></Link><div><Link href="/">Floor</Link><Link href="/leaderboard">Leaderboard</Link><Link href="/profile">Profile</Link></div><div className="nav-social"><ContractAddress /><XLink /></div></nav>
-    {!profile ? <div className="profile-loading">{status}</div> : <>
+    {signedIn === false ? (
+      <section className="signin-gate">
+        <div className="section-kicker">SIGN IN WITH SOLANA</div>
+        <h1>Connect your wallet.</h1>
+        <p>SolCage accounts are wallet-owned. Nothing is created until you sign the verification message — no guest profile, no placeholder identity. Your signature proves ownership and never authorises a transaction.</p>
+        <button className="primary" type="button" onClick={verifyWallet}>CONNECT WALLET</button>
+        {status && <small className="form-status">{status}</small>}
+      </section>
+    ) : !profile ? <div className="profile-loading">{status}</div> : <>
       <section className="profile-top">
         <div className="profile-avatar">{form.avatarUrl ? <Image src={form.avatarUrl} alt="Your profile" width={145} height={145} unoptimized /> : <span>{form.displayName.slice(0, 1)}</span>}<label>CHANGE PFP<input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={avatar} /></label></div>
         <div><div className="section-kicker">PLAYER PROFILE / SEASON ZERO</div><h1>{profile.displayName}</h1><p>@{profile.username} · {profile.rank ? `GLOBAL RANK #${profile.rank}` : "VERIFY WALLET TO RANK"}</p></div>
         <div className="profile-score"><span>LOYALTY BALANCE</span><b>{profile.points.toLocaleString()}</b><small>POINTS · {profile.multiplier.toFixed(2)}× MULTIPLIER</small></div>
+        <div className="profile-actions">
+          <button type="button" onClick={editProfile}>EDIT PROFILE</button>
+          <button type="button" onClick={switchWallet}>{profile.walletVerified ? "SWITCH WALLET" : "CONNECT WALLET"}</button>
+          <button type="button" className="danger" onClick={signOut}>SIGN OUT</button>
+        </div>
       </section>
       <section className="profile-grid">
         <form className="profile-form" onSubmit={save}>
           <div className="panel-title"><span>01</span> PROFILE DETAILS</div>
-          <label>DISPLAY NAME<input value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} maxLength={40} /></label>
+          <label>DISPLAY NAME<input id="profile-display-name" value={form.displayName} onChange={e => setForm({ ...form, displayName: e.target.value })} maxLength={40} /></label>
           <label>USERNAME<input value={form.username} onChange={e => setForm({ ...form, username: e.target.value })} maxLength={24} /></label>
           <label>BIO<textarea value={form.bio} onChange={e => setForm({ ...form, bio: e.target.value })} maxLength={180} /></label>
           <div className={profile.walletVerified ? "wallet-proof verified" : "wallet-proof"}>

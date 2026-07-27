@@ -167,6 +167,12 @@ const schemaStatements = [
   )`,
   `CREATE INDEX IF NOT EXISTS custody_events_user_created_idx
    ON custody_events (user_id, created_at DESC)`,
+  // Wallet-first sign-in: a challenge is issued before any account exists, so
+  // it can no longer be tied to a user. CREATE TABLE IF NOT EXISTS will not
+  // alter an already-created table, so relax it explicitly. Idempotent.
+  `ALTER TABLE wallet_challenges ALTER COLUMN user_id DROP NOT NULL`,
+  `CREATE INDEX IF NOT EXISTS wallet_challenge_wallet_idx
+   ON wallet_challenges (wallet_address, expires_at)`,
 ];
 
 export async function ensureSchema() {

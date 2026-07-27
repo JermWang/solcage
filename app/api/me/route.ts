@@ -1,5 +1,5 @@
 import { db } from "@/lib/db";
-import { json, profileSnapshot, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +8,7 @@ export async function GET(request: Request) {
     const identity = await requireIdentity(request);
     return json(await profileSnapshot(identity.userId), 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Profile unavailable" }, 503);
   }
 }
@@ -33,6 +34,7 @@ export async function PATCH(request: Request) {
     );
     return json(await profileSnapshot(identity.userId), 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     const duplicate = typeof error === "object" && error && "code" in error && error.code === "23505";
     return json({ error: duplicate ? "That username is already taken" : "Unable to save profile" }, duplicate ? 409 : 500);
   }

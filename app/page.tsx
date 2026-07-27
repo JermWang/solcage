@@ -34,25 +34,34 @@ export default function Home() {
   const [chips, setChips] = useState(0);
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [profileName, setProfileName] = useState("Profile");
+  const [signedIn, setSignedIn] = useState<boolean | null>(null);
 
   const collateral = Number(amount || 0) * asset.price;
   const available = collateral * asset.ltv / 100;
 
   useEffect(() => {
     const referralCode = new URLSearchParams(window.location.search).get("ref");
-    fetch("/api/me").then((response) => response.json()).then((profile) => {
-      if (!profile.error) {
-        setLoyaltyPoints(profile.points ?? 0);
-        setProfileName(profile.displayName ?? "Profile");
-      }
+    // Accounts are wallet-gated, so a visitor arriving on a referral link has
+    // no session to attribute it to yet. Hold the code until they sign in.
+    if (referralCode) {
+      try { localStorage.setItem("solcage_ref", referralCode); } catch { /* storage blocked */ }
+    }
+    fetch("/api/me").then(async (response) => {
+      if (response.status === 401) return setSignedIn(false);
+      const profile = await response.json();
+      if (profile.error) return;
+      setSignedIn(true);
+      setLoyaltyPoints(profile.points ?? 0);
+      setProfileName(profile.displayName ?? "Profile");
       if (referralCode) {
         fetch("/api/referrals", {
           method: "POST",
           headers: { "content-type": "application/json" },
           body: JSON.stringify({ code: referralCode }),
-        }).then((response) => response.json()).then((result) => {
+        }).then((r) => r.json()).then((result) => {
           if (result.profile) setLoyaltyPoints(result.profile.points ?? 0);
-        });
+          try { localStorage.removeItem("solcage_ref"); } catch { /* storage blocked */ }
+        }).catch(() => undefined);
       }
     }).catch(() => undefined);
 
@@ -98,9 +107,9 @@ export default function Home() {
           <a href="/docs">Docs</a>
           <a href="/leaderboard">Leaderboard</a>
         </div>
-        <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{loyaltyPoints.toLocaleString()} PTS</b></span></div>
+        <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{signedIn === false ? "—" : `${loyaltyPoints.toLocaleString()} PTS`}</b></span></div>
         <div className="nav-social"><ContractAddress /><XLink /></div>
-        <a className="wallet" href="/profile">{profileName}</a>
+        <a className="wallet" href="/profile">{signedIn === false ? "Connect wallet" : profileName}</a>
       </nav>
 
       {view === "home" && <HomeView go={go} onSelectAsset={(nextAsset) => {

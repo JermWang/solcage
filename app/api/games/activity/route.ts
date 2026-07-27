@@ -1,5 +1,5 @@
 import { db, ensureSchema } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +63,7 @@ export async function GET(request: Request) {
       },
     }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Unable to load activity" }, 500);
   }
 }

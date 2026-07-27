@@ -1,6 +1,6 @@
 import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { db, ensureSchema } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +33,7 @@ export async function POST(request: Request) {
       expiresInSeconds: 600,
     }, 201, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Unable to commit round" }, 400);
   }
 }

@@ -1,5 +1,5 @@
 import { db, transaction } from "@/lib/db";
-import { json, requireIdentity } from "@/lib/identity";
+import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import { custodyRuntimeConfig } from "@/lib/custody/config";
 import { positionJson, recordCustodyEvent, verifiedWallet } from "@/lib/custody/database";
 import { maybeProxyCustody } from "@/lib/custody/proxy";
@@ -72,6 +72,7 @@ export async function POST(request: Request) {
     });
     return json({ position: positionJson(updated) }, 200, identity);
   } catch (error) {
+    if (isAuthRequired(error)) return authRequired();
     return json({ error: error instanceof Error ? error.message : "Unable to confirm repayment" }, 400);
   }
 }
