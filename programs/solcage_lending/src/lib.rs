@@ -1,3 +1,6 @@
+#![allow(unexpected_cfgs)]
+#![allow(clippy::result_large_err)]
+
 use anchor_lang::prelude::*;
 use anchor_spl::{
     associated_token::AssociatedToken,
@@ -124,7 +127,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 transfer_accounts,
             ),
             amount,
@@ -189,7 +192,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 transfer_accounts,
                 signer_seeds,
             ),
@@ -229,7 +232,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 transfer_accounts,
             ),
             amount,
@@ -284,7 +287,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 transfer_accounts,
                 signer_seeds,
             ),
@@ -353,7 +356,7 @@ pub mod solcage_lending {
             authority: ctx.accounts.liquidator.to_account_info(),
         };
         token_interface::transfer_checked(
-            CpiContext::new(ctx.accounts.token_program.to_account_info(), repay_accounts),
+            CpiContext::new(ctx.accounts.token_program.key(), repay_accounts),
             debt,
             ctx.accounts.borrow_mint.decimals,
         )?;
@@ -372,7 +375,7 @@ pub mod solcage_lending {
         };
         token_interface::transfer_checked(
             CpiContext::new_with_signer(
-                ctx.accounts.token_program.to_account_info(),
+                ctx.accounts.token_program.key(),
                 seize_accounts,
                 signer_seeds,
             ),
