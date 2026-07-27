@@ -124,9 +124,8 @@ export default function DocsPage() {
                 gets a standing allowance over your balance and cannot pull more later.
               </p>
               <p>
-                Once that transfer finalizes on Solana, your position exists. Custody then sells the
-                deposit through a public Solana routing aggregator, at whatever the market pays at
-                that moment.
+                Once that transfer finalizes on Solana, your position exists, and the value of your
+                deposit at that moment is what sets your advance.
               </p>
               <p className="docs-callout warn">
                 Be clear on this part: <b>your tokens are sold when you open a position.</b> You are
@@ -225,8 +224,8 @@ export default function DocsPage() {
                   full quantity, and your claim is held for review instead of settling short.
                 </li>
                 <li>
-                  <b>Swap costs are real.</b> Selling and repurchasing both cross the open market, so
-                  routing fees and slippage apply on each leg. Very small positions feel this most.
+                  <b>Market costs are real.</b> Opening and closing a position each carry a market
+                  cost, so fees and slippage apply at both ends. Very small positions feel this most.
                 </li>
                 <li>
                   <b>You are out of the market on the way down, and on the way up.</b> Between the sale
@@ -293,7 +292,7 @@ export default function DocsPage() {
                 <dd>No. Repayment has to come from the same verified wallet that opened the position.</dd>
 
                 <dt>Do I get back the same tokens I deposited?</dt>
-                <dd>The same quantity of the same token, repurchased on the open market. Fungible tokens have no individual identity, so quantity is the meaningful unit.</dd>
+                <dd>The same quantity of the same token, reacquired for you before the claim releases. Fungible tokens have no individual identity, so quantity is the meaningful unit.</dd>
 
                 <dt>Why is the terminal disabled?</dt>
                 <dd>An operational check has failed — a missing market, a settlement route that is unavailable, or insufficient operator inventory. The live checklist is at the bottom of the <Link href="/lending">lending page</Link>.</dd>
