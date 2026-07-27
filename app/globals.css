@@ -725,7 +725,10 @@ main>footer p a:hover{background:var(--lime)}
 .docs-layout{display:grid;grid-template-columns:210px minmax(0,1fr);gap:44px;margin-top:34px;align-items:start}
 .docs-toc{position:sticky;top:96px;display:flex;flex-direction:column;gap:3px}
 .docs-toc>span{margin:0 10px 8px;color:#655f6e;font:800 8px var(--font-geist-mono);letter-spacing:.14em}
-.docs-toc nav{display:flex;flex-direction:column;gap:2px}
+/* The bare `nav` selector used by the landing header applies to every <nav> on
+   the site (76px tall, light background, sticky, centred). Neutralise it here,
+   the same way .casino-sidebar nav has to. */
+.docs-toc nav{position:static;height:auto;padding:0;border:0;background:transparent;backdrop-filter:none;z-index:auto;align-items:stretch;display:flex;flex-direction:column;gap:2px}
 .docs-toc a{padding:8px 10px;border-radius:8px;color:#9b95a3;font:700 10px var(--font-geist-mono)}
 .docs-toc a:hover{color:white;background:rgba(255,255,255,.05)}
 .docs-body{max-width:760px}
