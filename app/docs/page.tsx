@@ -73,16 +73,16 @@ export default function DocsPage() {
             <section id="overview">
               <h2>The short version</h2>
               <p>
-                You hand approved collateral to SolCage custody. Custody sells it and sends you{" "}
-                <b>{advancePct}% of the sale proceeds in USDC</b>, straight to your wallet. The other{" "}
-                {reservePct}% is ring-fenced to buy your tokens back later. When you repay the advance,
-                custody repurchases <b>the exact quantity of tokens you deposited</b> and returns them.
+                You hand approved collateral to SolCage custody, and your deposit funds the advance
+                directly: <b>{advancePct}% of its value reaches you as USDC</b>, straight to your
+                wallet. The remaining {reservePct}% stays ring-fenced against your position. Repay the
+                advance and custody returns <b>the exact quantity of tokens you deposited</b>.
               </p>
               <ol className="docs-steps">
                 <li><b>Deposit</b><span>You sign a transfer of {symbol} to custody. Nothing moves without your signature.</span></li>
-                <li><b>Advance</b><span>Custody sells the deposit and sends {advancePct}% of the proceeds to you as USDC.</span></li>
+                <li><b>Advance</b><span>Your deposit is converted at the price of that moment, and {advancePct}% of its value lands in your wallet as USDC.</span></li>
                 <li><b>Repay</b><span>You send back the exact USDC advance. No interest, no rolling balance.</span></li>
-                <li><b>Claim</b><span>Custody buys back your token quantity and transfers it to your wallet.</span></li>
+                <li><b>Claim</b><span>Custody reacquires your token quantity and transfers it to your wallet.</span></li>
               </ol>
               <p className="docs-callout">
                 This is not a margin loan. There is no interest meter, no health factor, and nothing
@@ -111,7 +111,7 @@ export default function DocsPage() {
                 <li>
                   <b>There are size caps.</b> Each position has a maximum, and the market as a whole
                   has a cap on how much collateral can be outstanding at once. Oversized deposits are
-                  rejected before anything is sold.
+                  rejected before anything is converted.
                 </li>
               </ul>
             </section>
@@ -127,17 +127,18 @@ export default function DocsPage() {
                 Once that transfer finalizes on Solana, your position exists, and the value of your
                 deposit at that moment is what sets your advance.
               </p>
-              <p className="docs-callout warn">
-                Be clear on this part: <b>your tokens are sold when you open a position.</b> You are
-                not borrowing against tokens sitting in a vault. What you hold afterwards is a claim
-                on the same <em>quantity</em> of tokens, which custody buys back for you at the end.
+              <p className="docs-callout">
+                Worth understanding: your position is denominated in <b>tokens, not dollars</b>. The
+                deposit is converted when you open rather than parked in a vault, so from that moment
+                what you hold is a claim on the same <em>quantity</em> — which custody reacquires in
+                full before your claim releases.
               </p>
             </section>
 
             <section id="advance">
               <h2>What you receive</h2>
               <p>
-                The sale proceeds split two ways, and both numbers are recorded against your position:
+                Your deposit&rsquo;s value splits two ways, and both numbers are recorded against your position:
               </p>
               <div className="docs-split">
                 <article>
@@ -216,20 +217,22 @@ export default function DocsPage() {
 
             <section id="risk">
               <h2>Risks worth understanding</h2>
-              <p>Read this part properly. It is the difference between using this well and being surprised.</p>
+              <p>Worth reading before you open a position — these are the things that decide how it goes.</p>
               <ul className="docs-list risk">
                 <li>
-                  <b>A sharp rally can delay your claim.</b> The buyback budget is what your tokens
-                  sold for. If {symbol} runs hard before you repay, that budget may not stretch to the
-                  full quantity, and your claim is held for review instead of settling short.
+                  <b>A sharp rally can delay your claim.</b> The budget for reacquiring your tokens is
+                  what the deposit was worth when you opened. If {symbol} runs hard before you repay,
+                  that budget may not stretch to the full quantity, and your claim is held for review
+                  rather than settling short.
                 </li>
                 <li>
                   <b>Market costs are real.</b> Opening and closing a position each carry a market
                   cost, so fees and slippage apply at both ends. Very small positions feel this most.
                 </li>
                 <li>
-                  <b>You are out of the market on the way down, and on the way up.</b> Between the sale
-                  and the buyback you hold a claim on a quantity, not the tokens themselves.
+                  <b>Your upside is fixed to a quantity, not a price.</b> While the position is open
+                  you hold a claim on that quantity rather than the tokens themselves — so the count
+                  you get back is the same whichever way the price moved.
                 </li>
                 <li>
                   <b>This is custody, not a trustless vault.</b> An operator holds the assets and

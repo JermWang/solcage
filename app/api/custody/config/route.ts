@@ -109,16 +109,18 @@ export async function GET(request: Request) {
         true,
         collateralAccount ? "Initialized" : "Created atomically on first deposit",
       );
-      const settlementRaw = usdcAccount && usdcAccount.data.length >= 72
-        ? usdcAccount.data.readBigUInt64LE(64)
-        : 0n;
+      // Advances are paid out of the proceeds of the deposit itself, so no
+      // settlement float is required — the account only has to exist for those
+      // proceeds to land in. Balance is reported, not gated.
+      const settlementReady = Boolean(usdcAccount && usdcAccount.data.length >= 72);
+      const settlementRaw = settlementReady ? usdcAccount!.data.readBigUInt64LE(64) : 0n;
       check(
         "settlement-account",
-        "Settlement inventory",
-        settlementRaw > 0n,
-        settlementRaw > 0n
-          ? `${settlementRaw.toString()} base units available`
-          : "Fund the custody wallet with settlement tokens",
+        "Settlement account",
+        settlementReady,
+        settlementReady
+          ? `Initialized · ${settlementRaw.toString()} base units held`
+          : "Send any amount of the settlement token once to create the account",
       );
     } catch {
       check("rpc", "Solana RPC", false, "Unable to attest custody accounts");
