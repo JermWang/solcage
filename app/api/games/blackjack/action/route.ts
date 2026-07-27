@@ -133,8 +133,8 @@ export async function POST(request: Request) {
       const settled = Boolean(state.outcome);
       await client.query(
         `UPDATE game_fair_rounds
-         SET client_seed = $1, status = $2, result = $3::jsonb,
-             revealed_at = CASE WHEN $2 = 'revealed' THEN NOW() ELSE revealed_at END
+         SET client_seed = $1, status = $2::varchar, result = $3::jsonb,
+             revealed_at = CASE WHEN $2::varchar = 'revealed' THEN NOW() ELSE revealed_at END
          WHERE id = $4`,
         [state.clientSeed, settled ? "revealed" : "active", JSON.stringify(state), roundId],
       );
