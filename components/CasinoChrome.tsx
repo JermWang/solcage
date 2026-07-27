@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { BrandMark } from "@/components/BrandMark";
+import { ContractAddress } from "@/components/ContractAddress";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards";
@@ -71,6 +72,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             />
           </div>
           <div className="casino-top-actions">
+            <ContractAddress />
             <Link href="/leaderboard"><small>WEEKLY RACE</small><b>{points.toLocaleString()} XP</b></Link>
             <Link className="casino-deposit" href="/lending">Deposit</Link>
             <Link className="casino-profile" href="/profile">{profileName.slice(0, 1).toUpperCase()}</Link>

@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type PointerEvent } from "react";
 import { BrandMark } from "@/components/BrandMark";
+import { ContractAddress } from "@/components/ContractAddress";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -97,6 +98,7 @@ export default function Home() {
           <a href="/leaderboard">Leaderboard</a>
         </div>
         <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{loyaltyPoints.toLocaleString()} PTS</b></span></div>
+        <ContractAddress />
         <a className="wallet" href="/profile">{profileName}</a>
       </nav>
 
