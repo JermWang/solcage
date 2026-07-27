@@ -28,6 +28,11 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
     setWalletAddress(profile.walletAddress ?? null);
   }
 
+  // Live table limits, read from the same source that enforces them so the
+  // displayed ceiling can never drift from the one actually applied.
+  const [maxWin, setMaxWin] = useState<string | null>(null);
+  const [houseSymbol, setHouseSymbol] = useState("SOL");
+
   useEffect(() => {
     fetch("/api/me")
       .then(async (response) => {
@@ -35,6 +40,22 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
         const profile = await response.json();
         if (profile.error) return;
         adopt(profile);
+      })
+      .catch(() => undefined);
+
+    fetch("/api/wallet/balance")
+      .then(async (response) => {
+        if (!response.ok) return;
+        const data = await response.json();
+        if (data.wagering !== "open") return;
+        const decimals = Number(data.decimals ?? 9);
+        const cap = BigInt(data.limits?.maxPayoutRaw ?? "0");
+        if (cap <= 0n) return;
+        const scale = 10n ** BigInt(decimals);
+        const whole = cap / scale;
+        const fraction = (cap % scale).toString().padStart(decimals, "0").replace(/0+$/, "");
+        setMaxWin(fraction ? `${whole}.${fraction}` : `${whole}`);
+        setHouseSymbol(String(data.symbol ?? "SOL"));
       })
       .catch(() => undefined);
   }, []);
@@ -85,6 +106,12 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             />
           </div>
           <div className="casino-top-actions">
+            {maxWin && (
+              <Link className="casino-maxwin" href="/docs#limits" title="Temporary while the bankroll grows — see the docs">
+                <small>MAX WIN / ROUND</small>
+                <b>{maxWin} {houseSymbol}</b>
+              </Link>
+            )}
             <ContractAddress />
             <XLink />
             <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{signedIn === false ? "—" : `${points.toLocaleString()} XP`}</b></Link>

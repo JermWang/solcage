@@ -21,6 +21,7 @@ const SECTIONS = [
   ["states", "Position states"],
   ["risk", "Risks worth understanding"],
   ["play", "Playing the floor"],
+  ["limits", "Table limits"],
   ["fair", "Provable fairness"],
   ["faq", "FAQ"],
 ] as const;
@@ -307,6 +308,40 @@ export default function DocsPage() {
                 <li><b>Referrers earn a 10% bonus</b> on the activity of players they bring in.</li>
                 <li><b>XP is tied to a verified wallet.</b> Unverified accounts do not rank.</li>
               </ul>
+            </section>
+
+            <section id="limits">
+              <h2>Table limits</h2>
+              <p>
+                Every table carries a minimum stake, a maximum stake, and a <b>maximum win per
+                round</b>. The win ceiling is the one worth reading twice, because it applies no
+                matter which game you are on: if a round would pay more than the ceiling, it pays the
+                ceiling.
+              </p>
+              <div className="docs-split">
+                <article>
+                  <span>MAX WIN PER ROUND</span>
+                  <b>0.5 SOL</b>
+                  <small>Applies to every game. A hand that would pay more is settled at this figure.</small>
+                </article>
+                <article>
+                  <span>STAKES</span>
+                  <b>0.001 – 0.25</b>
+                  <small>SOL per round. The upper end is reachable on low-multiplier tables.</small>
+                </article>
+              </div>
+              <p className="docs-callout">
+                <b>These limits are temporary.</b> They exist because the house bankroll is small at
+                launch, and a single high-multiplier hit on a small bankroll is how a table stops
+                being able to pay anyone. They will be raised as the bankroll grows — the ceiling is
+                a starting number, not a permanent one.
+              </p>
+              <p>
+                Where a ceiling applies, the round tells you: the result shows what was actually
+                credited rather than the uncapped figure, so you are never shown a number you did not
+                receive. The live values are always available from the cashier, and those are
+                authoritative if they ever disagree with this page.
+              </p>
             </section>
 
             <section id="fair">
