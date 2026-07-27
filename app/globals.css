@@ -858,11 +858,14 @@ main>footer p a:hover{background:var(--lime)}
 .plinko-slots span{border:1px solid #4b4057;border-radius:5px 5px 11px 11px;background:linear-gradient(180deg,#2d2339,#15111c);display:grid;place-items:center;color:#a29aaa;font:900 8px var(--font-geist-mono);transition:transform .2s,background .2s,color .2s,box-shadow .2s}
 .plinko-slots span:nth-child(-n+2),.plinko-slots span:nth-last-child(-n+2){color:#ff7d92;background:linear-gradient(180deg,#502030,#1c1016)}
 .plinko-slots span.active{transform:translateY(-5px) scale(1.08);background:var(--lime);border-color:var(--lime);color:#070609;box-shadow:0 0 25px rgba(201,255,56,.48)}
-.plinko-result{position:absolute;z-index:5;left:22px;bottom:22px;padding:14px 16px;border:1px solid var(--casino-line);border-radius:10px;background:rgba(8,7,11,.78);backdrop-filter:blur(12px);display:grid;grid-template-columns:auto auto;gap:5px 15px}
+/* Top-right, not bottom-left: the slot row spans the full width of the board's
+   base, so a bottom corner always covers the highest-value multipliers. The
+   board narrows toward the top, leaving its upper corners clear. */
+.plinko-result{position:absolute;z-index:5;right:22px;top:20px;padding:14px 16px;border:1px solid var(--casino-line);border-radius:10px;background:rgba(8,7,11,.78);backdrop-filter:blur(12px);display:grid;grid-template-columns:auto auto;gap:5px 15px}
 .plinko-result span{grid-column:1/-1;color:#77707d;font:800 7px var(--font-geist-mono);letter-spacing:.11em}.plinko-result b{font-size:22px;color:var(--lime)}.plinko-result small{align-self:center;color:#8a8390;font:800 7px var(--font-geist-mono)}
 .plinko-console{align-self:stretch}
 @media(max-width:1050px){.plinko-room{grid-template-columns:1fr}.plinko-stage{min-height:620px}}
-@media(max-width:700px){.plinko-stage{min-height:480px}.plinko-result{left:12px;bottom:12px}.plinko-page .fairness-panel{padding:20px}}
+@media(max-width:700px){.plinko-stage{min-height:480px}.plinko-result{left:12px;bottom:12px;right:auto;top:auto}.plinko-page .fairness-panel{padding:20px}}
 /* The peg rows carry hardcoded pixel widths (120 + row*44, up to 560px), so the board
    must keep its 640x610 geometry and zoom as a unit — resizing it desyncs the pegs. */
 @media(max-width:1340px){.plinko-board{zoom:.9}}
