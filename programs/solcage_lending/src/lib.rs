@@ -126,10 +126,7 @@ pub mod solcage_lending {
             authority: ctx.accounts.owner.to_account_info(),
         };
         token_interface::transfer_checked(
-            CpiContext::new(
-                ctx.accounts.token_program.key(),
-                transfer_accounts,
-            ),
+            CpiContext::new(ctx.accounts.token_program.key(), transfer_accounts),
             amount,
             ctx.accounts.collateral_mint.decimals,
         )?;
@@ -231,10 +228,7 @@ pub mod solcage_lending {
             authority: ctx.accounts.owner.to_account_info(),
         };
         token_interface::transfer_checked(
-            CpiContext::new(
-                ctx.accounts.token_program.key(),
-                transfer_accounts,
-            ),
+            CpiContext::new(ctx.accounts.token_program.key(), transfer_accounts),
             amount,
             ctx.accounts.borrow_mint.decimals,
         )?;
