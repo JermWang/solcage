@@ -55,5 +55,42 @@ informed Crystal Mines. SolCage replaces the original socket and browser-state
 flow with a PostgreSQL-backed, row-locked action endpoint, HMAC-SHA256 board
 shuffle, hidden server commitment, persisted proof, and atomic reward settlement.
 
-The full license text for each package is included in its installed package and
-is available from the linked source repository.
+## Solana Crash Game
+
+- Source: https://github.com/casinocutup/Solana-Crash-Game
+- Revision reviewed: `4035f3d76c525f9a211f29727d55fc6efd7a9320`
+- License: MIT
+- Copyright: 2024 Solana Crash Game
+
+The Solana-native multiplier flight and cashout presentation informed Cage
+Crash. SolCage replaces client-timed multiplier and settlement behavior with a
+PostgreSQL-backed row lock, committed HMAC-SHA256 crash point, server clock,
+idempotent persisted settlement, proof reveal, and atomic loyalty credit.
+
+## MIT license text for adapted game foundations
+
+Copyright (c) 2026 Jason Guo
+
+Copyright (c) 2026 Sinan Bolel
+
+Copyright (c) 2025 Thiago Ferreira
+
+Copyright (c) 2024 Solana Crash Game
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.

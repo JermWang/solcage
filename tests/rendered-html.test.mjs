@@ -56,7 +56,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Neon Plinko", "Cage Blackjack", "Crystal Mines"]) {
+  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
@@ -67,15 +67,17 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
   assert.match(html, /href="\/games\/mines"/);
+  assert.match(html, /href="\/games\/crash"/);
   assert.match(html, /href="\/lending"/);
   assert.match(html, /\/game-art\/plinko\.webp/);
   assert.match(html, /\/game-art\/blackjack\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
+  assert.match(html, /\/game-art\/crash\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
-  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
+  const [scene, games, roulette, plinko, blackjack, blackjackApi, mines, minesApi, minesEngine, crash, crashApi, crashEngine, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
@@ -85,6 +87,9 @@ test("ships the procedural model, fair games, lending client, protocol source, a
     readFile(new URL("../app/games/mines/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/mines/action/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../lib/games/mines.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/crash/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/crash/action/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../lib/games/crash.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
@@ -119,6 +124,10 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(minesApi, /generateMinePositions/);
   assert.match(minesApi, /awardPoints/);
   assert.match(minesEngine, /mineMultiplier/);
+  assert.match(crash, /SERVER-TIMED ROUND/);
+  assert.match(crashApi, /FOR UPDATE/);
+  assert.match(crashApi, /awardPoints/);
+  assert.match(crashEngine, /crashPointFromInt/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
   assert.match(fairReveal, /plinko/);
@@ -137,6 +146,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   assert.match(notices, /jasonca2023\/Plinko\.rng/);
   assert.match(notices, /sbolel\/blackjack-party/);
   assert.match(notices, /iamThiagoo\/mines-casino/);
+  assert.match(notices, /casinocutup\/Solana-Crash-Game/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);
@@ -148,6 +158,7 @@ test("ships the procedural model, fair games, lending client, protocol source, a
   await Promise.all([
     access(new URL("../public/game-art/roulette.webp", import.meta.url)),
     access(new URL("../public/game-art/mines.webp", import.meta.url)),
+    access(new URL("../public/game-art/crash.webp", import.meta.url)),
     access(new URL("../public/game-art/dice.webp", import.meta.url)),
     access(new URL("../public/game-art/plinko.webp", import.meta.url)),
     access(new URL("../public/game-art/blackjack.webp", import.meta.url)),

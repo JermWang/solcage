@@ -458,6 +458,7 @@
 .casino-game-card>img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;filter:saturate(.95) contrast(1.08);transition:transform .45s}
 .casino-game-card>img[src*="plinko"]{object-position:63% center}
 .casino-game-card>img[src*="blackjack"]{object-position:61% center}
+.casino-game-card>img[src*="crash"]{object-position:58% center}
 .casino-game-card:hover>img{transform:scale(1.05)}
 .game-card-shade{position:absolute;z-index:1;inset:0;background:linear-gradient(180deg,transparent 26%,rgba(7,6,9,.15) 47%,rgba(7,6,9,.95) 90%),linear-gradient(135deg,color-mix(in srgb,var(--card-accent,#8d65ff) 27%,transparent),transparent 50%)}
 .game-card-index,.game-card-tag{position:absolute;z-index:2;top:11px;font:800 7px var(--font-geist-mono);letter-spacing:.09em}
@@ -525,9 +526,39 @@
 .fairness-grid span{color:#706a77;font:800 7px var(--font-geist-mono);letter-spacing:.1em}
 .fairness-grid code{overflow:hidden;text-overflow:ellipsis;color:#b8b0bd;font:9px var(--font-geist-mono);white-space:nowrap}
 .fairness-panel>small{color:#77717e;font:10px/1.6 var(--font-geist-mono)}
+
+/* Server-authoritative crash room */
+.crash-room{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(310px,.72fr);gap:14px}
+.crash-stage{position:relative;min-height:620px;border:1px solid var(--casino-line);border-radius:18px;overflow:hidden;background:radial-gradient(circle at 72% 28%,rgba(201,255,56,.12),transparent 25%),radial-gradient(circle at 22% 82%,rgba(141,101,255,.2),transparent 31%),linear-gradient(145deg,#15121c,#08070b 68%);isolation:isolate}
+.crash-stage::before{content:"";position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.035) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.035) 1px,transparent 1px);background-size:52px 52px;mask-image:linear-gradient(to top,black,transparent 87%);z-index:-1}
+.crash-stage::after{content:"";position:absolute;inset:auto -15% -38% 4%;height:70%;background:radial-gradient(ellipse,rgba(141,101,255,.17),transparent 66%);filter:blur(28px);z-index:-1}
+.crash-history{position:absolute;z-index:4;right:20px;top:20px;max-width:54%;display:flex;justify-content:flex-end;gap:6px;overflow:hidden}
+.crash-history span,.crash-history small{flex:0 0 auto;padding:7px 9px;border:1px solid var(--casino-line);border-radius:16px;background:rgba(8,7,11,.62);color:#ff6b79;font:800 8px var(--font-geist-mono);backdrop-filter:blur(10px)}
+.crash-history span.high{color:var(--lime)}.crash-history small{color:#706a77;letter-spacing:.08em}
+.crash-curve{position:absolute;left:5%;right:5%;bottom:8%;width:90%;height:72%;overflow:visible}
+.crash-line{fill:none;stroke:url(#crash-line);stroke-width:8;stroke-linecap:round;filter:drop-shadow(0 0 12px rgba(201,255,56,.28));stroke-dasharray:1120;animation:crash-draw 2.4s ease-out both}
+.crash-area{fill:url(#crash-fill);opacity:.82}
+@keyframes crash-draw{from{stroke-dashoffset:1120}to{stroke-dashoffset:0}}
+.crash-flight{position:absolute;z-index:3;left:var(--crash-x);bottom:var(--crash-y);width:70px;height:70px;border:2px solid rgba(201,255,56,.78);border-radius:50%;background:radial-gradient(circle at 34% 28%,#f1ffaf 0 8%,#c9ff38 9% 39%,#7e9f21 70%,#222c09);box-shadow:0 0 0 9px rgba(201,255,56,.06),0 0 38px rgba(201,255,56,.35),0 15px 30px rgba(0,0,0,.4);display:grid;place-items:center;transform:translate(-50%,50%) rotate(-18deg);transition:left .18s linear,bottom .18s linear}
+.crash-flight span{width:49px;height:49px;border:1px dashed rgba(8,7,11,.48);border-radius:50%;display:grid;place-items:center;color:#0b0d05;font:1000 14px var(--font-geist-mono);letter-spacing:-.08em}
+.crash-flight i{position:absolute;right:57px;top:27px;width:110px;height:12px;background:linear-gradient(90deg,transparent,rgba(141,101,255,.55),var(--lime));filter:blur(5px);transform:rotate(12deg);transform-origin:right}
+.crash-stage.flying .crash-flight{animation:crash-chip-spin 1.1s linear infinite}
+@keyframes crash-chip-spin{to{transform:translate(-50%,50%) rotate(342deg)}}
+.crash-stage.loss{background:radial-gradient(circle at 70% 28%,rgba(255,79,98,.25),transparent 29%),linear-gradient(145deg,#1e1118,#08070b 68%)}.crash-stage.loss .crash-flight{filter:grayscale(.65);opacity:.35}.crash-stage.loss .crash-line{stroke:#ff4f62}
+.crash-stage.win .crash-flight{box-shadow:0 0 0 15px rgba(201,255,56,.08),0 0 75px rgba(201,255,56,.55)}.crash-stage.win .crash-line{stroke:var(--lime)}
+.crash-multiplier{position:absolute;z-index:4;left:6%;bottom:9%;display:flex;flex-direction:column;align-items:flex-start;pointer-events:none}
+.crash-multiplier span{color:#918997;font:800 8px var(--font-geist-mono);letter-spacing:.14em}.crash-multiplier b{font-size:clamp(52px,8vw,118px);line-height:.92;letter-spacing:-.075em;text-shadow:0 0 45px rgba(141,101,255,.21)}.crash-multiplier small{margin-top:12px;color:var(--lime);font:800 9px var(--font-geist-mono);letter-spacing:.09em}
+.crash-console{display:flex;flex-direction:column}.crash-console .roulette-receipt{margin-top:auto}
+.crash-auto-row{display:grid;grid-template-columns:58px 1fr;gap:7px}
+.crash-auto-row>button{border:1px solid var(--casino-line);border-radius:8px;background:#19171d;color:#746e7a;font:900 9px var(--font-geist-mono);cursor:pointer}.crash-auto-row>button.active{border-color:rgba(201,255,56,.45);background:rgba(201,255,56,.1);color:var(--lime)}
+.crash-auto-row>div{height:52px;padding:0 12px;border:1px solid var(--casino-line);border-radius:8px;background:#09080c;display:flex;align-items:center}.crash-auto-row input{min-width:0;width:100%;border:0;outline:0;background:transparent;color:white;font-size:18px;font-weight:800}.crash-auto-row input:disabled{opacity:.35}.crash-auto-row span{color:#746e7a;font:800 12px var(--font-geist-mono)}
+.crash-cashout{background:linear-gradient(105deg,var(--lime),#efffb1);box-shadow:0 0 35px rgba(201,255,56,.16)}
 @media(max-width:1200px){.casino-game-grid{grid-template-columns:repeat(3,1fr)}.casino-promo-grid{grid-template-columns:1.5fr 1fr}.casino-primary-promo{grid-row:span 2}.casino-mini-promo{min-height:148px}.promo-wheel{opacity:.58}.casino-primary-promo>div{max-width:470px}}
 @media(max-width:900px){.casino-app{grid-template-columns:82px minmax(0,1fr)}.casino-sidebar{padding:18px 10px}.casino-wordmark{justify-content:center;padding-left:0;padding-right:0}.casino-wordmark>span,.casino-sidebar nav>a:not(.active){font-size:0}.casino-sidebar nav>a,.casino-nav-muted{justify-content:center;padding:0}.casino-sidebar nav>a i,.casino-nav-muted i{font-size:18px}.casino-sidebar nav>small,.casino-nav-muted,.casino-sidebar-card{display:none}.casino-sidebar nav>a.active{font-size:0}.casino-sidebar nav>a.active i{font-size:18px}.roulette-room{grid-template-columns:1fr}.roulette-visual{min-height:520px}.casino-integrity{grid-template-columns:1fr auto}.casino-integrity>p{grid-row:2;grid-column:1/-1}}
 @media(max-width:650px){.casino-app{display:block}.casino-sidebar{position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:66px;padding:7px 12px;border:0;border-top:1px solid var(--casino-line);flex-direction:row;z-index:50}.casino-wordmark{display:none}.casino-sidebar nav{width:100%;height:100%;padding:0;display:grid;grid-template-columns:repeat(4,1fr);gap:4px}.casino-sidebar nav>small,.casino-sidebar nav>a:nth-of-type(3),.casino-sidebar nav>a:nth-of-type(4),.casino-sidebar nav>a:nth-of-type(6),.casino-sidebar nav>a:nth-of-type(8){display:none}.casino-sidebar nav>a{height:100%;font-size:0!important}.casino-topbar{height:62px;padding:0 14px}.casino-search{display:none}.casino-top-actions{width:100%;justify-content:flex-end}.casino-top-actions>a:first-child{margin-right:auto}.casino-content,.casino-game-room{padding:14px 14px 92px}.casino-promo-grid{display:block}.casino-primary-promo{min-height:430px;padding:28px}.casino-primary-promo h1{font-size:47px}.casino-mini-promo{min-height:175px;margin-top:10px}.promo-wheel{right:-90px;bottom:-95px;opacity:.55}.casino-live-strip>div{gap:22px}.casino-categories{margin-top:14px}.casino-game-grid{grid-template-columns:repeat(2,1fr)}.casino-integrity{display:block}.casino-integrity p{margin:18px 0}.game-room-header{align-items:start}.game-room-header>div:first-child span{display:none}.game-room-balance{padding:8px}.roulette-visual{min-height:430px}.roulette-visual .roulette-wheel-container{transform:scale(.88)}.roulette-console{padding:20px}.fairness-grid{grid-template-columns:1fr}.game-room-header h1{font-size:27px}.casino-game-card footer b{font-size:14px}}
+
+@media(max-width:900px){.crash-room{grid-template-columns:1fr}.crash-stage{min-height:520px}}
+@media(max-width:650px){.crash-stage{min-height:440px}.crash-history{left:18px;right:18px;top:62px;max-width:none;justify-content:flex-start}.crash-multiplier{left:7%;bottom:8%}.crash-multiplier b{font-size:58px}.crash-flight{width:52px;height:52px}.crash-flight span{width:37px;height:37px;font-size:11px}.crash-flight i{right:43px;top:20px;width:78px}.crash-curve{height:64%;bottom:12%}}
 
 .original-game-tabs{position:static;height:auto;padding:0;margin:0 0 12px;border:0;background:transparent;backdrop-filter:none;display:flex;gap:7px}
 .original-game-tabs button{padding:10px 14px;border:1px solid var(--casino-line);border-radius:8px;background:#111015;color:#827b89;font:800 8px var(--font-geist-mono);letter-spacing:.08em;cursor:pointer}

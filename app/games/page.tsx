@@ -21,6 +21,7 @@ const games: LobbyGame[] = [
   { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/plinko.webp", href: "/games/plinko", tone: "cyan", categories: ["Originals", "Instant"] },
   { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/blackjack.webp", href: "/games/blackjack", tone: "red", categories: ["Originals", "Table games", "High limit"] },
   { name: "Crystal Mines", studio: "MINES CASINO FOUNDATION", tag: "NEW", image: "/game-art/mines.webp", href: "/games/mines", tone: "cyan", categories: ["Originals", "Instant"] },
+  { name: "Cage Crash", studio: "SOLANA CRASH FOUNDATION", tag: "LIVE", image: "/game-art/crash.webp", href: "/games/crash", tone: "red", categories: ["Originals", "Instant", "High limit"] },
   { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red", categories: ["Table games", "High limit"] },
   { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "FAST", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple", categories: ["Originals", "Instant"] },
 ];
@@ -113,13 +114,13 @@ export default function GamesLobby() {
                 </Link>
               ))}
             </div>
-          ) : <div className="casino-empty-search"><b>NO GAMES FOUND</b><span>Try roulette, mines, dice, Plinko, blackjack, or slots.</span></div>}
+          ) : <div className="casino-empty-search"><b>NO GAMES FOUND</b><span>Try crash, roulette, mines, dice, Plinko, blackjack, or slots.</span></div>}
         </section>
 
         <section className="casino-integrity">
           <div><span>PROVABLY FAIR FLOOR</span><h2>Commit first. Reveal after.</h2></div>
-          <p>Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
-          <Link href="/games/mines">Play the newest game ↗</Link>
+          <p>Crash, Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
+          <Link href="/games/crash">Play the newest game ↗</Link>
         </section>
       </div>
     </CasinoChrome>
