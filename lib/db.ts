@@ -92,6 +92,20 @@ const schemaStatements = [
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
   )`,
   `CREATE INDEX IF NOT EXISTS games_user_created_idx ON game_history (user_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS game_fair_rounds (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    game VARCHAR(32) NOT NULL,
+    server_seed CHAR(64) NOT NULL,
+    server_seed_hash CHAR(64) NOT NULL,
+    client_seed VARCHAR(128),
+    nonce INTEGER NOT NULL DEFAULT 0,
+    status VARCHAR(16) NOT NULL DEFAULT 'committed',
+    result JSONB,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    revealed_at TIMESTAMPTZ
+  )`,
+  `CREATE INDEX IF NOT EXISTS fair_rounds_user_created_idx ON game_fair_rounds (user_id, created_at DESC)`,
 ];
 
 export async function ensureSchema() {

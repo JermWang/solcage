@@ -70,30 +70,17 @@ export default function Home() {
       window.location.assign("/games");
       return;
     }
+    if (next === "vault") {
+      window.location.assign(`/lending?asset=${asset.symbol}`);
+      return;
+    }
     setView(next);
     window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  async function recordEvent(payload: Record<string, unknown>) {
-    const response = await fetch("/api/events", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ ...payload, eventKey: crypto.randomUUID() }),
-    });
-    const data = await response.json();
-    if (response.ok) setLoyaltyPoints(data.points ?? loyaltyPoints);
   }
 
   function draw() {
     if (!connected) return setConnected(true);
     setChips(Math.round(available * 100) / 100);
-    void recordEvent({
-      kind: "loan_draw",
-      asset: asset.symbol,
-      collateralAmount: Number(amount || 0),
-      collateralValue: collateral,
-      chipsDrawn: available,
-    });
   }
 
   return (
@@ -105,7 +92,7 @@ export default function Home() {
         </button>
         <div className="nav-links">
           <button className={view === "home" ? "active" : ""} onClick={() => go("home")}>Home</button>
-          <button className={view === "vault" ? "active" : ""} onClick={() => go("vault")}>Cage</button>
+          <a href="/lending">Lending</a>
           <a href="/games">Games</a>
           <a href="/leaderboard">Leaderboard</a>
         </div>
@@ -113,7 +100,10 @@ export default function Home() {
         <a className="wallet" href="/profile">{profileName}</a>
       </nav>
 
-      {view === "home" && <HomeView go={go} onSelectAsset={(nextAsset) => { setAsset(nextAsset); go("vault"); }} />}
+      {view === "home" && <HomeView go={go} onSelectAsset={(nextAsset) => {
+        setAsset(nextAsset);
+        window.location.assign(`/lending?asset=${nextAsset.symbol}`);
+      }} />}
       {view === "vault" && (
         <section className="app-shell">
           <div className="section-kicker">THE CAGE / CREDIT PREVIEW</div>
@@ -163,7 +153,7 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
       <div className="eyebrow"><span /> MEMECOIN CREDIT ON SOLANA · $10M+ COLLATERAL · FLOOR REWARDS</div>
       <h1>Bag locked.<br /><em>Tables open.</em></h1>
       <p>Deposit an eligible Solana memecoin, open a collateralized credit position, and take that liquidity to the floor. Every position and round builds your account history and loyalty score.</p>
-      <div className="hero-actions"><button className="primary" onClick={() => go("games")}>Play now <span>↗</span></button><button className="secondary" onClick={() => go("vault")}>Open the cage</button></div>
+      <div className="hero-actions"><button className="primary" onClick={() => go("games")}>Play now <span>↗</span></button><button className="secondary" onClick={() => window.location.assign("/lending")}>Open the cage</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin hero-logo-coin"><BrandMark size={384} /></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
     </header>
@@ -180,8 +170,8 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
       <div className="lending-intro">
         <div className="section-kicker">THE CREDIT MARKET / SOLANA MEMECOINS</div>
         <h2>Keep the bag.<br /><em>Access the liquidity.</em></h2>
-        <p>SolCage is designed as a Solana-native collateral market for established memecoins. At launch, eligible tokens enter program-controlled vaults, each asset receives its own loan-to-value limit, and repayment unlocks the original collateral.</p>
-        <button className="primary" onClick={() => go("vault")}>Explore the cage <span>↗</span></button>
+        <p>SolCage is a Solana-native collateral market for established memecoins. Eligible tokens enter program-controlled vaults, each asset receives its own loan-to-value limit, and repayment unlocks the original collateral.</p>
+        <button className="primary" onClick={() => window.location.assign("/lending")}>Explore the cage <span>↗</span></button>
       </div>
       <div className="lending-details">
         <article><span>01 / ELIGIBILITY</span><h3>$10M market cap is the first gate—not the only one.</h3><p>Executable liquidity, holder concentration, token authorities, trading history and oracle coverage determine whether new positions can open.</p></article>

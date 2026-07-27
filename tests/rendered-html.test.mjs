@@ -48,26 +48,31 @@ test("server-renders the SolCage landing experience", async () => {
   assert.doesNotMatch(html, /codex-preview|Building your site|react-loading-skeleton/i);
 });
 
-test("server-renders all three game experiences without Coin Flip", async () => {
+test("server-renders the casino lobby and sourced original games", async () => {
   const response = await render("/games");
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Neon Dice", "Crystal Mines", "Sol Spin"]) {
+  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Crystal Mines"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
   assert.doesNotMatch(html, /pre-launch|integrating|production play/i);
-  assert.match(html, /round outcomes in this interface are generated locally/i);
-  assert.match(html, /unifies collateral, credit, gameplay and loyalty/i);
+  assert.match(html, /HMAC-SHA256/i);
+  assert.match(html, /OPEN-SOURCE FOUNDATION/i);
+  assert.match(html, /href="\/games\/roulette"/);
+  assert.match(html, /href="\/lending"/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
-test("ships the procedural model, optimized art, and interaction hooks", async () => {
-  const [scene, games, page, health, css, packageJson] = await Promise.all([
+test("ships the procedural model, fair game engine, lending route, and interaction hooks", async () => {
+  const [scene, games, roulette, fairReveal, lending, page, health, css, packageJson] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/health/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
@@ -75,19 +80,27 @@ test("ships the procedural model, optimized art, and interaction hooks", async (
   ]);
 
   assert.match(packageJson, /"three":/);
+  assert.match(packageJson, /"react-casino-roulette":/);
+  assert.match(packageJson, /"@provableio\/provable-core":/);
   assert.match(scene, /sculptRuntime/);
   assert.match(scene, /scrollProgress/);
   assert.match(scene, /prefers-reduced-motion/);
   assert.match(page, /addEventListener\("wheel", captureWheel, \{ passive: false \}\)/);
   assert.match(page, /target\.closest\("\.coin-card"\)/);
   assert.match(health, /database: "connected"/);
-  assert.match(health, /readyTables !== 6/);
-  assert.match(games, /kind: "game_round"/);
-  assert.match(games, /Array\.from\(\{ length: 25 \}/);
+  assert.match(health, /readyTables !== 7/);
+  assert.match(games, /OPEN-SOURCE FOUNDATION/);
+  assert.match(roulette, /RouletteWheel/);
+  assert.match(roulette, /\/api\/games\/fair\/commit/);
+  assert.match(fairReveal, /Provable/);
+  assert.match(fairReveal, /HMAC-SHA256/);
+  assert.match(fairReveal, /game_fair_rounds/);
+  assert.match(lending, /COLLATERAL MARKET/);
+  assert.match(lending, /configuration-required/);
   assert.doesNotMatch(games, /SolCageChipScene/);
-  assert.match(games, /games-hero-art/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
-  assert.match(css, /@keyframes rouletteSpin/);
+  assert.match(css, /\.casino-game-grid/);
+  assert.match(css, /\.roulette-room/);
   assert.match(css, /rotateY\(var\(--coin-angle\)\) translateZ\(var\(--ring-radius\)\)/);
   assert.match(css, /True circular 3D coin ring/);
   assert.match(css, /\.seamless-carousel-shell\{[^}]*var\(--paper\);color:var\(--ink\)/);

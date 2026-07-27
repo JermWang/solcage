@@ -43,6 +43,7 @@ next-env.d.ts
 /outputs/
 /work/
 /tmp/
+/tsconfig.tsbuildinfo
 *.tar.gz
 /artifacts/dev.log
 /artifacts/dev.err
