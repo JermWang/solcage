@@ -165,12 +165,16 @@ test("ships a database-backed live casino activity floor", async () => {
   assert.match(lobby, /casino-bets-board/);
   assert.match(lobby, /setInterval/);
   assert.match(lobby, /HIGH ROLLERS/);
+  assert.match(lobby, /studio: "SOLCAGE ORIGINALS"/);
+  assert.doesNotMatch(lobby, /PINKKIS|JARED KJAR|JDLEO FOUNDATION|BLACKJACK PARTY", tag/);
   assert.match(activityApi, /FROM game_history/);
   assert.match(activityApi, /SUM\(bet\)/);
   assert.match(activityApi, /COUNT\(DISTINCT user_id\)/);
   assert.match(activityApi, /LIMIT 40/);
   assert.match(css, /\.casino-game-rail\{display:flex/);
   assert.match(css, /\.casino-bets-board/);
+  assert.match(css, /\.casino-promo-dots\{[^}]*height:auto[^}]*background:transparent/);
+  assert.match(css, /@media\(max-width:1050px\)\{\.roulette-room,\.original-room/);
 });
 
 test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
