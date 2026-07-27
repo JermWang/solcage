@@ -197,6 +197,46 @@ const schemaStatements = [
   `ALTER TABLE wallet_challenges ALTER COLUMN user_id DROP NOT NULL`,
   `CREATE INDEX IF NOT EXISTS wallet_challenge_wallet_idx
    ON wallet_challenges (wallet_address, expires_at)`,
+
+  // ---- Player bankroll -------------------------------------------------
+  // Append-only. A balance is SUM(amount_raw) for a user; nothing mutates a
+  // stored total, so a partial failure can never leave a wrong number behind.
+  // amount_raw is signed and denominated in the house token's base units.
+  `CREATE TABLE IF NOT EXISTS wallet_ledger (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    kind VARCHAR(24) NOT NULL,
+    amount_raw NUMERIC(20,0) NOT NULL,
+    event_key VARCHAR(160) NOT NULL UNIQUE,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS wallet_ledger_user_created_idx
+   ON wallet_ledger (user_id, created_at DESC)`,
+  // Credited deposits, keyed by signature so a replayed confirmation is a no-op.
+  `CREATE TABLE IF NOT EXISTS house_deposits (
+    signature VARCHAR(96) PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    wallet_address VARCHAR(64) NOT NULL,
+    amount_raw NUMERIC(20,0) NOT NULL,
+    slot BIGINT,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS house_deposits_user_idx
+   ON house_deposits (user_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS withdrawals (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    destination VARCHAR(64) NOT NULL,
+    amount_raw NUMERIC(20,0) NOT NULL,
+    status VARCHAR(16) NOT NULL DEFAULT 'requested',
+    signature VARCHAR(96) UNIQUE,
+    failure_reason VARCHAR(240),
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS withdrawals_status_idx
+   ON withdrawals (status, created_at)`,
 ];
 
 export async function ensureSchema() {

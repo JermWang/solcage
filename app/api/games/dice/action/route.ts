@@ -8,6 +8,8 @@ import {
 } from "@/lib/games/dice";
 import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
+import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -94,9 +96,35 @@ export async function POST(request: Request) {
         nonce: 0,
         cursor: 0,
       });
+      // Take the stake before revealing anything. This runs inside the same
+      // transaction as the settlement below, so a failure here rolls the whole
+      // round back rather than leaving a debit with no result.
+      const house = houseConfig();
+      const wagering = house.enabled && houseReadiness(house).ready;
+      const stakeRaw = wagering ? toBaseUnits(bet.toFixed(house.decimals), house.decimals) : 0n;
+      if (wagering) {
+        await takeStake(client, {
+          userId: identity.userId,
+          stakeRaw,
+          maxMultiplier: MAX_MULTIPLIER.dice,
+          eventKey: `bet:${roundId}`,
+          limits: house.limits,
+          metadata: { game: "dice", chanceBps, direction },
+        });
+      }
+
       const roll = generator.ints(1, DICE_ROLL_MAX, 0)[0];
       const outcome = settleDice(roll, chanceBps, direction);
       const payout = outcome.won ? roundMoney(bet * outcome.multiplier) : 0;
+
+      if (wagering && payout > 0) {
+        await payWinnings(client, {
+          userId: identity.userId,
+          payoutRaw: toBaseUnits(payout.toFixed(house.decimals), house.decimals),
+          eventKey: `win:${roundId}`,
+          metadata: { game: "dice", roll, multiplier: outcome.multiplier },
+        });
+      }
       const result: StoredDice = {
         bet,
         clientSeed,
@@ -143,6 +171,8 @@ export async function POST(request: Request) {
     return json({ ...settled, points: profile.points, rank: profile.rank }, 200, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    if (error instanceof InsufficientFunds) return json({ error: "Not enough balance for that stake", balanceRaw: error.balanceRaw.toString() }, 402);
+    if (error instanceof StakeRejected) return json({ error: error.message }, 400);
     return json({ error: error instanceof Error ? error.message : "Dice roll failed" }, 400);
   }
 }
