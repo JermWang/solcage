@@ -6,8 +6,9 @@ async function render(pathname = "/") {
   const workerUrl = new URL("../dist/server/index.js", import.meta.url);
   workerUrl.searchParams.set("test", `${process.pid}-${Date.now()}-${pathname}`);
   const { default: worker } = await import(workerUrl.href);
+  const background = [];
 
-  return worker.fetch(
+  const response = await worker.fetch(
     new Request(`http://localhost${pathname}`, {
       headers: { accept: "text/html" },
     }),
@@ -17,10 +18,12 @@ async function render(pathname = "/") {
       },
     },
     {
-      waitUntil() {},
+      waitUntil(promise) { background.push(promise); },
       passThroughOnException() {},
     },
   );
+  await Promise.allSettled(background);
+  return response;
 }
 
 test("server-renders the SolCage landing experience", async () => {
@@ -53,7 +56,7 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Crystal Mines"]) {
+  for (const title of ["Cage Roulette", "Neon Dice", "Cage Slots", "Neon Plinko", "Cage Blackjack", "Crystal Mines"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
@@ -61,42 +64,68 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /HMAC-SHA256/i);
   assert.match(html, /OPEN-SOURCE FOUNDATION/i);
   assert.match(html, /href="\/games\/roulette"/);
+  assert.match(html, /href="\/games\/plinko"/);
+  assert.match(html, /href="\/games\/blackjack"/);
   assert.match(html, /href="\/lending"/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/dice\.webp/);
 });
 
-test("ships the procedural model, fair game engine, lending route, and interaction hooks", async () => {
-  const [scene, games, roulette, fairReveal, lending, page, health, css, packageJson] = await Promise.all([
+test("ships the procedural model, fair games, lending client, protocol source, and interaction hooks", async () => {
+  const [scene, games, roulette, plinko, blackjack, blackjackApi, fairReveal, lending, lendingClient, protocolApi, protocolProgram, page, health, css, packageJson, notices] = await Promise.all([
     readFile(new URL("../components/SolCageChipScene.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/games/roulette/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/plinko/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/games/blackjack/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/games/blackjack/action/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/api/games/fair/reveal/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lending/page.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../lib/solana/lendingClient.ts", import.meta.url), "utf8"),
+    readFile(new URL("../app/api/protocol/transactions/route.ts", import.meta.url), "utf8"),
+    readFile(new URL("../programs/solcage_lending/src/lib.rs", import.meta.url), "utf8"),
     readFile(new URL("../app/page.tsx", import.meta.url), "utf8"),
     readFile(new URL("../app/api/health/route.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
     readFile(new URL("../package.json", import.meta.url), "utf8"),
+    readFile(new URL("../THIRD_PARTY_NOTICES.md", import.meta.url), "utf8"),
   ]);
 
   assert.match(packageJson, /"three":/);
   assert.match(packageJson, /"react-casino-roulette":/);
   assert.match(packageJson, /"@provableio\/provable-core":/);
+  assert.match(packageJson, /"@solana\/web3\.js":/);
   assert.match(scene, /sculptRuntime/);
   assert.match(scene, /scrollProgress/);
   assert.match(scene, /prefers-reduced-motion/);
   assert.match(page, /addEventListener\("wheel", captureWheel, \{ passive: false \}\)/);
   assert.match(page, /target\.closest\("\.coin-card"\)/);
   assert.match(health, /database: "connected"/);
-  assert.match(health, /readyTables !== 7/);
+  assert.match(health, /readyTables !== 8/);
   assert.match(games, /OPEN-SOURCE FOUNDATION/);
   assert.match(roulette, /RouletteWheel/);
   assert.match(roulette, /\/api\/games\/fair\/commit/);
+  assert.match(plinko, /VERIFIED PLINKO/);
+  assert.match(plinko, /already-settled HMAC path/i);
+  assert.match(blackjack, /BLACKJACK PARTY FOUNDATION/);
+  assert.match(blackjackApi, /createShuffledDeck/);
   assert.match(fairReveal, /Provable/);
   assert.match(fairReveal, /HMAC-SHA256/);
+  assert.match(fairReveal, /plinko/);
   assert.match(fairReveal, /game_fair_rounds/);
   assert.match(lending, /COLLATERAL MARKET/);
-  assert.match(lending, /configuration-required/);
+  assert.match(lending, /sendLendingTransaction/);
+  assert.match(lendingClient, /findProgramAddressSync/);
+  assert.match(lendingClient, /signAndSendTransaction/);
+  assert.match(lendingClient, /buildLendingInstruction/);
+  assert.match(lendingClient, /"deposit" \| "borrow" \| "repay" \| "withdraw"/);
+  assert.match(protocolApi, /getTransaction/);
+  assert.match(protocolApi, /protocol_transactions/);
+  assert.match(protocolProgram, /deposit_collateral/);
+  assert.match(protocolProgram, /withdraw_collateral/);
+  assert.match(protocolProgram, /get_price_no_older_than/);
+  assert.match(notices, /jasonca2023\/Plinko\.rng/);
+  assert.match(notices, /sbolel\/blackjack-party/);
   assert.doesNotMatch(games, /SolCageChipScene/);
   assert.doesNotMatch(css, /@keyframes chipFlip/);
   assert.match(css, /\.casino-game-grid/);

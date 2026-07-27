@@ -1,98 +1,96 @@
-# vinext-starter
+# SolCage
 
-A clean full-stack starter running on
-[vinext](https://github.com/cloudflare/vinext), with optional Cloudflare D1 and
-Drizzle support.
+SolCage combines a Solana casino lobby, provably fair game rounds, wallet-owned
+profiles, loyalty rewards, referrals, and a non-custodial memecoin lending
+protocol.
 
-## Prerequisites
+## Product surfaces
 
-- Node.js `>=22.13.0`
+- Casino lobby with Roulette, Dice, Slots, Plinko, and Blackjack
+- Server commit/reveal settlement using HMAC-SHA256 and player client seeds
+- PostgreSQL-backed profiles, avatars, verified Solana wallets, game history,
+  rewards, referral multipliers, and a global leaderboard
+- Dedicated lending terminal with configured collateral markets, Phantom
+  transaction signing, program-derived token vaults, and transaction
+  reconciliation from Solana RPC
+- Anchor lending program with collateral deposits, USDC borrowing and
+  repayment, debt-free withdrawals, Pyth pricing, and permissionless
+  liquidation
 
-## Quick Start
+Game foundations and exact reviewed commits are documented in
+[`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
+
+## Local application
+
+Requirements:
+
+- Node.js 22.13 or newer
+- PostgreSQL
 
 ```bash
-npm install
+npm ci
 npm run dev
 npm run build
+npm test
 ```
 
-This starter does not use `wrangler.jsonc`.
+The application creates its PostgreSQL tables idempotently at runtime.
 
-## Included Shape
+## Runtime configuration
 
-- edit site code under `app/`
-- `.openai/hosting.json` declares optional Sites D1 and R2 bindings
-- `vite.config.ts` simulates declared bindings for local development
-- `db/schema.ts` starts intentionally empty
-- `examples/d1/` contains an optional D1 example surface
-- `drizzle.config.ts` supports local migration generation when needed
+Copy `.env.example` to `.env.local` for development. `DATABASE_URL` is
+required for profiles, sessions, rewards, games, and protocol history.
 
-## Workspace Auth Headers
+`SOLCAGE_COLLATERAL_MARKETS` is a JSON array. A market is ignored unless its
+mint, Pyth price-update account, Pyth feed ID, decimal count, LTV limits, and
+token program all pass validation. The web transaction button stays disabled
+unless both a valid program ID and at least one enabled market exist.
 
-OpenAI workspace sites can read the current user's email from
-`oai-authenticated-user-email`.
+Never configure an upgradeable production program until its upgrade authority,
+auditor report, oracle feeds, liquidity vault, monitoring, and liquidator
+operations have been independently verified.
 
-SIWC-authenticated workspace sites may also receive
-`oai-authenticated-user-full-name` when the user's SIWC profile has a non-empty
-`name` claim. The full-name value is percent-encoded UTF-8 and is accompanied by
-`oai-authenticated-user-full-name-encoding: percent-encoded-utf-8`.
+## On-chain program
 
-Treat the full name as optional and fall back to email when it is absent:
+The Anchor workspace is under `programs/solcage_lending`.
 
-```tsx
-import { headers } from "next/headers";
-
-export default async function Home() {
-  const requestHeaders = await headers();
-  const email = requestHeaders.get("oai-authenticated-user-email");
-  const encodedFullName = requestHeaders.get("oai-authenticated-user-full-name");
-  const fullName =
-    encodedFullName &&
-    requestHeaders.get("oai-authenticated-user-full-name-encoding") ===
-      "percent-encoded-utf-8"
-      ? decodeURIComponent(encodedFullName)
-      : null;
-
-  const displayName = fullName ?? email;
-  // ...
-}
+```bash
+cargo fmt --all --check
+cargo test --workspace --lib
+anchor build
+anchor keys sync
+anchor test
 ```
 
-## Optional Dispatch-Owned ChatGPT Sign-In
+`Anchor.toml` contains a non-deployed placeholder public key for reproducible
+source builds. Generate the actual program keypair outside source control, run
+`anchor keys sync`, then commit the resulting public program ID before a
+deployment. Program keypairs are gitignored.
 
-Import the ready-to-use helpers from `app/chatgpt-auth.ts` when the site needs
-optional or required ChatGPT sign-in:
+Program state:
 
-- Use `getChatGPTUser()` for optional signed-in UI.
-- Use `requireChatGPTUser(returnTo)` for server-rendered pages that should send
-  anonymous visitors through Sign in with ChatGPT.
-- Use `chatGPTSignInPath(returnTo)` and `chatGPTSignOutPath(returnTo)` for
-  browser links or actions.
-- Pass a same-origin relative `returnTo` path for the destination after sign-in
-  or sign-out. The helper validates and safely encodes it.
-- Mark protected pages with `export const dynamic = "force-dynamic"` because
-  they depend on per-request identity headers.
+- `protocol` PDA: administrator, borrow mint, pause control
+- `market` PDA: collateral mint, risk parameters, oracle feed, aggregate state
+- `position` PDA: wallet owner, collateral amount, debt amount
+- market-owned associated token account: collateral vault
+- protocol-owned associated token account: borrow-liquidity vault
 
-Dispatch owns `/signin-with-chatgpt`, `/signout-with-chatgpt`, `/callback`, the
-OAuth cookies, and identity header injection. Do not implement app routes for
-those reserved paths. Routes that do not import and call the helper remain
-anonymous-compatible.
+There is no server hot-wallet withdrawal path. A collateral withdrawal is
+signed by the position owner and currently requires zero outstanding debt.
 
-SIWC establishes identity only; it does not prove workspace membership. Use the
-Sites hosting platform's access policy controls for workspace-wide restrictions,
-or enforce explicit server-side membership or allowlist checks.
+## Deployment
 
-Use SIWC for account pages, user-specific dashboards, saved records, and write
-actions tied to the current ChatGPT user. Leave public content anonymous.
+The production web service runs on Railway with managed PostgreSQL. The same
+validated source is also published through OpenAI Sites using the existing
+project ID in `.openai/hosting.json`.
 
-## Useful Commands
+Every release should pass:
 
-- `npm run dev`: start local development
-- `npm run build`: verify the vinext build output
-- `npm test`: build the starter and verify its rendered loading skeleton
-- `npm run db:generate`: generate Drizzle migrations after schema changes
+```bash
+npm run lint
+npm test
+npm audit --omit=dev
+```
 
-## Learn More
-
-- [vinext Documentation](https://github.com/cloudflare/vinext)
-- [Drizzle D1 Guide](https://orm.drizzle.team/docs/get-started/d1-new)
+The protocol workflow in `.github/workflows/protocol-ci.yml` independently
+checks Rust formatting, unit tests, and Clippy on Linux.

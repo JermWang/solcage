@@ -1,0 +1,40 @@
+name: SolCage protocol CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "Anchor.toml"
+      - "programs/**"
+      - ".github/workflows/protocol-ci.yml"
+  pull_request:
+    paths:
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "Anchor.toml"
+      - "programs/**"
+      - ".github/workflows/protocol-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ". -> target"
+      - name: Check formatting
+        run: cargo fmt --all -- --check
+      - name: Compile and run protocol math tests
+        run: cargo test --workspace --lib
+      - name: Lint program
+        run: cargo clippy --workspace --all-targets -- -D warnings

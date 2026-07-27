@@ -17,6 +17,8 @@ const games: LobbyGame[] = [
   { name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "VERIFIABLE", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet" },
   { name: "Neon Dice", studio: "SOLCAGE ORIGINALS", tag: "HMAC-SHA256", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "lime" },
   { name: "Cage Slots", studio: "PROVABLE.IO ENGINE", tag: "MIT FOUNDATION", image: "/og.png", href: "/games/play?game=slots", tone: "gold" },
+  { name: "Neon Plinko", studio: "PLINKO.RNG FOUNDATION", tag: "98% RTP", image: "/game-art/mines.webp", href: "/games/plinko", tone: "cyan" },
+  { name: "Cage Blackjack", studio: "BLACKJACK PARTY FOUNDATION", tag: "3:2 TABLE", image: "/game-art/roulette.webp", href: "/games/blackjack", tone: "red" },
   { name: "Crystal Mines", studio: "SOLCAGE ORIGINALS", tag: "TABLE PAUSED", image: "/game-art/mines.webp", tone: "cyan" },
   { name: "Private Roulette", studio: "HIGH LIMIT", tag: "EUROPEAN", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "red" },
   { name: "Turbo Dice", studio: "SOLCAGE ORIGINALS", tag: "98% RTP", image: "/game-art/dice.webp", href: "/games/play?game=dice", tone: "purple" },
@@ -37,7 +39,8 @@ export default function GamesLobby() {
 
   const visibleGames = useMemo(() => {
     if (category === "Originals") return games.filter((game) => game.studio.includes("ORIGINALS"));
-    if (category === "Table games") return games.filter((game) => game.name.includes("Roulette"));
+    if (category === "Table games") return games.filter((game) => /Roulette|Blackjack/.test(game.name));
+    if (category === "Instant") return games.filter((game) => /Dice|Plinko|Mines/.test(game.name));
     if (category === "High limit") return games.filter((game) => game.name.includes("Private"));
     return games;
   }, [category]);
@@ -108,7 +111,7 @@ export default function GamesLobby() {
 
         <section className="casino-integrity">
           <div><span>OPEN-SOURCE FOUNDATION</span><h2>Built on code we can inspect.</h2></div>
-          <p>The roulette presentation uses the MIT-licensed React Casino Roulette foundation. Outcomes are generated server-side with the MIT-licensed Provable.IO HMAC-SHA256 engine and stored alongside their verification proof.</p>
+          <p>Roulette uses the MIT React Casino Roulette foundation. Plinko adapts the MIT Plinko.rng peg-board model. Outcomes are generated server-side with the MIT Provable.IO HMAC-SHA256 engine and stored alongside their verification proof.</p>
           <Link href="/games/roulette">Verify a round ↗</Link>
         </section>
       </div>

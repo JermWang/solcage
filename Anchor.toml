@@ -1,0 +1,22 @@
+[toolchain]
+anchor_version = "1.1.2"
+
+[features]
+resolution = true
+skip-lint = false
+
+[programs.localnet]
+solcage_lending = "8cdX9Sv53BddvaqdB9N1qTwPd1YBrhh8x1iAo9DBMUFE"
+
+[programs.devnet]
+solcage_lending = "8cdX9Sv53BddvaqdB9N1qTwPd1YBrhh8x1iAo9DBMUFE"
+
+[registry]
+url = "https://api.apr.dev"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "cargo test --workspace --lib"

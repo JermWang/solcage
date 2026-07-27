@@ -10,10 +10,10 @@ export async function GET() {
       `SELECT COUNT(*)::int AS ready_tables
        FROM information_schema.tables
        WHERE table_schema = 'public'
-         AND table_name IN ('users', 'sessions', 'wallet_challenges', 'reward_ledger', 'loan_history', 'game_history', 'game_fair_rounds')`,
+         AND table_name IN ('users', 'sessions', 'wallet_challenges', 'reward_ledger', 'loan_history', 'game_history', 'game_fair_rounds', 'protocol_transactions')`,
     );
     const readyTables = result.rows[0]?.ready_tables ?? 0;
-    if (readyTables !== 7) throw new Error("Persistence schema is incomplete");
+    if (readyTables !== 8) throw new Error("Persistence schema is incomplete");
     return Response.json(
       {
         status: "ok",

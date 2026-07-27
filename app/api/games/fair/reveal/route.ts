@@ -13,6 +13,7 @@ type FairResult = {
 
 const redNumbers = new Set([1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36]);
 const slotSymbols = ["CAGE", "SOL", "LIME", "CHIP", "SEVEN", "CROWN", "JACKPOT"];
+const plinkoMultipliers = [30, 9, 3, 1.5, 0.7, 0.5, 0.5, 0.7, 1.5, 3, 9, 30];
 
 function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
@@ -63,6 +64,22 @@ function settle(
       won: multiplier > 0,
       payout: multiplier > 0 ? roundMoney(bet * multiplier) : 0,
       outcome: { reels, multiplier },
+    };
+  }
+
+  if (game === "plinko") {
+    const path = randomInts(11, 2, 0);
+    const slot = path.reduce((total, direction) => total + direction, 0);
+    const multiplier = plinkoMultipliers[slot];
+    return {
+      game,
+      won: multiplier >= 1,
+      payout: roundMoney(bet * multiplier),
+      outcome: {
+        slot,
+        multiplier,
+        path: path.map((direction) => direction ? "R" : "L"),
+      },
     };
   }
 

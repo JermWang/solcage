@@ -106,6 +106,22 @@ const schemaStatements = [
     revealed_at TIMESTAMPTZ
   )`,
   `CREATE INDEX IF NOT EXISTS fair_rounds_user_created_idx ON game_fair_rounds (user_id, created_at DESC)`,
+  `CREATE TABLE IF NOT EXISTS protocol_transactions (
+    id UUID PRIMARY KEY,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    signature VARCHAR(96) NOT NULL UNIQUE,
+    action VARCHAR(24) NOT NULL,
+    asset_symbol VARCHAR(16) NOT NULL,
+    mint_address VARCHAR(64) NOT NULL,
+    raw_amount NUMERIC(20,0) NOT NULL,
+    slot BIGINT NOT NULL,
+    block_time TIMESTAMPTZ,
+    status VARCHAR(16) NOT NULL DEFAULT 'confirmed',
+    payload JSONB NOT NULL DEFAULT '{}'::jsonb,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  )`,
+  `CREATE INDEX IF NOT EXISTS protocol_transactions_user_created_idx
+   ON protocol_transactions (user_id, created_at DESC)`,
 ];
 
 export async function ensureSchema() {
