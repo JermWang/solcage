@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRef, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type PlinkoResult = {
   won: boolean;
@@ -24,8 +25,9 @@ const rows = Array.from({ length: 11 }, (_, row) => Array.from({ length: row + 3
 
 export default function PlinkoPage() {
   const ballRef = useRef<HTMLSpanElement | null>(null);
-  const [bank, setBank] = useState(1000);
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [pending, setPending] = useState(false);
   const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [result, setResult] = useState<PlinkoResult | null>(null);
@@ -77,7 +79,7 @@ export default function PlinkoPage() {
         offset: 1,
       });
 
-      setBank((value) => Math.max(0, value - bet + revealed.payout));
+      void wager.refresh();
       setResult(revealed);
       const animation = ballRef.current?.animate(frames, {
         duration: 2200,
@@ -98,7 +100,7 @@ export default function PlinkoPage() {
       <div className="casino-game-room plinko-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINALS / VERIFIED PLINKO</span><h1>Neon Plinko</h1></div>
-          <div className="game-room-balance"><span>PRACTICE TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="plinko-room">
@@ -128,18 +130,18 @@ export default function PlinkoPage() {
             <div className="console-title"><span>DROP SLIP</span><small>11 ROWS / 12 SLOTS</small></div>
             <label className="console-label">STAKE</label>
             <div className="roulette-stake">
-              <button onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-              <div><input aria-label="Stake amount" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-              <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+              <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+              <div><input aria-label="Stake amount" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+              <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
             </div>
-            <div className="roulette-quick-stakes">{[5, 25, 50, 100].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+            <div className="roulette-quick-stakes">{[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
             <div className="roulette-receipt">
               <p><span>Rows</span><b>11</b></p>
               <p><span>Maximum multiplier</span><b>30×</b></p>
               <p><span>Designed RTP</span><b>98.00%</b></p>
               <p><span>Path entropy</span><b>11 BITS</b></p>
             </div>
-            <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={drop}>{pending ? "BALL IN PLAY…" : `DROP ${bet.toFixed(2)} CHIPS`}</button>
+            <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={drop}>{pending ? "BALL IN PLAY…" : `DROP ${bet.toFixed(2)} SOL`}</button>
             {error && <p className="roulette-error">{error}</p>}
           </aside>
         </section>

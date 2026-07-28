@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import type { BaccaratOutcome, BaccaratSelection, BaccaratWinner } from "@/lib/games/baccarat";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type Card = { rank: string; suit: "hearts" | "diamonds" | "clubs" | "spades" };
 type BaccaratProof = {
@@ -61,9 +62,10 @@ function freshSeed() {
 }
 
 export default function BaccaratPage() {
-  const [bank, setBank] = useState(1000);
+  const wager = useWager();
+  const bank = wager.balance;
   const [points, setPoints] = useState(0);
-  const [bet, setBet] = useState(25);
+  const [bet, setBet] = useState(0.01);
   const [selection, setSelection] = useState<BaccaratSelection>("banker");
   const [clientSeed, setClientSeed] = useState("baccarat:solcage-player");
   const [pending, setPending] = useState(false);
@@ -105,7 +107,7 @@ export default function BaccaratPage() {
       }).then((response) => response.json()) as BaccaratResult & { error?: string };
       if (!settled.proof) throw new Error(settled.error ?? "Unable to settle the hand");
 
-      setBank((value) => Math.max(0, value - bet) + settled.payout);
+      void wager.refresh();
       setPoints(settled.points);
       setResult(settled);
       setHistory((current) => [settled, ...current].slice(0, 24));
@@ -126,7 +128,7 @@ export default function BaccaratPage() {
             <h1>Cage Baccarat</h1>
           </div>
           <div className="baccarat-header-stats">
-            <p><span>TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></p>
+            <p><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></p>
             <p><span>LOYALTY SCORE</span><b>{points.toLocaleString()} XP</b></p>
           </div>
         </header>
@@ -181,7 +183,7 @@ export default function BaccaratPage() {
               <div className={`baccarat-outcome ${result.outcome}`}>
                 <small>{result.natural ? "NATURAL" : `${result.cardsDealt} CARDS`}</small>
                 <span>{result.label}</span>
-                <b>{result.outcome === "loss" ? "ROUND SETTLED" : `+${result.payout.toFixed(2)} CHIPS`}</b>
+                <b>{result.outcome === "loss" ? "ROUND SETTLED" : `+${result.payout.toFixed(2)} SOL`}</b>
               </div>
             )}
           </div>
@@ -206,7 +208,7 @@ export default function BaccaratPage() {
 
             <label className="console-label">STAKE</label>
             <div className="roulette-stake">
-              <button onClick={() => setBet(Math.max(0.01, bet / 2))}>1/2</button>
+              <button onClick={() => setBet(clampStake(bet / 2, wager))}>1/2</button>
               <div>
                 <input
                   aria-label="Stake amount"
@@ -215,14 +217,14 @@ export default function BaccaratPage() {
                   max="100000"
                   step="0.01"
                   value={bet}
-                  onChange={(event) => setBet(Math.min(100_000, Math.max(0.01, Number(event.target.value) || 0.01)))}
+                  onChange={(event) => setBet(clampStake(Number(event.target.value), wager))}
                 />
-                <span>CHIPS</span>
+                <span>SOL</span>
               </div>
-              <button onClick={() => setBet(Math.min(100_000, bet * 2))}>2x</button>
+              <button onClick={() => setBet(clampStake(bet * 2, wager))}>2x</button>
             </div>
             <div className="roulette-quick-stakes">
-              {[5, 25, 100, 500].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}
+              {[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}
             </div>
 
             <label className="console-label">CLIENT SEED</label>

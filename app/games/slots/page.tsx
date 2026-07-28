@@ -4,6 +4,7 @@ import type { CSSProperties } from "react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 import {
   SLOT_LINE_COUNT,
   SLOT_PAYTABLE,
@@ -70,8 +71,9 @@ function SymbolFace({
 }
 
 export default function SlotsPage() {
-  const [bank, setBank] = useState(1_000);
-  const [bet, setBet] = useState(18);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [pending, setPending] = useState(false);
   const [turbo, setTurbo] = useState(false);
   const [result, setResult] = useState<SlotsResult | null>(null);
@@ -124,13 +126,13 @@ export default function SlotsPage() {
       ]);
       setResult(settled);
       setHistory((current) => [settled, ...current].slice(0, 8));
-      setBank((current) => Math.max(0, current - bet + settled.payout));
+      void wager.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Spin failed");
     } finally {
       setPending(false);
     }
-  }, [bank, bet, pending, turbo]);
+  }, [bank, bet, pending, turbo, wager]);
 
   useEffect(() => {
     const keyboardSpin = (event: KeyboardEvent) => {
@@ -147,7 +149,7 @@ export default function SlotsPage() {
       <div className="casino-game-room vault-slots-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINAL / NINE-LINE VIDEO SLOT</span><h1>Neon Vault</h1></div>
-          <div className="game-room-balance"><span>TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="vault-slots-room">
@@ -208,10 +210,10 @@ export default function SlotsPage() {
             <label className="console-label">TOTAL STAKE <b>{(bet / SLOT_LINE_COUNT).toFixed(2)} / LINE</b></label>
             <div className="roulette-stake">
               <button onClick={() => setBet(Math.max(1, Math.floor(bet / 2)))}>½</button>
-              <div><input aria-label="Total stake" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-              <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+              <div><input aria-label="Total stake" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+              <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
             </div>
-            <div className="roulette-quick-stakes">{[9, 18, 45, 90].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+            <div className="roulette-quick-stakes">{[9, 18, 45, 90].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
             <div className="roulette-receipt">
               <p><span>Reels</span><b>5 × 40 STOPS</b></p>
               <p><span>Window</span><b>5 × 3 / 9 LINES</b></p>
@@ -219,7 +221,7 @@ export default function SlotsPage() {
               <p><span>Foundation</span><b>KRYSITS + JOHAKR / MIT</b></p>
             </div>
             <button className="roulette-spin-button vault-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => void play()}>
-              {pending ? "SPINNING…" : `SPIN ${bet.toFixed(2)} CHIPS`}
+              {pending ? "SPINNING…" : `SPIN ${bet.toFixed(2)} SOL`}
             </button>
             <small className="vault-space-hint">PRESS SPACE TO SPIN · RESULTS SETTLE ON THE SERVER</small>
             {error && <p className="roulette-error">{error}</p>}

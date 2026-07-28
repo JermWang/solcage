@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 import {
   diceMultiplier,
   diceTarget,
@@ -41,7 +42,8 @@ function freshSeed() {
 }
 
 export default function DicePage() {
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const [bet, setBet] = useState(0.01);
   const [chanceBps, setChanceBps] = useState(4_950);
   const [direction, setDirection] = useState<DiceDirection>("under");
   const [clientSeed, setClientSeed] = useState("dice:solcage-player");
@@ -91,12 +93,13 @@ export default function DicePage() {
       setProofRound(rolled);
       setHistory((current) => [rolled, ...current].slice(0, 12));
       setPoints(rolled.points);
+      void wager.refresh();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Roll failed");
     } finally {
       setPending(false);
     }
-  }, [bet, chanceBps, clientSeed, direction, pending]);
+  }, [bet, chanceBps, clientSeed, direction, pending, wager]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -105,14 +108,14 @@ export default function DicePage() {
         event.preventDefault();
         void play();
       } else if (event.key.toLowerCase() === "d") {
-        setBet((value) => Math.min(100_000, Math.max(0.01, value * 2)));
+        setBet((value) => clampStake(value * 2, wager));
       } else if (event.key.toLowerCase() === "h") {
-        setBet((value) => Math.max(0.01, value / 2));
+        setBet((value) => clampStake(value / 2, wager));
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [play]);
+  }, [play, wager]);
 
   const trackStyle = {
     "--dice-target": `${(target / 9_999) * 100}%`,
@@ -127,6 +130,10 @@ export default function DicePage() {
             <Link href="/games">← Casino</Link>
             <span>PROVABLY FAIR / 98% BASE RTP</span>
             <h1>Neon Dice</h1>
+          </div>
+          <div className="game-room-balance">
+            <span>YOUR BALANCE</span>
+            <b>{wager.balance.toFixed(2)} {wager.symbol}</b>
           </div>
           <div className="game-room-balance">
             <span>LOYALTY SCORE</span>
@@ -163,7 +170,7 @@ export default function DicePage() {
 
             <div className={`dice-result-ticket ${result?.won ? "win" : ""}`}>
               <span>{result ? `ROUND ${result.roundId.slice(0, 8).toUpperCase()}` : "AWAITING FIRST ROLL"}</span>
-              <b>{result ? (result.won ? `+${result.payout.toFixed(2)} CHIPS` : "ROUND SETTLED") : "SERVER COMMIT FIRST"}</b>
+              <b>{result ? (result.won ? `+${result.payout.toFixed(2)} SOL` : "ROUND SETTLED") : "SERVER COMMIT FIRST"}</b>
               <small>{result ? `${result.multiplier.toFixed(4)}× verified payout` : "Outcome is derived only after your client seed arrives."}</small>
             </div>
           </div>
@@ -198,23 +205,23 @@ export default function DicePage() {
 
             <label className="console-label">STAKE</label>
             <div className="roulette-stake">
-              <button onClick={() => setBet(Math.max(0.01, bet / 2))}>½</button>
+              <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
               <div>
                 <input
                   aria-label="Stake amount"
                   type="number"
-                  min="0.01"
-                  max="100000"
+                  min={wager.minStake}
+                  max={Math.min(wager.maxStake, wager.balance || wager.maxStake)}
                   step="0.01"
                   value={bet}
-                  onChange={(event) => setBet(Math.min(100_000, Math.max(0.01, Number(event.target.value) || 0.01)))}
+                  onChange={(event) => setBet(clampStake(Number(event.target.value), wager))}
                 />
-                <span>CHIPS</span>
+                <span>SOL</span>
               </div>
-              <button onClick={() => setBet(Math.min(100_000, bet * 2))}>2×</button>
+              <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
             </div>
             <div className="roulette-quick-stakes">
-              {[5, 25, 100, 500].map((value) => <button key={value} onClick={() => setBet(value)}>{value}</button>)}
+              {[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(value)}>{value}</button>)}
             </div>
 
             <label className="console-label">CLIENT SEED</label>
@@ -239,7 +246,7 @@ export default function DicePage() {
               disabled={pending || bet < 0.01 || clientSeed.length < 8}
               onClick={() => void play()}
             >
-              {pending ? "VERIFYING ROLL…" : `ROLL ${bet.toFixed(2)} CHIPS`}
+              {pending ? "VERIFYING ROLL…" : `ROLL ${bet.toFixed(2)} SOL`}
             </button>
             <small className="dice-hotkeys">SPACE roll · D double · H halve</small>
             {error && <p className="roulette-error">{error}</p>}

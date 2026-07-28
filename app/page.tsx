@@ -7,6 +7,7 @@ import { XLink } from "@/components/XLink";
 import { visibleGameCountLabel } from "@/lib/games-catalog";
 import { Cashier } from "@/components/Cashier";
 import { DepositMenu } from "@/components/DepositMenu";
+import { useWager } from "@/lib/useWager";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -34,7 +35,7 @@ export default function Home() {
   const [connected, setConnected] = useState(false);
   const [asset, setAsset] = useState(assets[0]);
   const [amount, setAmount] = useState("10");
-  const [chips, setChips] = useState(0);
+  const wager = useWager();
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [profileName, setProfileName] = useState("Profile");
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
@@ -94,7 +95,7 @@ export default function Home() {
 
   function draw() {
     if (!connected) return setConnected(true);
-    setChips(Math.round(available * 100) / 100);
+    /* preview only — real balances come from the cashier */
   }
 
   return (
@@ -111,7 +112,7 @@ export default function Home() {
           <a href="/docs">Docs</a>
           <a href="/leaderboard">Leaderboard</a>
         </div>
-        <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{signedIn === false ? "—" : `${loyaltyPoints.toLocaleString()} PTS`}</b></span></div>
+        <div className="balances"><span>BALANCE <b>{signedIn === false ? "—" : `${wager.balance.toFixed(2)} ${wager.symbol}`}</b></span><span>LOYALTY <b>{signedIn === false ? "—" : `${loyaltyPoints.toLocaleString()} PTS`}</b></span></div>
         <div className="nav-social"><ContractAddress /><XLink /></div>
         <DepositMenu signedIn={signedIn !== false} onSolana={() => setCashierOpen(true)} />
         <a className="wallet" href="/profile">{signedIn === false ? "Connect wallet" : profileName}</a>
@@ -123,8 +124,8 @@ export default function Home() {
       }} />}
       {view === "vault" && (
         <section className="app-shell">
-          <div className="section-kicker">THE CAGE / CREDIT PREVIEW</div>
-          <h1>Turn Solana assets into <em>table chips.</em></h1>
+          <div className="section-kicker">THE CAGE / INDICATIVE ESTIMATE</div>
+          <h1>Turn Solana assets into <em>table stakes.</em></h1>
           <p className="lead">Collateralize screened Solana memecoins with a verified market cap above $10M. Pump.fun candidates must also pass age, liquidity, authority and concentration checks.</p>
           <div className="vault-grid">
             <div className="panel">
@@ -149,10 +150,10 @@ export default function Home() {
                 <p><span>Origin / age</span><b>{asset.origin}</b></p>
                 <p><span>Risk tier</span><b>{asset.ltv <= 20 ? "HIGH" : asset.ltv <= 30 ? "ELEVATED" : "VOLATILE"}</b></p>
                 <p><span>Maximum draw</span><b>{asset.ltv}%</b></p>
-                <p className="total"><span>Chips available</span><b>{available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
+                <p className="total"><span>Estimated credit</span><b>${available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
               </div>
               <button className="primary full" onClick={draw}>{connected ? "Preview available credit" : "Connect wallet to preview"}</button>
-              <small className="fine">Screened does not mean safe or endorsed. Eligibility requires a verified $10M+ market cap, sufficient executable liquidity, revoked mint/freeze authority, holder-distribution limits and clean oracle coverage. Any failed check disables new loans.</small>
+              <small className="fine">Figures on this page are indicative only; your actual terms are quoted in the lending terminal at the time you post collateral. Screened does not mean safe or endorsed. Eligibility requires a verified $10M+ market cap, sufficient executable liquidity, revoked mint/freeze authority, holder-distribution limits and clean oracle coverage. Any failed check disables new loans.</small>
             </div>
           </div>
         </section>

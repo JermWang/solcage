@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { RouletteWheel } from "react-casino-roulette";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type Choice = "RED" | "BLACK" | "ZERO";
 type Proof = {
@@ -24,8 +25,9 @@ type RoundResult = {
 
 export default function RoulettePage() {
   const [choice, setChoice] = useState<Choice>("RED");
-  const [bet, setBet] = useState(25);
-  const [bank, setBank] = useState(1000);
+  const [bet, setBet] = useState(0.01);
+  const wager = useWager();
+  const bank = wager.balance;
   const [start, setStart] = useState(false);
   const [winningBet, setWinningBet] = useState("0");
   const [pending, setPending] = useState(false);
@@ -59,7 +61,7 @@ export default function RoulettePage() {
 
       setWinningBet(String(revealed.outcome.number));
       setResult(revealed);
-      setBank((value) => Math.max(0, value - bet + revealed.payout));
+      void wager.refresh();
       setStart(true);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Round failed");
@@ -72,7 +74,7 @@ export default function RoulettePage() {
       <div className="casino-game-room">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINALS / EUROPEAN ROULETTE</span><h1>Cage Roulette</h1></div>
-          <div className="game-room-balance"><span>TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="roulette-room">
@@ -102,11 +104,11 @@ export default function RoulettePage() {
 
             <label className="console-label">STAKE</label>
             <div className="roulette-stake">
-              <button onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-              <div><input aria-label="Stake amount" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-              <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+              <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+              <div><input aria-label="Stake amount" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+              <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
             </div>
-            <div className="roulette-quick-stakes">{[5, 25, 50, 100].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+            <div className="roulette-quick-stakes">{[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
 
             <div className="roulette-receipt">
               <p><span>Selection</span><b>{choice}</b></p>
@@ -114,7 +116,7 @@ export default function RoulettePage() {
               <p><span>House edge</span><b>2.70%</b></p>
             </div>
 
-            <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={spin}>{pending ? "ROUND COMMITTED…" : `SPIN ${bet.toFixed(2)} CHIPS`}</button>
+            <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={spin}>{pending ? "ROUND COMMITTED…" : `SPIN ${bet.toFixed(2)} SOL`}</button>
             {error && <p className="roulette-error">{error}</p>}
           </aside>
         </section>

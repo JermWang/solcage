@@ -5,6 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { VIDEO_POKER_PAYTABLE } from "@/lib/games/videoPoker";
 import type { PlayingCard } from "@/lib/games/blackjack";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type PokerProof = {
   algorithm: string;
@@ -47,9 +48,10 @@ function freshSeed() {
 }
 
 export default function VideoPokerPage() {
-  const [bank, setBank] = useState(1000);
+  const wager = useWager();
+  const bank = wager.balance;
   const [points, setPoints] = useState(0);
-  const [bet, setBet] = useState(5);
+  const [bet, setBet] = useState(0.01);
   const [clientSeed, setClientSeed] = useState("draw:solcage-player");
   const [round, setRound] = useState<PokerRound | null>(null);
   const [holdMask, setHoldMask] = useState(0);
@@ -93,14 +95,14 @@ export default function VideoPokerPage() {
       if (dealt.phase !== "holding" || dealt.hand?.length !== 5) {
         throw new Error(dealt.error ?? "Unable to deal the hand");
       }
-      setBank((value) => Math.max(0, value - bet));
+      void wager.refresh();
       setRound(dealt);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Video Poker deal failed");
     } finally {
       setPending(false);
     }
-  }, [bank, bet, clientSeed, pending, round?.phase]);
+  }, [bank, bet, clientSeed, pending, round?.phase, wager]);
 
   const draw = useCallback(async () => {
     if (pending || round?.phase !== "holding") return;
@@ -119,7 +121,7 @@ export default function VideoPokerPage() {
       if (settled.phase !== "settled" || !settled.proof) {
         throw new Error(settled.error ?? "Unable to settle the draw");
       }
-      setBank((value) => value + (settled.payout ?? 0));
+      void wager.refresh();
       setPoints(settled.points);
       setRound(settled);
       setHistory((current) => [settled, ...current].slice(0, 20));
@@ -128,7 +130,7 @@ export default function VideoPokerPage() {
     } finally {
       setPending(false);
     }
-  }, [holdMask, pending, round]);
+  }, [holdMask, pending, round, wager]);
 
   const toggleHold = useCallback((index: number) => {
     if (round?.phase !== "holding" || pending) return;
@@ -165,7 +167,7 @@ export default function VideoPokerPage() {
             <h1>Neon Draw</h1>
           </div>
           <div className="baccarat-header-stats">
-            <p><span>MACHINE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></p>
+            <p><span>MACHINE BALANCE</span><b>{bank.toFixed(2)} SOL</b></p>
             <p><span>LOYALTY SCORE</span><b>{points.toLocaleString()} XP</b></p>
           </div>
         </header>
@@ -225,7 +227,7 @@ export default function VideoPokerPage() {
             {round?.phase === "settled" && (
               <div className={`video-poker-win ${round.outcome}`}>
                 <span>{round.handName}</span>
-                <b>{round.outcome === "win" ? `+${round.payout?.toFixed(2)} CHIPS` : "NO WIN"}</b>
+                <b>{round.outcome === "win" ? `+${round.payout?.toFixed(2)} SOL` : "NO WIN"}</b>
               </div>
             )}
           </div>
@@ -234,14 +236,14 @@ export default function VideoPokerPage() {
             <div className="video-poker-bet">
               <span>BET PER HAND</span>
               <div>
-                <button onClick={() => setBet(Math.max(0.01, bet / 2))}>½</button>
-                <label><input aria-label="Stake amount" type="number" min="0.01" max="100000" step="0.01" value={bet} onChange={(event) => setBet(Math.min(100_000, Math.max(0.01, Number(event.target.value) || 0.01)))} disabled={round?.phase === "holding"} /><small>CHIPS</small></label>
-                <button onClick={() => setBet(Math.min(100_000, bet * 2))}>2×</button>
+                <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+                <label><input aria-label="Stake amount" type="number" min="0.01" max="100000" step="0.01" value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} disabled={round?.phase === "holding"} /><small>SOL</small></label>
+                <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
               </div>
             </div>
 
             <div className="video-poker-quick">
-              {[1, 5, 25, 100].map((value) => <button key={value} disabled={round?.phase === "holding"} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}
+              {[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} disabled={round?.phase === "holding"} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}
             </div>
 
             <button
@@ -250,7 +252,7 @@ export default function VideoPokerPage() {
               onClick={round?.phase === "holding" ? draw : deal}
             >
               <span>{pending ? "PLEASE WAIT" : round?.phase === "holding" ? "DRAW" : "DEAL"}</span>
-              <small>{round?.phase === "holding" ? `${holdMask.toString(2).split("1").length - 1} HELD` : `${bet.toFixed(2)} CHIPS`}</small>
+              <small>{round?.phase === "holding" ? `${holdMask.toString(2).split("1").length - 1} HELD` : `${bet.toFixed(2)} SOL`}</small>
             </button>
 
             <div className="video-poker-meter">

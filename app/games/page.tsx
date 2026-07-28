@@ -211,7 +211,7 @@ export default function GamesLobby() {
 
         <section className="casino-floor-pulse" aria-label="Live floor totals">
           <div><span>VERIFIED ROUNDS</span><b>{floor.rounds.toLocaleString()}</b></div>
-          <div><span>CHIPS WAGERED</span><b>{floor.wagered.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></div>
+          <div><span>SOL WAGERED</span><b>{floor.wagered.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></div>
           <div><span>LARGEST RETURN</span><b>{floor.largestPayout.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></div>
           <div><span>FLOOR PLAYERS</span><b>{floor.activePlayers.toLocaleString()}</b></div>
           <Link href="/leaderboard">OPEN RACE <i>↗</i></Link>
@@ -254,7 +254,7 @@ export default function GamesLobby() {
                     <b>{game.name}</b>
                   </span>
                   <span>{bet.player}</span>
-                  <span>{bet.bet.toFixed(2)} <small>CHIPS</small></span>
+                  <span>{bet.bet.toFixed(2)} <small>SOL</small></span>
                   <strong className={bet.outcome}>{bet.multiplier.toFixed(2)}×</strong>
                   <em className={bet.outcome}>{bet.payout.toFixed(2)}</em>
                 </Link>

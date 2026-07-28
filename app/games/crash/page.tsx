@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type CrashState = {
   roundId: string;
@@ -28,8 +29,9 @@ function displayMultiplier(startedAt: string) {
 }
 
 export default function CrashPage() {
-  const [bank, setBank] = useState(1000);
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [autoEnabled, setAutoEnabled] = useState(true);
   const [autoCashout, setAutoCashout] = useState(2);
   const [pending, setPending] = useState(false);
@@ -47,10 +49,10 @@ export default function CrashPage() {
     setLiveMultiplier(next.currentMultiplier);
     if (next.phase === "settled" && creditedRound.current !== next.roundId) {
       creditedRound.current = next.roundId;
-      setBank((value) => value + (next.payout ?? 0));
+      void wager.refresh();
       if (next.crashPoint) setHistory((values) => [next.crashPoint!, ...values].slice(0, 8));
     }
-  }, []);
+  }, [wager]);
 
   const activeRoundId = state?.phase === "flying" ? state.roundId : null;
   const activeStartedAt = state?.phase === "flying" ? state.startedAt : null;
@@ -117,7 +119,7 @@ export default function CrashPage() {
       }).then((response) => response.json()) as CrashState & { error?: string };
       if (!started.roundId) throw new Error(started.error ?? "Unable to start crash round");
       creditedRound.current = "";
-      setBank((value) => Math.max(0, value - bet));
+      void wager.refresh();
       acceptState(started);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Crash round failed");
@@ -165,7 +167,7 @@ export default function CrashPage() {
       <div className="casino-game-room crash-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>SOLANA CRASH FOUNDATION / VERIFIED FLIGHT</span><h1>Cage Crash</h1></div>
-          <div className="game-room-balance"><span>PRACTICE TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="crash-room">
@@ -193,7 +195,7 @@ export default function CrashPage() {
             <div className="crash-multiplier">
               <span>{state?.phase === "settled" ? state.label : state ? "ROUND LIVE" : "AWAITING LAUNCH"}</span>
               <b>{(state?.phase === "settled" ? state.crashPoint ?? liveMultiplier : liveMultiplier).toFixed(2)}×</b>
-              <small>{state?.phase === "settled" ? (state.outcome === "win" ? `RETURN ${(state.payout ?? 0).toFixed(2)} CHIPS` : "ROUND CRASHED") : state?.autoCashout ? `AUTO CASHOUT ${state.autoCashout.toFixed(2)}×` : "MANUAL CASHOUT"}</small>
+              <small>{state?.phase === "settled" ? (state.outcome === "win" ? `RETURN ${(state.payout ?? 0).toFixed(2)} SOL` : "ROUND CRASHED") : state?.autoCashout ? `AUTO CASHOUT ${state.autoCashout.toFixed(2)}×` : "MANUAL CASHOUT"}</small>
             </div>
           </div>
 
@@ -202,11 +204,11 @@ export default function CrashPage() {
             {!state && <>
               <label className="console-label">STAKE</label>
               <div className="roulette-stake">
-                <button onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-                <div><input aria-label="Stake amount" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-                <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+                <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+                <div><input aria-label="Stake amount" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+                <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
               </div>
-              <div className="roulette-quick-stakes">{[5, 25, 50, 100].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+              <div className="roulette-quick-stakes">{[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
               <label className="console-label">AUTO CASHOUT</label>
               <div className="crash-auto-row">
                 <button className={autoEnabled ? "active" : ""} onClick={() => setAutoEnabled((value) => !value)}>{autoEnabled ? "ON" : "OFF"}</button>
@@ -219,7 +221,7 @@ export default function CrashPage() {
               <p><span>Crash point</span><b>{state?.crashPoint ? `${state.crashPoint.toFixed(2)}×` : "HIDDEN"}</b></p>
               <p><span>Designed RTP</span><b>99.00%</b></p>
             </div>
-            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={startRound}>{pending ? "COMMITTING…" : `LAUNCH ${bet.toFixed(2)} CHIPS`}</button>}
+            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={startRound}>{pending ? "COMMITTING…" : `LAUNCH ${bet.toFixed(2)} SOL`}</button>}
             {state?.phase === "flying" && <button className="roulette-spin-button crash-cashout" disabled={pending} onClick={cashOut}>{pending ? "LOCKING…" : `CASH OUT ${(bet * liveMultiplier).toFixed(2)}`}</button>}
             {state?.phase === "settled" && <button className="roulette-spin-button" onClick={newRound}>NEW FLIGHT</button>}
             {error && <p className="roulette-error">{error}</p>}

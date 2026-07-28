@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 import {
   KENO_DRAW_COUNT,
   KENO_MAX_PICKS,
@@ -47,8 +48,9 @@ function randomSelection(count: number) {
 }
 
 export default function KenoPage() {
-  const [bank, setBank] = useState(1000);
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [selectedNumbers, setSelectedNumbers] = useState<number[]>([]);
   const [result, setResult] = useState<KenoResult | null>(null);
   const [revealedCount, setRevealedCount] = useState(0);
@@ -128,7 +130,7 @@ export default function KenoPage() {
         }),
       }).then((response) => response.json()) as KenoResult & { error?: string };
       if (!next.roundId) throw new Error(next.error ?? "Unable to settle Keno draw");
-      setBank((value) => Math.max(0, value - bet + next.payout));
+      void wager.refresh();
       setHistory((items) => [
         { hits: next.hitCount, picks: next.selectedNumbers.length, multiplier: next.multiplier },
         ...items,
@@ -161,7 +163,7 @@ export default function KenoPage() {
       <div className="casino-game-room keno-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>CHARLIE GUAN KENO FOUNDATION / VERIFIED DRAW</span><h1>Cage Keno</h1></div>
-          <div className="game-room-balance"><span>PRACTICE TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="keno-room">
@@ -220,11 +222,11 @@ export default function KenoPage() {
               </div>
               <label className="console-label">STAKE</label>
               <div className="roulette-stake">
-                <button disabled={pending} onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-                <div><input aria-label="Stake amount" disabled={pending} type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-                <button disabled={pending} onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+                <button disabled={pending} onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+                <div><input aria-label="Stake amount" disabled={pending} type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+                <button disabled={pending} onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
               </div>
-              <div className="roulette-quick-stakes">{[5, 25, 50, 100].map((value) => <button disabled={pending} key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+              <div className="roulette-quick-stakes">{[0.01, 0.05, 0.1, 0.25].map((value) => <button disabled={pending} key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
             </>}
 
             <label className="console-label">PAYOUTS / {selectedNumbers.length || KENO_MIN_PICKS} PICKS</label>
@@ -241,10 +243,10 @@ export default function KenoPage() {
               <p><span>Selected</span><b>{selectedNumbers.length} NUMBERS</b></p>
               <p><span>Draw size</span><b>20 / 80</b></p>
               <p><span>Designed RTP</span><b>≈ 96.00%</b></p>
-              <p><span>Result</span><b>{drawComplete ? `${result?.payout.toFixed(2)} CHIPS` : "PENDING"}</b></p>
+              <p><span>Result</span><b>{drawComplete ? `${result?.payout.toFixed(2)} SOL` : "PENDING"}</b></p>
             </div>
 
-            {!result && <button className="roulette-spin-button" disabled={pending || bet > bank || selectedNumbers.length < KENO_MIN_PICKS} onClick={play}>{pending ? "COMMITTING…" : `DRAW ${bet.toFixed(2)} CHIPS`}</button>}
+            {!result && <button className="roulette-spin-button" disabled={pending || bet > bank || selectedNumbers.length < KENO_MIN_PICKS} onClick={play}>{pending ? "COMMITTING…" : `DRAW ${bet.toFixed(2)} SOL`}</button>}
             {result && <button className="roulette-spin-button" disabled={!drawComplete} onClick={repeatDraw}>{drawComplete ? "DRAW AGAIN / SAME PICKS" : "DRAWING…"}</button>}
             {error && <p className="roulette-error">{error}</p>}
           </aside>

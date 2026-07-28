@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type MinesState = {
   roundId: string;
@@ -25,8 +26,9 @@ type MinesState = {
 const cells = Array.from({ length: 25 }, (_, index) => index);
 
 export default function MinesPage() {
-  const [bank, setBank] = useState(1000);
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [mineCount, setMineCount] = useState(3);
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<MinesState | null>(null);
@@ -41,7 +43,7 @@ export default function MinesPage() {
       let roundId = state?.roundId;
       let clientSeed: string | undefined;
       if (actionName === "start") {
-        if (bet > bank || bank <= 0) throw new Error("Practice balance is too low");
+        if (bet > bank || bank <= 0) throw new Error("Not enough balance");
         const committed = await fetch("/api/games/fair/commit", {
           method: "POST",
           headers: { "content-type": "application/json" },
@@ -66,8 +68,8 @@ export default function MinesPage() {
         }),
       }).then((response) => response.json()) as MinesState & { error?: string };
       if (!next.roundId) throw new Error(next.error ?? "Mines action failed");
-      if (actionName === "start") setBank((value) => Math.max(0, value - bet));
-      if (next.phase === "settled") setBank((value) => value + (next.payout ?? 0));
+      if (actionName === "start") void wager.refresh();
+      if (next.phase === "settled") void wager.refresh();
       setState(next);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Mines action failed");
@@ -87,7 +89,7 @@ export default function MinesPage() {
       <div className="casino-game-room mines-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>MIT MINES FOUNDATION / VERIFIED BOARD</span><h1>Crystal Mines</h1></div>
-          <div className="game-room-balance"><span>PRACTICE TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="mines-room">
@@ -119,7 +121,7 @@ export default function MinesPage() {
             {state?.phase === "settled" && (
               <div className={`mines-outcome ${state.outcome}`}>
                 <span>{state.label}</span>
-                <b>{state.payout ? `+${state.payout.toFixed(2)} CHIPS` : "BOARD LOST"}</b>
+                <b>{state.payout ? `+${state.payout.toFixed(2)} SOL` : "BOARD LOST"}</b>
               </div>
             )}
           </div>
@@ -129,9 +131,9 @@ export default function MinesPage() {
             {!state && <>
               <label className="console-label">STAKE</label>
               <div className="roulette-stake">
-                <button onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-                <div><input aria-label="Stake amount" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-                <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+                <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+                <div><input aria-label="Stake amount" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+                <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
               </div>
               <label className="console-label">MINES</label>
               <div className="mine-count-picker">{[3, 5, 10].map((count) => <button className={mineCount === count ? "active" : ""} key={count} onClick={() => setMineCount(count)}>{count}</button>)}</div>
@@ -139,10 +141,10 @@ export default function MinesPage() {
             <div className="roulette-receipt">
               <p><span>Crystals found</span><b>{state?.revealed.length ?? 0}</b></p>
               <p><span>Mines hidden</span><b>{state?.mineCount ?? mineCount}</b></p>
-              <p><span>Current return</span><b>{state ? `${(bet * state.multiplier).toFixed(2)} CHIPS` : "—"}</b></p>
+              <p><span>Current return</span><b>{state ? `${(bet * state.multiplier).toFixed(2)} SOL` : "—"}</b></p>
               <p><span>Designed RTP</span><b>98.00%</b></p>
             </div>
-            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => action("start")}>{pending ? "LOCKING BOARD…" : `START ${bet.toFixed(2)} CHIPS`}</button>}
+            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => action("start")}>{pending ? "LOCKING BOARD…" : `START ${bet.toFixed(2)} SOL`}</button>}
             {state?.phase === "playing" && <button className="roulette-spin-button" disabled={pending || !state.revealed.length} onClick={() => action("cashout")}>{pending ? "VERIFYING…" : `CASH OUT ${(bet * state.multiplier).toFixed(2)}`}</button>}
             {state?.phase === "settled" && <button className="roulette-spin-button" onClick={newBoard}>NEW BOARD</button>}
             {error && <p className="roulette-error">{error}</p>}

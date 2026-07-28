@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { clampStake, useWager } from "@/lib/useWager";
 
 type Card = { rank: string; suit: "hearts" | "diamonds" | "clubs" | "spades" };
 type BlackjackState = {
@@ -33,8 +34,9 @@ const suitGlyph: Record<Card["suit"], string> = {
 };
 
 export default function BlackjackPage() {
-  const [bank, setBank] = useState(1000);
-  const [bet, setBet] = useState(25);
+  const wager = useWager();
+  const bank = wager.balance;
+  const [bet, setBet] = useState(0.01);
   const [pending, setPending] = useState(false);
   const [state, setState] = useState<BlackjackState | null>(null);
   const [commitment, setCommitment] = useState("");
@@ -66,9 +68,9 @@ export default function BlackjackPage() {
         body: JSON.stringify({ roundId, action, bet, clientSeed }),
       }).then((response) => response.json()) as BlackjackState & { error?: string };
       if (!next.roundId) throw new Error(next.error ?? "Blackjack action failed");
-      if (action === "deal") setBank((value) => Math.max(0, value - bet));
-      if (action === "double") setBank((value) => Math.max(0, value - (state?.stake ?? bet)));
-      if (next.phase === "settled") setBank((value) => value + (next.payout ?? 0));
+      if (action === "deal") void wager.refresh();
+      if (action === "double") void wager.refresh();
+      if (next.phase === "settled") void wager.refresh();
       setState(next);
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : "Blackjack action failed");
@@ -88,7 +90,7 @@ export default function BlackjackPage() {
       <div className="casino-game-room blackjack-page">
         <header className="game-room-header">
           <div><Link href="/games">← Casino</Link><span>BLACKJACK PARTY FOUNDATION / VERIFIED SHOE</span><h1>Cage Blackjack</h1></div>
-          <div className="game-room-balance"><span>PRACTICE TABLE BALANCE</span><b>{bank.toFixed(2)} CHIPS</b></div>
+          <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
 
         <section className="blackjack-room">
@@ -100,7 +102,7 @@ export default function BlackjackPage() {
             <div className="blackjack-mark"><span>SC</span><small>BLACKJACK</small></div>
             <Hand label="PLAYER" cards={state?.player ?? []} value={state?.playerValue ?? 0} />
             <div className="blackjack-seat"><i /><span>ACTIVE SEAT</span><b>YOU</b></div>
-            {state?.phase === "settled" && <div className={`blackjack-outcome ${state.outcome}`}><span>{state.label}</span><b>{state.payout ? `+${state.payout.toFixed(2)} CHIPS` : "NO PAYOUT"}</b></div>}
+            {state?.phase === "settled" && <div className={`blackjack-outcome ${state.outcome}`}><span>{state.label}</span><b>{state.payout ? `+${state.payout.toFixed(2)} SOL` : "NO PAYOUT"}</b></div>}
           </div>
 
           <aside className="roulette-console blackjack-console">
@@ -108,11 +110,11 @@ export default function BlackjackPage() {
             {!state && <>
               <label className="console-label">STAKE</label>
               <div className="roulette-stake">
-                <button onClick={() => setBet(Math.max(1, bet / 2))}>½</button>
-                <div><input aria-label="Stake amount" type="number" min="1" max={bank} value={bet} onChange={(event) => setBet(Math.max(1, Number(event.target.value)))} /><span>CHIPS</span></div>
-                <button onClick={() => setBet(Math.min(bank, bet * 2))}>2×</button>
+                <button onClick={() => setBet(clampStake(bet / 2, wager))}>½</button>
+                <div><input aria-label="Stake amount" type="number" min={wager.minStake} max={Math.min(wager.maxStake, bank)} value={bet} onChange={(event) => setBet(clampStake(Number(event.target.value), wager))} /><span>SOL</span></div>
+                <button onClick={() => setBet(clampStake(bet * 2, wager))}>2×</button>
               </div>
-              <div className="roulette-quick-stakes">{[5, 25, 50, 100].map((value) => <button key={value} onClick={() => setBet(Math.min(bank, value))}>{value}</button>)}</div>
+              <div className="roulette-quick-stakes">{[0.01, 0.05, 0.1, 0.25].map((value) => <button key={value} onClick={() => setBet(clampStake(value, wager))}>{value}</button>)}</div>
             </>}
             <div className="roulette-receipt">
               <p><span>Player hand</span><b>{state?.playerValue ?? "—"}</b></p>
@@ -120,8 +122,8 @@ export default function BlackjackPage() {
               <p><span>Natural blackjack</span><b>2.50× RETURN</b></p>
               <p><span>Shoe</span><b>HMAC SHUFFLED</b></p>
             </div>
-            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => requestAction("deal")}>{pending ? "DEALING…" : `DEAL ${bet.toFixed(2)} CHIPS`}</button>}
-            <div className="blackjack-status"><span>TABLE STATUS</span><b>{pending ? "DEALER IS ACTING" : !state ? "PLACE YOUR STAKE" : state.phase === "settled" ? state.label : state.canDouble ? "HIT, STAND, OR DOUBLE" : "HIT OR STAND"}</b><small>{state?.phase === "playing" ? (state.playerValue <= 11 ? "Drawing cannot bust this hand." : state.playerValue >= 17 ? "Standing is often the conservative play." : "Weigh the dealer up-card before acting.") : "Single-hand practice table; no insurance, split, or surrender."}</small></div>
+            {!state && <button className="roulette-spin-button" disabled={pending || bet > bank || bank <= 0} onClick={() => requestAction("deal")}>{pending ? "DEALING…" : `DEAL ${bet.toFixed(2)} SOL`}</button>}
+            <div className="blackjack-status"><span>TABLE STATUS</span><b>{pending ? "DEALER IS ACTING" : !state ? "PLACE YOUR STAKE" : state.phase === "settled" ? state.label : state.canDouble ? "HIT, STAND, OR DOUBLE" : "HIT OR STAND"}</b><small>{state?.phase === "playing" ? (state.playerValue <= 11 ? "Drawing cannot bust this hand." : state.playerValue >= 17 ? "Standing is often the conservative play." : "Weigh the dealer up-card before acting.") : "Single-hand table; no insurance, split, or surrender."}</small></div>
             {state?.phase === "playing" && <div className={`blackjack-actions ${state.canDouble && bank >= state.stake ? "has-double" : ""}`}><button disabled={pending} onClick={() => requestAction("hit")}>HIT</button><button disabled={pending} onClick={() => requestAction("stand")}>STAND</button>{state.canDouble && bank >= state.stake && <button className="blackjack-double" disabled={pending} onClick={() => requestAction("double")}>DOUBLE <small>+{state.stake.toFixed(2)}</small></button>}</div>}
             {state?.phase === "settled" && <button className="roulette-spin-button" onClick={newHand}>NEW HAND</button>}
             {error && <p className="roulette-error">{error}</p>}
