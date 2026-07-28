@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 import {
   diceMultiplier,
   diceTarget,
@@ -140,6 +141,7 @@ export default function DicePage() {
             <b>{points.toLocaleString()} XP</b>
           </div>
         </header>
+        <GameHints game="dice" />
 
         <section className="dice-room">
           <div className={`dice-stage ${pending ? "rolling" : ""} ${result?.won ? "won" : result ? "lost" : ""}`}>

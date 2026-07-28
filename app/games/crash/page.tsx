@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 
 type CrashState = {
   roundId: string;
@@ -169,6 +170,7 @@ export default function CrashPage() {
           <div><Link href="/games">← Casino</Link><span>SOLANA CRASH FOUNDATION / VERIFIED FLIGHT</span><h1>Cage Crash</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
+        <GameHints game="crash" />
 
         <section className="crash-room">
           <div className={`crash-stage ${state?.phase === "settled" ? state.outcome : "flying"}`}>

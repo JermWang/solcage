@@ -66,7 +66,23 @@ export function useWager(): WagerState {
     void (async () => {
       if (!cancelled) await refresh();
     })();
-    return () => { cancelled = true; };
+
+    // Keep the balance live. A round settled in another tab, a deposit that
+    // finalized, or a withdrawal all move it without this page doing anything,
+    // so poll gently and re-read the moment the tab is looked at again.
+    const timer = window.setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 8_000);
+    const onFocus = () => { void refresh(); };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onFocus);
+
+    return () => {
+      cancelled = true;
+      window.clearInterval(timer);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onFocus);
+    };
   }, [refresh]);
 
   return { ...state, refresh };

@@ -8,6 +8,7 @@ import { XLink } from "@/components/XLink";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { Cashier } from "@/components/Cashier";
 import { DepositMenu } from "@/components/DepositMenu";
+import { useWager } from "@/lib/useWager";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards" | "docs";
@@ -31,7 +32,8 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
   }
 
   const [cashierOpen, setCashierOpen] = useState(false);
-  const [playBalance, setPlayBalance] = useState<string | null>(null);
+  // Shared hook, so the nav figure tracks the same live balance the tables use.
+  const wager = useWager();
 
   useEffect(() => {
     fetch("/api/me")
@@ -43,13 +45,6 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
       })
       .catch(() => undefined);
 
-    fetch("/api/wallet/balance")
-      .then(async (response) => {
-        if (!response.ok) return;
-        const data = await response.json();
-        if (data.wagering === "open") setPlayBalance(data.balance ?? null);
-      })
-      .catch(() => undefined);
   }, []);
 
   return (
@@ -102,7 +97,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             <XLink />
             {signedIn !== false && (
               <button type="button" className="casino-balance-chip" onClick={() => setCashierOpen(true)}>
-                <small>BALANCE</small><b>{playBalance ?? "0"} SOL</b>
+                <small>BALANCE</small><b>{wager.balance.toFixed(2)} {wager.symbol}</b>
               </button>
             )}
             <DepositMenu signedIn={signedIn !== false} onSolana={() => setCashierOpen(true)} />
@@ -120,7 +115,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
         <Cashier
           open={cashierOpen}
           onClose={() => setCashierOpen(false)}
-          onBalance={(available) => setPlayBalance(available)}
+          onBalance={() => { void wager.refresh(); }}
         />
       )}
     </main>

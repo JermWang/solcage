@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRef, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 
 type PlinkoResult = {
   won: boolean;
@@ -102,6 +103,7 @@ export default function PlinkoPage() {
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINALS / VERIFIED PLINKO</span><h1>Neon Plinko</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
+        <GameHints game="plinko" />
 
         <section className="plinko-room">
           <div className="plinko-stage">

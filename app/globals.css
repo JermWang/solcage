@@ -474,6 +474,24 @@ main>footer p a:hover{background:var(--lime)}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
 .casino-deposit{height:40px;padding:0 20px;border-radius:9px;border:0;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;cursor:pointer}
 .casino-deposit:hover{filter:brightness(1.08)}
+/* Beginner guidance shown above each table */
+.game-hints{margin:0 0 18px;padding:18px 20px;border:1px solid rgba(201,255,56,.22);border-radius:14px;background:linear-gradient(180deg,rgba(201,255,56,.06),rgba(201,255,56,.02))}
+.game-hints header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}
+.game-hints header span{display:block;color:var(--lime);font:800 8px var(--font-geist-mono);letter-spacing:.14em;margin-bottom:5px}
+.game-hints header h2{margin:0;font-size:18px;letter-spacing:-.02em;color:#fff}
+.game-hints header button{flex:0 0 auto;height:30px;padding:0 12px;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:transparent;color:#a49dae;font:800 9px var(--font-geist-mono);cursor:pointer}
+.game-hints header button:hover{color:#fff;border-color:rgba(255,255,255,.4)}
+.game-hints-summary{margin:0 0 14px;color:#d8d3e0;font:14px/1.6 Georgia,serif;max-width:78ch}
+.game-hints ol{list-style:none;margin:0 0 14px;padding:0;display:grid;gap:8px}
+.game-hints ol li{display:grid;grid-template-columns:22px 1fr;gap:10px;align-items:start}
+.game-hints ol b{width:22px;height:22px;display:grid;place-items:center;border-radius:50%;background:rgba(201,255,56,.16);color:var(--lime);font:800 10px var(--font-geist-mono)}
+.game-hints ol span{color:#c5bfd0;font:13px/1.5 var(--font-geist-sans),Arial,sans-serif;padding-top:2px}
+.game-hints-tip{margin:0;padding-top:12px;border-top:1px solid rgba(255,255,255,.08);color:#a49dae;font:12px/1.6 var(--font-geist-sans),Arial,sans-serif}
+.game-hints-tip b{color:var(--lime);font:800 9px var(--font-geist-mono);letter-spacing:.1em;margin-right:8px;text-transform:uppercase}
+.hints-reopen{margin:0 0 16px;height:32px;padding:0 14px;border:1px solid rgba(255,255,255,.16);border-radius:8px;background:transparent;color:#a49dae;font:800 9px var(--font-geist-mono);letter-spacing:.06em;cursor:pointer}
+.hints-reopen:hover{color:var(--lime);border-color:rgba(201,255,56,.4)}
+@media(max-width:640px){.game-hints{padding:15px}.game-hints-summary{font-size:13px}}
+
 /* Unified on-chain transaction feed (profile) */
 .txn-feed{display:flex;flex-direction:column;gap:6px}
 .txn-empty{color:var(--muted);font:12px/1.6 var(--font-geist-mono);margin:0;padding:16px 0}

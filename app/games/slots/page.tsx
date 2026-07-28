@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 import {
   SLOT_LINE_COUNT,
   SLOT_PAYTABLE,
@@ -151,6 +152,7 @@ export default function SlotsPage() {
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINAL / NINE-LINE VIDEO SLOT</span><h1>Neon Vault</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
+        <GameHints game="slots" />
 
         <section className="vault-slots-room">
           <div className="vault-cabinet-wrap">

@@ -6,6 +6,7 @@ import { CasinoChrome } from "@/components/CasinoChrome";
 import { VIDEO_POKER_PAYTABLE } from "@/lib/games/videoPoker";
 import type { PlayingCard } from "@/lib/games/blackjack";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 
 type PokerProof = {
   algorithm: string;
@@ -171,6 +172,7 @@ export default function VideoPokerPage() {
             <p><span>LOYALTY SCORE</span><b>{points.toLocaleString()} XP</b></p>
           </div>
         </header>
+        <GameHints game="video-poker" />
 
         <section className="video-poker-machine">
           <div className="video-poker-marquee">

@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
+import { GameHints } from "@/components/GameHints";
 import {
   KENO_DRAW_COUNT,
   KENO_MAX_PICKS,
@@ -165,6 +166,7 @@ export default function KenoPage() {
           <div><Link href="/games">← Casino</Link><span>CHARLIE GUAN KENO FOUNDATION / VERIFIED DRAW</span><h1>Cage Keno</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
+        <GameHints game="keno" />
 
         <section className="keno-room">
           <div className={`keno-stage ${drawComplete ? result?.outcome : ""}`}>
