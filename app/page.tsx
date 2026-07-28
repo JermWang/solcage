@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState, type CSSProperties, type Keyboard
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
+import { visibleGameCountLabel } from "@/lib/games-catalog";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -159,7 +160,8 @@ export default function Home() {
 }
 
 function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset: (asset: Asset) => void }) {
-  const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", "03"], ["Round rewards", "ON"], ["Network", "SOLANA"]], []);
+  const gameCount = visibleGameCountLabel();
+  const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", gameCount], ["Round rewards", "ON"], ["Network", "SOLANA"]], [gameCount]);
   return <>
     <header className="hero">
       <div className="eyebrow"><span /> MEMECOIN CREDIT ON SOLANA · $10M+ COLLATERAL · FLOOR REWARDS</div>
@@ -169,9 +171,9 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin hero-logo-coin"><BrandMark size={384} /></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
     </header>
-    <div className="lobby-marquee" aria-label="Floor status"><b><span /> LIVE TABLES 03</b><b>SOLANA CREDIT MARKET</b><b>LOYALTY ACTIVE</b><b>PROFILE HISTORY ON</b></div>
+    <div className="lobby-marquee" aria-label="Floor status"><b><span /> LIVE TABLES {gameCount}</b><b>SOLANA CREDIT MARKET</b><b>LOYALTY ACTIVE</b><b>PROFILE HISTORY ON</b></div>
     <section className="floor reveal">
-      <div className="floor-head"><div><div className="section-kicker">THE FLOOR / THREE GAME EXPERIENCES</div><h2>Pick a table.<br /><em>Place your stake.</em></h2></div><button className="secondary light" onClick={() => go("games")}>Enter the floor ↗</button></div>
+      <div className="floor-head"><div><div className="section-kicker">THE FLOOR / {gameCount} PROVABLY-FAIR TABLES</div><h2>Pick a table.<br /><em>Place your stake.</em></h2></div><button className="secondary light" onClick={() => go("games")}>Enter the floor ↗</button></div>
       <div className="cards">{games.map((game) => <button key={game[2]} onClick={() => go("games")}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={game[6]} alt="" />
@@ -197,7 +199,7 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
       <div className="step-grid">
         <article><span>01 / LOCK</span><b>◆</b><h3>Put the bag in the cage</h3><p>Choose a screened $10M+ Solana asset and open a collateral position.</p></article>
         <article><span>02 / BORROW</span><b>◎</b><h3>Access the credit line</h3><p>Your asset’s risk tier sets the available LTV while the collateral remains secured in the vault.</p></article>
-        <article><span>03 / PLAY</span><b>↗</b><h3>Hit the floor</h3><p>Play three game experiences, build round history, and climb the loyalty leaderboard.</p></article>
+        <article><span>03 / PLAY</span><b>↗</b><h3>Hit the floor</h3><p>Play every provably-fair table, build round history, and climb the loyalty leaderboard.</p></article>
       </div>
     </section>
   </>;
