@@ -33,7 +33,7 @@ type FloorTotals = {
   activePlayers: number;
 };
 
-const games: LobbyGame[] = [
+const allGames: LobbyGame[] = [
   { id: "roulette", name: "Cage Roulette", studio: "SOLCAGE ORIGINALS", tag: "TRENDING", image: "/game-art/roulette.webp", href: "/games/roulette", tone: "violet", categories: ["Originals", "Table games", "High limit"] },
   { id: "baccarat", name: "Cage Baccarat", studio: "SOLCAGE ORIGINALS", tag: "NEW TABLE", image: "/game-art/baccarat.webp", href: "/games/baccarat", tone: "gold", categories: ["Originals", "Table games", "High limit"] },
   { id: "video-poker", name: "Neon Draw", studio: "SOLCAGE ORIGINALS", tag: "99.54% base RTP", image: "/game-art/video-poker.webp", href: "/games/video-poker", tone: "purple", categories: ["Originals", "Table games", "High limit", "Video poker"] },
@@ -46,9 +46,21 @@ const games: LobbyGame[] = [
   { id: "keno", name: "Cage Keno", studio: "SOLCAGE ORIGINALS", tag: "80 BALL", image: "/game-art/keno.webp", href: "/games/keno", tone: "lime", categories: ["Originals", "Instant", "High limit"] },
 ];
 
+// Withheld from the floor. Same variable the wager gate reads, so a hidden
+// game cannot be played by going straight to its URL either.
+const hidden = new Set(
+  (process.env.NEXT_PUBLIC_SOLCAGE_HIDDEN_GAMES ?? "")
+    .split(",")
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean),
+);
+const games = allGames.filter((game) => !hidden.has(game.id));
+
 const gameById = Object.fromEntries(games.map((game) => [game.id, game]));
 const categories = ["Lobby", "Originals", "Slots", "Table games", "Video poker", "Instant", "High limit", "All games"];
-const heroSlides = [
+// Hiding a game removes it from gameById, so any slide or shelf naming it
+// would resolve to undefined and render a broken card. Both are filtered.
+const allHeroSlides = [
   {
     game: gameById["video-poker"],
     eyebrow: "NEW MACHINE / FULL PAY",
@@ -68,6 +80,7 @@ const heroSlides = [
     copy: "Pick the risk, commit the path, and watch every peg settle against the proof.",
   },
 ];
+const heroSlides = allHeroSlides.filter((slide) => Boolean(slide.game));
 
 function GameCards({ items }: { items: LobbyGame[] }) {
   return (
@@ -124,7 +137,7 @@ export default function GamesLobby() {
   const shelves = useMemo(() => {
     if (category === "Lobby" && !query.trim()) {
       return [
-        { eyebrow: "LIVE FLOOR", title: "Trending now", items: [gameById["video-poker"], gameById.baccarat, gameById.slots, gameById.crash, gameById.roulette, gameById.blackjack] },
+        { eyebrow: "LIVE FLOOR", title: "Trending now", items: [gameById["video-poker"], gameById.baccarat, gameById.slots, gameById.crash, gameById.roulette, gameById.blackjack].filter(Boolean) },
         { eyebrow: "SOLCAGE ORIGINALS", title: "Fast games", items: games.filter((game) => game.categories.includes("Instant")) },
         { eyebrow: "TABLES", title: "Tables & video poker", items: games.filter((game) => game.categories.includes("Table games")) },
         { eyebrow: "FULL FLOOR", title: "Every open game", items: games },

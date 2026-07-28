@@ -12,7 +12,7 @@ import {
 import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } from "@/lib/identity";
 import { awardPoints } from "@/lib/rewards";
 import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
-import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
+import { MAX_MULTIPLIER, houseConfig, houseReadiness, isGameHidden } from "@/lib/house";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +75,11 @@ function publicState(
 export async function POST(request: Request) {
   try {
     const identity = await requireIdentity(request);
+    // Withheld from the floor: refuse here too, so the API cannot be used to
+    // play a game the lobby is hiding.
+    if (isGameHidden("video-poker")) {
+      return json({ error: "This table is currently closed" }, 503, identity);
+    }
     const body = await request.json() as Record<string, unknown>;
     const roundId = String(body.roundId ?? "");
     const action = String(body.action ?? "").toLowerCase();

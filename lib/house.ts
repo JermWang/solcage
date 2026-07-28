@@ -111,6 +111,26 @@ export function gameLimits(config: HouseConfig) {
   });
 }
 
+/**
+ * Games withheld from the floor, by id. Comma-separated in
+ * SOLCAGE_HIDDEN_GAMES. Hidden games are filtered from the lobby and refuse
+ * wagers outright, so hiding one cannot be bypassed by calling its API directly.
+ */
+export function hiddenGames(): Set<string> {
+  // One NEXT_PUBLIC_ variable so the lobby and the wager gate cannot disagree
+  // about what is hidden; the server reads it too.
+  const raw = process.env.NEXT_PUBLIC_SOLCAGE_HIDDEN_GAMES
+    ?? process.env.SOLCAGE_HIDDEN_GAMES
+    ?? "";
+  return new Set(
+    raw.split(",").map((entry) => entry.trim().toLowerCase()).filter(Boolean),
+  );
+}
+
+export function isGameHidden(game: string) {
+  return hiddenGames().has(game.toLowerCase());
+}
+
 /** Highest multiplier each game can return, used to cap exposure per round. */
 export const MAX_MULTIPLIER: Record<string, number> = {
   dice: 49,
