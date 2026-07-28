@@ -232,11 +232,6 @@ export default function LendingPage() {
             <h1>The Cage</h1>
             <p>Transfer approved collateral to SolCage custody, receive a risk-adjusted USDC advance, repay it, and claim the same token quantity after buyback. <Link className="lending-docs-link" href="/docs">How it works ↗</Link></p>
           </div>
-          <div className="protocol-status">
-            <span><i className={config?.ready ? "online" : ""} /> CUSTODY</span>
-            <b>{config?.ready ? "OPERATOR ATTESTED" : "LAUNCH GATED"}</b>
-            <small>{config?.network ?? "mainnet-beta"} · {config?.rpcHost ?? "loading"}</small>
-          </div>
         </header>
 
         <section className="lending-metrics">

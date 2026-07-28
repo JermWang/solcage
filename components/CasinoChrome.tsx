@@ -6,6 +6,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
 import { ProfileMenu } from "@/components/ProfileMenu";
+import { Cashier } from "@/components/Cashier";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards" | "docs";
@@ -28,11 +29,8 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
     setWalletAddress(profile.walletAddress ?? null);
   }
 
-  // Live table limits, read from the same source that enforces them so the
-  // displayed ceiling can never drift from the one actually applied.
-  const [maxWin, setMaxWin] = useState<string | null>(null);
-  const [houseSymbol, setHouseSymbol] = useState("SOL");
-  const [rakeBps, setRakeBps] = useState(0);
+  const [cashierOpen, setCashierOpen] = useState(false);
+  const [playBalance, setPlayBalance] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/me")
@@ -48,16 +46,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
       .then(async (response) => {
         if (!response.ok) return;
         const data = await response.json();
-        if (data.wagering !== "open") return;
-        const decimals = Number(data.decimals ?? 9);
-        const cap = BigInt(data.limits?.maxPayoutRaw ?? "0");
-        if (cap <= 0n) return;
-        const scale = 10n ** BigInt(decimals);
-        const whole = cap / scale;
-        const fraction = (cap % scale).toString().padStart(decimals, "0").replace(/0+$/, "");
-        setMaxWin(fraction ? `${whole}.${fraction}` : `${whole}`);
-        setHouseSymbol(String(data.symbol ?? "SOL"));
-        setRakeBps(Number(data.rakeBps ?? 0));
+        if (data.wagering === "open") setPlayBalance(data.balance ?? null);
       })
       .catch(() => undefined);
   }, []);
@@ -108,16 +97,20 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             />
           </div>
           <div className="casino-top-actions">
-            {maxWin && (
-              <Link className="casino-maxwin" href="/docs#limits" title="Temporary while the bankroll grows — see the docs">
-                <small>{rakeBps > 0 ? `${rakeBps / 100}% RAKE · MAX WIN` : "MAX WIN / ROUND"}</small>
-                <b>{maxWin} {houseSymbol}</b>
-              </Link>
-            )}
             <ContractAddress />
             <XLink />
-            <Link className="casino-race" href="/leaderboard"><small>WEEKLY RACE</small><b>{signedIn === false ? "—" : `${points.toLocaleString()} XP`}</b></Link>
-            <Link className="casino-deposit" href="/lending">Deposit</Link>
+            {signedIn !== false && (
+              <button type="button" className="casino-balance-chip" onClick={() => setCashierOpen(true)}>
+                <small>BALANCE</small><b>{playBalance ?? "0"} SOL</b>
+              </button>
+            )}
+            <button
+              type="button"
+              className="casino-deposit"
+              onClick={() => (signedIn === false ? (window.location.href = "/profile") : setCashierOpen(true))}
+            >
+              {signedIn === false ? "Connect" : "Deposit"}
+            </button>
             <ProfileMenu
               signedIn={signedIn !== false}
               displayName={profileName}
@@ -128,6 +121,13 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
         </header>
         {children}
       </section>
+      {cashierOpen && (
+        <Cashier
+          open={cashierOpen}
+          onClose={() => setCashierOpen(false)}
+          onBalance={(available) => setPlayBalance(available)}
+        />
+      )}
     </main>
   );
 }

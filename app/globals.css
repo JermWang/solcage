@@ -472,8 +472,41 @@ main>footer p a:hover{background:var(--lime)}
 .casino-race{height:40px;padding:7px 15px;border:1px solid var(--casino-line);border-radius:9px;display:flex;flex-direction:column;justify-content:center}
 .casino-top-actions small{color:#766f7e;font:700 7px var(--font-geist-mono);letter-spacing:.1em}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
-.casino-deposit{height:40px;padding:0 20px;border-radius:9px;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em}
+.casino-deposit{height:40px;padding:0 20px;border-radius:9px;border:0;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;cursor:pointer}
+.casino-deposit:hover{filter:brightness(1.08)}
+.casino-balance-chip{flex:0 0 auto;height:40px;padding:0 14px;border:1px solid var(--casino-line);border-radius:9px;background:#111015;display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:border-color .16s}
+.casino-balance-chip:hover{border-color:rgba(201,255,56,.5)}
+.casino-balance-chip small{color:#766f7e;font:700 7px var(--font-geist-mono);letter-spacing:.1em}
+.casino-balance-chip b{color:var(--lime);font:800 11px var(--font-geist-mono)}
 .casino-profile{width:40px;height:40px;border:1px solid #4d4655;border-radius:50%;background:var(--purple);display:grid;place-items:center;font-weight:900}
+
+/* Cashier — one-click deposit / withdraw */
+.cashier-overlay{position:fixed;inset:0;z-index:100;background:rgba(4,3,7,.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
+.cashier-panel{width:min(420px,100%);border:1px solid var(--casino-line);border-radius:18px;background:linear-gradient(180deg,#15131c,#0c0b10);box-shadow:0 40px 80px rgba(0,0,0,.6);padding:20px}
+.cashier-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.cashier-tabs{display:flex;gap:4px;padding:4px;border:1px solid var(--casino-line);border-radius:11px;background:#0d0c11}
+.cashier-tabs button{height:32px;padding:0 18px;border:0;border-radius:8px;background:transparent;color:#8f8998;font:800 10px var(--font-geist-mono);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.cashier-tabs button.active{background:var(--lime);color:#09080b}
+.cashier-close{width:32px;height:32px;border:1px solid var(--casino-line);border-radius:8px;background:transparent;color:#8f8998;cursor:pointer;font-size:13px}
+.cashier-close:hover{color:#fff;border-color:#4d4655}
+.cashier-balances{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.cashier-balances>div{padding:14px;border:1px solid var(--casino-line);border-radius:12px;background:#100e15;display:flex;flex-direction:column;gap:6px}
+.cashier-balances span{color:#766f7e;font:800 7px var(--font-geist-mono);letter-spacing:.11em}
+.cashier-balances b{font:800 17px var(--font-geist-mono);color:var(--casino-text)}
+.cashier-amount{display:block;margin-bottom:14px}
+.cashier-amount>span{display:block;margin-bottom:8px;color:#8f8998;font:800 8px var(--font-geist-mono);letter-spacing:.11em}
+.cashier-amount>div{display:flex;align-items:center;gap:8px;height:56px;padding:0 8px 0 16px;border:1px solid var(--casino-line);border-radius:12px;background:#0d0c11}
+.cashier-amount input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#fff;font:800 24px var(--font-geist-mono)}
+.cashier-amount em{color:#8f8998;font:800 13px var(--font-geist-mono);font-style:normal}
+.cashier-amount button{height:32px;padding:0 12px;border:1px solid var(--casino-line);border-radius:8px;background:transparent;color:var(--lime);font:800 9px var(--font-geist-mono);cursor:pointer}
+.cashier-amount button:hover{border-color:var(--lime)}
+.cashier-action{width:100%;height:52px;border:0;border-radius:12px;background:var(--lime);color:#09080b;font:900 12px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.06em;cursor:pointer}
+.cashier-action:disabled{opacity:.5;cursor:default}
+.cashier-status{margin:14px 0 0;padding:11px 13px;border-radius:10px;font:11px/1.5 var(--font-geist-mono)}
+.cashier-status.ok{background:rgba(201,255,56,.1);border:1px solid rgba(201,255,56,.3);color:#d6ff8c}
+.cashier-status.error{background:rgba(255,107,120,.1);border:1px solid rgba(255,107,120,.35);color:#ff9aa4}
+.cashier-note{margin:14px 0 0;color:#6f6979;font:9px/1.6 var(--font-geist-mono)}
+@media(max-width:650px){.casino-balance-chip{display:none}}
 .profile-menu{position:relative;flex:0 0 auto}
 .profile-menu>.casino-profile{border:1px solid #4d4655;cursor:pointer;padding:0}
 .profile-menu-panel{position:absolute;right:0;top:calc(100% + 9px);z-index:40;min-width:212px;padding:7px;border:1px solid var(--casino-line);border-radius:12px;background:#14121a;box-shadow:0 24px 48px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:2px}

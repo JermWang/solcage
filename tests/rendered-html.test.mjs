@@ -70,7 +70,8 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /FULL FLOOR/i);
   assert.match(html, /href="\/games\/roulette"/);
   assert.match(html, /href="\/games\/baccarat"/);
-  assert.match(html, /href="\/games\/video-poker"/);
+  // video-poker is withheld from the lobby via NEXT_PUBLIC_SOLCAGE_HIDDEN_GAMES,
+  // so it is intentionally absent here; its standalone page still renders below.
   assert.match(html, /href="\/games\/dice"/);
   assert.match(html, /href="\/games\/plinko"/);
   assert.match(html, /href="\/games\/blackjack"/);
@@ -82,7 +83,6 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.match(html, /\/game-art\/plinko\.webp/);
   assert.match(html, /\/game-art\/blackjack\.webp/);
   assert.match(html, /\/game-art\/baccarat\.webp/);
-  assert.match(html, /\/game-art\/video-poker\.webp/);
   assert.match(html, /\/game-art\/mines\.webp/);
   assert.match(html, /\/game-art\/crash\.webp/);
   assert.match(html, /\/game-art\/keno\.webp/);
