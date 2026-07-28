@@ -9,6 +9,7 @@ import { ProfileMenu } from "@/components/ProfileMenu";
 import { Cashier } from "@/components/Cashier";
 import { DepositMenu } from "@/components/DepositMenu";
 import { useWager } from "@/lib/useWager";
+import { solToUsd, usePrices } from "@/lib/usePrices";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards" | "docs";
@@ -34,6 +35,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
   const [cashierOpen, setCashierOpen] = useState(false);
   // Shared hook, so the nav figure tracks the same live balance the tables use.
   const wager = useWager();
+  const prices = usePrices();
 
   useEffect(() => {
     fetch("/api/me")
@@ -97,7 +99,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
             <XLink />
             {signedIn !== false && (
               <button type="button" className="casino-balance-chip" onClick={() => setCashierOpen(true)}>
-                <small>BALANCE</small><b>{wager.balance.toFixed(2)} {wager.symbol}</b>
+                <small>BALANCE</small><b>{wager.balance.toFixed(2)} {wager.symbol}</b>{solToUsd(wager.balance, prices.sol?.usdPrice) && <i className="balance-usd">{solToUsd(wager.balance, prices.sol?.usdPrice)}</i>}
               </button>
             )}
             <DepositMenu signedIn={signedIn !== false} onSolana={() => setCashierOpen(true)} />

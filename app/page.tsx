@@ -8,20 +8,23 @@ import { visibleGameCountLabel } from "@/lib/games-catalog";
 import { Cashier } from "@/components/Cashier";
 import { DepositMenu } from "@/components/DepositMenu";
 import { useWager } from "@/lib/useWager";
+import { formatUsd, usePrices } from "@/lib/usePrices";
 
 type View = "home" | "vault" | "games";
-type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
+/**
+ * Presentation only — art and styling per collateral. Price, 24h change and the
+ * advance rate all arrive live from /api/prices, which reads the same market
+ * config the custody flow settles against. Nothing here carries a number.
+ */
+type AssetArt = { symbol: string; name: string; ltv: number; tone: string; origin: string; image: string };
+type Asset = AssetArt & { price: number | null; change24h: number | null };
 
-const assets: Asset[] = [
-  { symbol: "ANSEM", name: "The Black Bull", price: 0.1959, marketCap: 195_900_000, ltv: 30, tone: "purple", origin: "PUMP · 1 MO", image: "/coin-art/ansem.webp" },
-  { symbol: "FARTCOIN", name: "Fartcoin", price: 0.1312, marketCap: 131_200_000, ltv: 30, tone: "green", origin: "PUMP · 1 YR", image: "/coin-art/fartcoin.webp" },
-  { symbol: "TRIPLET", name: "Tung Tung Tung Sahur", price: 0.01748, marketCap: 17_480_000, ltv: 20, tone: "orange", origin: "PUMP · 5 MO", image: "/coin-art/triplet.webp" },
-  { symbol: "KINS", name: "Kintara", price: 0.0151, marketCap: 15_100_000, ltv: 18, tone: "pink", origin: "PUMP · RECENT", image: "/coin-art/kins.webp" },
-  { symbol: "JIMOTHY", name: "Jimothy the Raccoon", price: 0.0171, marketCap: 17_100_000, ltv: 15, tone: "green", origin: "PUMP · NEW", image: "/coin-art/jimothy.webp" },
-  { symbol: "PENGU", name: "Pudgy Penguins", price: 0.006315, marketCap: 397_100_000, ltv: 40, tone: "purple", origin: "SOLANA", image: "/coin-art/pengu.webp" },
-  { symbol: "BONK", name: "Bonk", price: 0.000002935, marketCap: 258_300_000, ltv: 35, tone: "orange", origin: "SOLANA", image: "/coin-art/bonk.webp" },
-  { symbol: "WIF", name: "dogwifhat", price: 0.1545, marketCap: 154_300_000, ltv: 30, tone: "green", origin: "SOLANA", image: "/coin-art/wif.jpg" },
-  { symbol: "POPCAT", name: "Popcat", price: 0.0433, marketCap: 42_400_000, ltv: 25, tone: "pink", origin: "SOLANA", image: "/coin-art/popcat.webp" },
+const assetArt: AssetArt[] = [
+  { symbol: "FARTCOIN", name: "Fartcoin", ltv: 20, tone: "green", origin: "SOLANA", image: "/coin-art/fartcoin.webp" },
+  { symbol: "PENGU", name: "Pudgy Penguins", ltv: 20, tone: "purple", origin: "SOLANA", image: "/coin-art/pengu.webp" },
+  { symbol: "BONK", name: "Bonk", ltv: 20, tone: "orange", origin: "SOLANA", image: "/coin-art/bonk.webp" },
+  { symbol: "WIF", name: "dogwifhat", ltv: 20, tone: "green", origin: "SOLANA", image: "/coin-art/wif.jpg" },
+  { symbol: "POPCAT", name: "Popcat", ltv: 20, tone: "pink", origin: "SOLANA", image: "/coin-art/popcat.webp" },
 ];
 
 const games = [
@@ -33,16 +36,30 @@ const games = [
 export default function Home() {
   const [view, setView] = useState<View>("home");
   const [connected, setConnected] = useState(false);
-  const [asset, setAsset] = useState(assets[0]);
+  const [selectedSymbol, setSelectedSymbol] = useState(assetArt[0].symbol);
   const [amount, setAmount] = useState("10");
   const wager = useWager();
+  const prices = usePrices();
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [profileName, setProfileName] = useState("Profile");
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [cashierOpen, setCashierOpen] = useState(false);
 
-  const collateral = Number(amount || 0) * asset.price;
-  const available = collateral * asset.ltv / 100;
+  // Art joined to the live quote. Advance rate comes from the market config too,
+  // so the LTV shown is the one the custody flow would actually apply.
+  const assets: Asset[] = useMemo(() => assetArt.map((art) => {
+    const quote = prices.collateral.find((entry) => entry.symbol === art.symbol);
+    return {
+      ...art,
+      ltv: quote ? quote.advanceBps / 100 : art.ltv,
+      price: quote?.usdPrice ?? null,
+      change24h: quote?.priceChange24h ?? null,
+    };
+  }), [prices.collateral]);
+
+  const asset = assets.find((entry) => entry.symbol === selectedSymbol) ?? assets[0];
+  const collateral = asset.price === null ? null : Number(amount || 0) * asset.price;
+  const available = collateral === null ? null : collateral * asset.ltv / 100;
 
   useEffect(() => {
     const referralCode = new URLSearchParams(window.location.search).get("ref");
@@ -118,8 +135,8 @@ export default function Home() {
         <a className="wallet" href="/profile">{signedIn === false ? "Connect wallet" : profileName}</a>
       </nav>
 
-      {view === "home" && <HomeView go={go} onSelectAsset={(nextAsset) => {
-        setAsset(nextAsset);
+      {view === "home" && <HomeView go={go} assets={assets} solPrice={prices.sol?.usdPrice ?? null} onSelectAsset={(nextAsset) => {
+        setSelectedSymbol(nextAsset.symbol);
         window.location.assign(`/lending?asset=${nextAsset.symbol}`);
       }} />}
       {view === "vault" && (
@@ -131,11 +148,11 @@ export default function Home() {
             <div className="panel">
               <div className="panel-title"><span>01</span> SELECT COLLATERAL</div>
               <div className="asset-list">
-                {assets.map((a) => <button key={a.symbol} className={asset.symbol === a.symbol ? "asset selected" : "asset"} onClick={() => setAsset(a)}>
+                {assets.map((a) => <button key={a.symbol} className={asset.symbol === a.symbol ? "asset selected" : "asset"} onClick={() => setSelectedSymbol(a.symbol)}>
                   <i className={a.tone}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src={a.image} alt="" />
-                  </i><span><b>{a.symbol}</b><small>{a.name} · ${(a.marketCap / 1_000_000).toFixed(1)}M cap</small></span><strong><em>✓ SCREENED</em>{a.ltv}% LTV</strong>
+                  </i><span><b>{a.symbol}</b><small>{a.name} · {a.price === null ? "price loading…" : formatUsd(a.price)}{a.change24h !== null && ` · ${a.change24h >= 0 ? "+" : ""}${a.change24h.toFixed(2)}% 24h`}</small></span><strong><em>✓ SCREENED</em>{a.ltv}% LTV</strong>
                 </button>)}
               </div>
             </div>
@@ -144,13 +161,13 @@ export default function Home() {
               <label>COLLATERAL AMOUNT <span>Position input</span></label>
               <div className="amount"><input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="decimal" aria-label="Collateral amount" /><b>{asset.symbol}</b></div>
               <div className="receipt">
-                <p><span>Mark price</span><b>${asset.price < .01 ? asset.price.toFixed(6) : asset.price.toFixed(2)}</b></p>
-                <p><span>Collateral value</span><b>${collateral.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
+                <p><span>Mark price</span><b>{asset.price === null ? "—" : formatUsd(asset.price)}</b></p>
+                <p><span>Collateral value</span><b>{collateral === null ? "—" : `$${collateral.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</b></p>
                 <p><span>Market-cap gate</span><b className="eligible">✓ ABOVE $10M</b></p>
                 <p><span>Origin / age</span><b>{asset.origin}</b></p>
                 <p><span>Risk tier</span><b>{asset.ltv <= 20 ? "HIGH" : asset.ltv <= 30 ? "ELEVATED" : "VOLATILE"}</b></p>
                 <p><span>Maximum draw</span><b>{asset.ltv}%</b></p>
-                <p className="total"><span>Estimated credit</span><b>${available.toLocaleString(undefined, { maximumFractionDigits: 2 })}</b></p>
+                <p className="total"><span>Estimated credit</span><b>{available === null ? "—" : `${available.toLocaleString(undefined, { maximumFractionDigits: 2 })}`}</b></p>
               </div>
               <button className="primary full" onClick={draw}>{connected ? "Preview available credit" : "Connect wallet to preview"}</button>
               <small className="fine">Figures on this page are indicative only; your actual terms are quoted in the lending terminal at the time you post collateral. Screened does not mean safe or endorsed. Eligibility requires a verified $10M+ market cap, sufficient executable liquidity, revoked mint/freeze authority, holder-distribution limits and clean oracle coverage. Any failed check disables new loans.</small>
@@ -165,9 +182,9 @@ export default function Home() {
   );
 }
 
-function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset: (asset: Asset) => void }) {
+function HomeView({ go, assets, solPrice, onSelectAsset }: { go: (v: View) => void; assets: Asset[]; solPrice: number | null; onSelectAsset: (asset: Asset) => void }) {
   const gameCount = visibleGameCountLabel();
-  const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", gameCount], ["Round rewards", "ON"], ["Network", "SOLANA"]], [gameCount]);
+  const stats = useMemo(() => [["Collateral gate", "$10M+"], ["Live games", gameCount], ["Round rewards", "ON"], ["SOL price", solPrice === null ? "—" : formatUsd(solPrice)]], [gameCount, solPrice]);
   return <>
     <header className="hero">
       <div className="eyebrow"><span /> MEMECOIN CREDIT ON SOLANA · $10M+ COLLATERAL · FLOOR REWARDS</div>
@@ -330,7 +347,12 @@ function CollateralCarousel({ items, onSelect }: { items: Asset[]; onSelect: (as
                 <span className="coin-card-copy">
                   <span><small>{coin.origin}</small><b>${coin.symbol}</b><em>{coin.name}</em></span>
                   <span className="coin-card-metrics">
-                    <span><small>CAP REFERENCE</small><b>${(coin.marketCap / 1_000_000).toFixed(coin.marketCap >= 100_000_000 ? 0 : 1)}M</b></span>
+                    <span>
+                      <small>PRICE{coin.change24h !== null && ` · ${coin.change24h >= 0 ? "+" : ""}${coin.change24h.toFixed(1)}%`}</small>
+                      <b className={coin.change24h === null ? "" : coin.change24h >= 0 ? "up" : "down"}>
+                        {coin.price === null ? "—" : formatUsd(coin.price)}
+                      </b>
+                    </span>
                     <span><small>MAX LTV</small><b>{coin.ltv}%</b></span>
                   </span>
                 </span>

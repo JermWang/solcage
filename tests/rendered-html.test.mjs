@@ -44,8 +44,10 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /Accepted collateral coins circular carousel/);
   assert.match(html, /seamless-carousel-shell/);
   assert.match(html, /Choose your bag/);
-  assert.match(html, /\/coin-art\/jimothy\.webp/);
-  assert.match(html, /\/coin-art\/triplet\.webp/);
+  // The carousel now shows only collateral we actually accept and can price
+  // live, so it tracks the configured markets rather than a fixed art list.
+  assert.match(html, /\/coin-art\/bonk\.webp/);
+  assert.match(html, /\/coin-art\/wif\.jpg/);
   assert.match(html, /solcage-logo\.png/);
   assert.match(html, /favicon\.png/);
   assert.doesNotMatch(html, /Animated SolCage casino chip/);
