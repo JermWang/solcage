@@ -18,8 +18,32 @@ declare global {
 
 const LAMPORTS_PER_SOL = 1_000_000_000n;
 
+/**
+ * Same-origin proxy rather than a public endpoint.
+ *
+ * NEXT_PUBLIC_ values are not inlined into client bundles here, so reading the
+ * configured RPC from the browser silently fell back to the public one, which
+ * rate-limits and often refuses browser traffic — that is why wallet balances
+ * came back empty. The proxy uses the real endpoint server-side without
+ * exposing its key.
+ */
 function rpcUrl() {
-  return process.env.NEXT_PUBLIC_SOLANA_RPC_URL ?? "https://api.mainnet-beta.solana.com";
+  return `${window.location.origin}/api/solana/rpc`;
+}
+
+/**
+ * Poll for confirmation instead of Connection.confirmTransaction, which opens a
+ * websocket subscription the proxy cannot serve.
+ */
+async function waitForConfirmation(connection: Connection, signature: string) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const { value } = await connection.getSignatureStatuses([signature]);
+    const status = value[0];
+    if (status?.err) throw new Error("The transfer failed on Solana.");
+    if (status?.confirmationStatus === "confirmed" || status?.confirmationStatus === "finalized") return;
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+  }
+  // Not fatal: the credit step below retries until the chain catches up.
 }
 
 /** Parse a decimal SOL string into lamports with no floating-point drift. */
@@ -169,7 +193,7 @@ export async function depositSol(amountLamports: bigint, onProgress?: DepositPro
   rememberPending({ signature, rawAmount: amountLamports.toString() });
 
   onProgress?.("confirming");
-  await connection.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
+  await waitForConfirmation(connection, signature);
 
   // The server verifies at finalized commitment, which lags confirmed by a few
   // seconds, so retry the credit until the transaction is visible there.

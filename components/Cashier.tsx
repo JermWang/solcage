@@ -23,6 +23,7 @@ export function Cashier({ open, onClose, onBalance }: {
   const [amount, setAmount] = useState("");
   const [walletSol, setWalletSol] = useState<bigint | null>(null);
   const [casino, setCasino] = useState<{ available: string; availableRaw: bigint } | null>(null);
+  const [walletError, setWalletError] = useState("");
   const [busy, setBusy] = useState("");
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -31,13 +32,20 @@ export function Cashier({ open, onClose, onBalance }: {
     try {
       const [balance, wallet] = await Promise.all([
         fetch("/api/wallet/balance").then((r) => (r.ok ? r.json() : null)),
-        readWalletSol().catch(() => null),
+        // Report why this failed rather than leaving a dash on screen forever.
+        readWalletSol().then((value) => ({ value }))
+          .catch((error: unknown) => ({ error: error instanceof Error ? error.message : "unknown" })),
       ]);
       if (balance && !balance.error) {
         setCasino({ available: balance.balance, availableRaw: BigInt(balance.balanceRaw ?? "0") });
         onBalance?.(balance.balance);
       }
-      if (wallet !== null) setWalletSol(wallet);
+      if ("value" in wallet) {
+        setWalletSol(wallet.value);
+        setWalletError("");
+      } else {
+        setWalletError(wallet.error);
+      }
     } catch {
       /* leave prior values */
     }
@@ -71,10 +79,15 @@ export function Cashier({ open, onClose, onBalance }: {
 
   if (!open) return null;
 
+  // Deposits leave a little behind for the network fee; withdrawals are of the
+  // play balance, which carries no fee for the player.
   const walletMax = walletSol !== null && walletSol > FEE_HEADROOM ? walletSol - FEE_HEADROOM : 0n;
-  const setMax = () => {
-    if (tab === "deposit") setAmount(walletMax > 0n ? lamportsToSol(walletMax, 4) : "0");
-    else setAmount(casino ? casino.available : "0");
+  const spendable = tab === "deposit" ? walletMax : (casino?.availableRaw ?? 0n);
+
+  const setPercent = (percent: number) => {
+    if (spendable <= 0n) return setAmount("0");
+    const portion = percent >= 100 ? spendable : (spendable * BigInt(percent)) / 100n;
+    setAmount(lamportsToSol(portion, 4));
   };
 
   async function run() {
@@ -134,8 +147,9 @@ export function Cashier({ open, onClose, onBalance }: {
           <div>
             <span>{tab === "deposit" ? "IN YOUR WALLET" : "WITHDRAWABLE"}</span>
             <b>{tab === "deposit"
-              ? (walletSol !== null ? lamportsToSol(walletSol, 4) : "…")
+              ? (walletSol !== null ? lamportsToSol(walletSol, 4) : walletError ? "—" : "…")
               : (casino ? casino.available : "…")} SOL</b>
+            {tab === "deposit" && walletError && <i className="cashier-warn">Could not read your wallet: {walletError}</i>}
           </div>
         </div>
 
@@ -151,7 +165,18 @@ export function Cashier({ open, onClose, onBalance }: {
               aria-label="Amount in SOL"
             />
             <em>SOL</em>
-            <button type="button" onClick={setMax} disabled={Boolean(busy)}>MAX</button>
+          </div>
+          <div className="cashier-percents">
+            {[25, 50, 75, 100].map((percent) => (
+              <button
+                key={percent}
+                type="button"
+                onClick={() => setPercent(percent)}
+                disabled={Boolean(busy) || spendable <= 0n}
+              >
+                {percent === 100 ? "MAX" : `${percent}%`}
+              </button>
+            ))}
           </div>
         </label>
 
