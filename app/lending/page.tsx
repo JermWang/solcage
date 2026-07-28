@@ -143,6 +143,18 @@ export default function LendingPage() {
     return () => window.clearTimeout(timer);
   }, [refresh]);
 
+  // Opening a position runs deposit → sale → advance server-side inside a single
+  // request, and each step writes its event as it lands. Polling while that
+  // request is in flight lets the journal fill in step by step instead of
+  // jumping straight to the finished state.
+  useEffect(() => {
+    if (!submitting) return;
+    const timer = window.setInterval(() => {
+      refresh().catch(() => undefined);
+    }, 2_500);
+    return () => window.clearInterval(timer);
+  }, [submitting, refresh]);
+
   const activePosition = useMemo(
     () => snapshot.positions.find((position) => position.id === selectedPositionId)
       ?? snapshot.positions.find((position) => position.status !== "claimed")

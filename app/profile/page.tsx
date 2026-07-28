@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
+import { TransactionHistory } from "@/components/TransactionHistory";
 import { signInWithWallet, signOut as walletSignOut, switchWallet as walletSwitch } from "@/lib/wallet";
 
 type History = { kind: string; points: number; multiplier: number; description: string; created_at: string };
@@ -202,6 +203,10 @@ export default function ProfilePage() {
           <button className="secondary" onClick={copyReferral}>COPY REFERRAL LINK</button>
           <strong>{profile.referrals} VERIFIED REFERRALS</strong>
         </div>
+      </section>
+      <section className="history-panel">
+        <div><div className="section-kicker">ON-CHAIN / DEPOSITS · WITHDRAWALS · LENDING</div><h2>Transaction history</h2></div>
+        <TransactionHistory />
       </section>
       <section className="history-panel">
         <div><div className="section-kicker">POINTS LEDGER / LAST 30 EVENTS</div><h2>Activity history</h2></div>

@@ -474,6 +474,24 @@ main>footer p a:hover{background:var(--lime)}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
 .casino-deposit{height:40px;padding:0 20px;border-radius:9px;border:0;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;cursor:pointer}
 .casino-deposit:hover{filter:brightness(1.08)}
+/* Unified on-chain transaction feed (profile) */
+.txn-feed{display:flex;flex-direction:column;gap:6px}
+.txn-empty{color:var(--muted);font:12px/1.6 var(--font-geist-mono);margin:0;padding:16px 0}
+.txn-row{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:14px;padding:13px 14px;border:1px solid var(--line);border-radius:10px;background:var(--paper);text-decoration:none;color:inherit}
+a.txn-row:hover{border-color:var(--ink);box-shadow:3px 3px 0 var(--lime)}
+.txn-kind{font:800 8px var(--font-geist-mono);letter-spacing:.1em;text-transform:uppercase;padding:5px 8px;border-radius:5px;background:var(--purple);color:#fff}
+.txn-kind.deposit{background:#2f7d55}
+.txn-kind.withdrawal{background:#8a5a2b}
+.txn-kind.lending{background:var(--purple)}
+.txn-main{display:flex;flex-direction:column;gap:3px;min-width:0}
+.txn-main b{font-size:13px}
+.txn-main small{color:var(--muted);font:10px var(--font-geist-mono)}
+.txn-row strong{font:800 12px var(--font-geist-mono);white-space:nowrap}
+.txn-link{font:10px var(--font-geist-mono);color:var(--muted);font-style:normal;white-space:nowrap}
+a.txn-row:hover .txn-link{color:var(--ink)}
+.txn-pending{font:800 9px var(--font-geist-mono);color:var(--muted);font-style:normal;text-transform:uppercase}
+@media(max-width:640px){.txn-row{grid-template-columns:auto 1fr;row-gap:8px}.txn-row strong,.txn-link,.txn-pending{grid-column:2}}
+
 .deposit-menu{position:relative;flex:0 0 auto}
 .deposit-menu>.casino-deposit{display:inline-flex;align-items:center;gap:7px}
 .deposit-caret{font-size:9px;line-height:1}
