@@ -474,6 +474,15 @@ main>footer p a:hover{background:var(--lime)}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
 .casino-deposit{height:40px;padding:0 20px;border-radius:9px;border:0;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;cursor:pointer}
 .casino-deposit:hover{filter:brightness(1.08)}
+.deposit-menu{position:relative;flex:0 0 auto}
+.deposit-menu>.casino-deposit{display:inline-flex;align-items:center;gap:7px}
+.deposit-caret{font-size:9px;line-height:1}
+.deposit-menu-panel{position:absolute;right:0;top:calc(100% + 8px);z-index:60;min-width:210px;padding:7px;border:1px solid var(--casino-line);border-radius:12px;background:#14121a;box-shadow:0 24px 48px rgba(0,0,0,.55);display:flex;flex-direction:column;gap:3px}
+.deposit-menu-panel a,.deposit-menu-panel button{display:flex;flex-direction:column;gap:3px;width:100%;padding:11px 12px;border:0;border-radius:9px;background:transparent;text-align:left;cursor:pointer;text-decoration:none}
+.deposit-menu-panel b{color:#fff;font:800 11px var(--font-geist-mono);letter-spacing:.03em}
+.deposit-menu-panel small{color:#8f8998;font:10px var(--font-geist-mono)}
+.deposit-menu-panel a:hover,.deposit-menu-panel button:hover{background:rgba(201,255,56,.1)}
+.deposit-menu-panel a:hover b,.deposit-menu-panel button:hover b{color:var(--lime)}
 .casino-balance-chip{flex:0 0 auto;height:40px;padding:0 14px;border:1px solid var(--casino-line);border-radius:9px;background:#111015;display:flex;flex-direction:column;justify-content:center;cursor:pointer;transition:border-color .16s}
 .casino-balance-chip:hover{border-color:rgba(201,255,56,.5)}
 .casino-balance-chip small{color:#766f7e;font:700 7px var(--font-geist-mono);letter-spacing:.1em}

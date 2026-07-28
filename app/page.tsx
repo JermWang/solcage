@@ -6,6 +6,7 @@ import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
 import { visibleGameCountLabel } from "@/lib/games-catalog";
 import { Cashier } from "@/components/Cashier";
+import { DepositMenu } from "@/components/DepositMenu";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -38,11 +39,6 @@ export default function Home() {
   const [profileName, setProfileName] = useState("Profile");
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
   const [cashierOpen, setCashierOpen] = useState(false);
-
-  function openCashier() {
-    if (signedIn === false) window.location.assign("/profile");
-    else setCashierOpen(true);
-  }
 
   const collateral = Number(amount || 0) * asset.price;
   const available = collateral * asset.ltv / 100;
@@ -117,7 +113,7 @@ export default function Home() {
         </div>
         <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{signedIn === false ? "—" : `${loyaltyPoints.toLocaleString()} PTS`}</b></span></div>
         <div className="nav-social"><ContractAddress /><XLink /></div>
-        <button className="nav-deposit" onClick={openCashier}>Deposit SOL</button>
+        <DepositMenu signedIn={signedIn !== false} onSolana={() => setCashierOpen(true)} />
         <a className="wallet" href="/profile">{signedIn === false ? "Connect wallet" : profileName}</a>
       </nav>
 

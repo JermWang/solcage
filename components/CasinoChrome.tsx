@@ -7,6 +7,7 @@ import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
 import { ProfileMenu } from "@/components/ProfileMenu";
 import { Cashier } from "@/components/Cashier";
+import { DepositMenu } from "@/components/DepositMenu";
 
 type CasinoChromeProps = {
   active: "casino" | "lending" | "rewards" | "docs";
@@ -104,13 +105,7 @@ export function CasinoChrome({ active, children, searchValue, onSearchChange }: 
                 <small>BALANCE</small><b>{playBalance ?? "0"} SOL</b>
               </button>
             )}
-            <button
-              type="button"
-              className="casino-deposit"
-              onClick={() => (signedIn === false ? (window.location.href = "/profile") : setCashierOpen(true))}
-            >
-              {signedIn === false ? "Connect" : "Deposit"}
-            </button>
+            <DepositMenu signedIn={signedIn !== false} onSolana={() => setCashierOpen(true)} />
             <ProfileMenu
               signedIn={signedIn !== false}
               displayName={profileName}
