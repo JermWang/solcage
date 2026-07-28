@@ -508,6 +508,11 @@ a.txn-row:hover .txn-link{color:var(--ink)}
 .casino-profile{width:40px;height:40px;border:1px solid #4d4655;border-radius:50%;background:var(--purple);display:grid;place-items:center;font-weight:900}
 
 /* Cashier — one-click deposit / withdraw */
+/* The cashier and the deposit menu mount outside .casino-app on the landing
+   page, where the --casino-* variables do not exist. Declaring them here keeps
+   both panels legible wherever they open, instead of inheriting the light
+   theme's dark ink onto a dark panel. */
+.cashier-overlay,.deposit-menu-panel{--casino-line:rgba(255,255,255,.09);--casino-text:#f7f5fa;--casino-muted:#8f8998;color:var(--casino-text)}
 .cashier-overlay{position:fixed;inset:0;z-index:100;background:rgba(4,3,7,.72);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px}
 .cashier-panel{width:min(420px,100%);border:1px solid var(--casino-line);border-radius:18px;background:linear-gradient(180deg,#15131c,#0c0b10);box-shadow:0 40px 80px rgba(0,0,0,.6);padding:20px}
 .cashier-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
