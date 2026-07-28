@@ -1,6 +1,6 @@
 import { db, transaction } from "@/lib/db";
 import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
-import { custodyRuntimeConfig } from "@/lib/custody/config";
+import { custodyMarketByMint, custodyRuntimeConfig } from "@/lib/custody/config";
 import { positionJson, recordCustodyEvent, verifiedWallet } from "@/lib/custody/database";
 import { maybeProxyCustody } from "@/lib/custody/proxy";
 import { sendCustodyTokenTransfer, verifyIncomingTransfer } from "@/lib/custody/solana";
@@ -21,40 +21,51 @@ export async function POST(request: Request) {
     const identity = await requireIdentity(request);
     const wallet = await verifiedWallet(identity.userId);
     const config = custodyRuntimeConfig();
-    if (!config.enabled || !config.custodyAddress || !config.market?.enabled) {
+    const enabledMarkets = config.markets.filter((entry) => entry.enabled);
+    if (!config.enabled || !config.custodyAddress || enabledMarkets.length === 0) {
       return json({ error: "Custody deposits are launch-gated" }, 503, identity);
     }
-    const body = await request.json() as { signature?: unknown; rawAmount?: unknown };
+    const body = await request.json() as { signature?: unknown; rawAmount?: unknown; mint?: unknown };
     const amount = positiveRaw(body.rawAmount);
     if (!amount || typeof body.signature !== "string" || body.signature.length > 96) {
       return json({ error: "Invalid custody deposit confirmation" }, 400, identity);
     }
+    // Which collateral this position is in. Resolved from the approved list by
+    // mint — never taken on trust from the body — so a caller cannot invent a
+    // market or borrow one market's terms against another's token. With a
+    // single market configured the mint may be omitted.
+    const market = body.mint === undefined && enabledMarkets.length === 1
+      ? enabledMarkets[0]
+      : custodyMarketByMint(body.mint);
+    if (!market) {
+      return json({ error: "That collateral is not accepted" }, 400, identity);
+    }
     const depositSignature = body.signature;
     if (!wallet) return json({ error: "Verify your Solana wallet first" }, 403, identity);
-    if (amount > config.market.maxPositionRaw) {
+    if (amount > market.maxPositionRaw) {
       return json({ error: "Deposit exceeds the configured per-position limit" }, 400, identity);
     }
     const settlement = await verifyIncomingTransfer({
       signature: depositSignature,
       owner: wallet,
       destinationOwner: config.custodyAddress,
-      mint: config.market.mint,
+      mint: market.mint,
       amount,
-      decimals: config.market.decimals,
-      tokenProgram: config.market.tokenProgram,
+      decimals: market.decimals,
+      tokenProgram: market.tokenProgram,
     });
     const claimed = await transaction(async (client) => {
       await client.query(
         "SELECT pg_advisory_xact_lock(hashtext($1))",
-        [`custody-liability:${config.market!.mint}`],
+        [`custody-liability:${market.mint}`],
       );
       const liabilities = await client.query(
         `SELECT COALESCE(SUM(collateral_raw), 0)::text AS total
          FROM custody_positions
          WHERE collateral_mint = $1 AND status <> 'claimed' AND deposit_signature <> $2`,
-        [config.market!.mint, depositSignature],
+        [market.mint, depositSignature],
       );
-      if (BigInt(liabilities.rows[0].total) + amount > config.market!.maxActiveLiabilityRaw) {
+      if (BigInt(liabilities.rows[0].total) + amount > market.maxActiveLiabilityRaw) {
         throw new Error("Custody market active-liability limit reached");
       }
       const inserted = await client.query(
@@ -67,9 +78,9 @@ export async function POST(request: Request) {
           crypto.randomUUID(),
           identity.userId,
           wallet,
-          config.market?.symbol,
-          config.market?.mint,
-          config.market?.decimals,
+          market.symbol,
+          market.mint,
+          market.decimals,
           amount.toString(),
           depositSignature,
           JSON.stringify({
@@ -88,8 +99,8 @@ export async function POST(request: Request) {
         eventKey: `custody:deposit:${depositSignature}`,
         action: "deposit_confirmed",
         signature: depositSignature,
-        symbol: config.market!.symbol,
-        mint: config.market!.mint,
+        symbol: market.symbol,
+        mint: market.mint,
         rawAmount: amount,
       });
       return row;
@@ -103,9 +114,9 @@ export async function POST(request: Request) {
     }
 
     try {
-      const sale = await sellCollateral({ market: config.market, collateralRaw: amount });
+      const sale = await sellCollateral({ market, collateralRaw: amount });
       if (sale.outputAmount <= 0n) throw new Error("Collateral sale returned no settlement value");
-      const advance = sale.outputAmount * BigInt(config.market.advanceBps) / 10_000n;
+      const advance = sale.outputAmount * BigInt(market.advanceBps) / 10_000n;
       const reserve = sale.outputAmount - advance;
       if (advance <= 0n) throw new Error("Calculated advance is below one settlement unit");
       await transaction(async (client) => {
@@ -122,8 +133,8 @@ export async function POST(request: Request) {
           eventKey: `custody:sell:${claimed.id}`,
           action: "collateral_sold",
           signature: sale.signature,
-          symbol: config.market!.symbol,
-          mint: config.market!.mint,
+          symbol: market.symbol,
+          mint: market.mint,
           rawAmount: amount,
           payload: {
             outputRaw: sale.outputAmount.toString(),

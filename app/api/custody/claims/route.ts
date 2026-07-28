@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     const identity = await requireIdentity(request);
     const wallet = await verifiedWallet(identity.userId);
     const config = custodyRuntimeConfig();
-    if (!config.enabled || !config.custodyAddress || !config.market?.enabled || !wallet) {
+    if (!config.enabled || !config.custodyAddress || config.markets.length === 0 || !wallet) {
       return json({ error: "Custody claims are launch-gated" }, 503, identity);
     }
     const body = await request.json() as { positionId?: unknown };
@@ -29,6 +29,14 @@ export async function POST(request: Request) {
     );
     if (!found.rowCount) return json({ error: "Repaid custody position not found" }, 404, identity);
     let position = found.rows[0];
+    // Use the market this position is actually held in, not the default one —
+    // buying BONK back on WIF's terms would settle the wrong asset. Matched
+    // across all configured markets, not just enabled ones, so a market that is
+    // later switched off can still be claimed out by whoever is still in it.
+    const market = config.markets.find((entry) => entry.mint === position.collateral_mint);
+    if (!market) {
+      return json({ error: "This position's collateral is no longer configured" }, 409, identity);
+    }
     if (position.status === "repaid") {
       const locked = await db().query(
         `UPDATE custody_positions SET status = 'claiming', updated_at = NOW()
@@ -40,7 +48,7 @@ export async function POST(request: Request) {
       try {
         const available = BigInt(position.reserve_raw) + BigInt(position.repaid_raw);
         const buy = await buyCollateral({
-          market: config.market,
+          market,
           targetCollateralRaw: BigInt(position.collateral_raw),
           maximumUsdcRaw: available,
         });
@@ -58,8 +66,8 @@ export async function POST(request: Request) {
             eventKey: `custody:buy:${position.id}`,
             action: "collateral_repurchased",
             signature: buy.signature,
-            symbol: config.market!.symbol,
-            mint: config.market!.mint,
+            symbol: market.symbol,
+            mint: market.mint,
             rawAmount: buy.outputAmount,
             payload: {
               inputUsdcRaw: buy.inputAmount.toString(),
@@ -87,7 +95,7 @@ export async function POST(request: Request) {
       mint: position.collateral_mint,
       amount: BigInt(position.collateral_raw),
       decimals: position.collateral_decimals,
-      tokenProgram: config.market.tokenProgram,
+      tokenProgram: market.tokenProgram,
     });
     const completed = await transaction(async (client) => {
       const updated = await client.query(

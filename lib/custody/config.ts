@@ -32,11 +32,9 @@ function integer(value: unknown, minimum: number, maximum: number) {
   return Number.isSafeInteger(parsed) && parsed >= minimum && parsed <= maximum ? parsed : null;
 }
 
-export function custodyMarketFromEnvironment(): CustodyMarket | null {
-  const source = process.env.SOLCAGE_CUSTODY_MARKET;
-  if (!source) return null;
+/** Validate one market entry. Returns null if anything is off — never throws. */
+function parseMarket(value: Record<string, unknown>): CustodyMarket | null {
   try {
-    const value = JSON.parse(source) as Record<string, unknown>;
     const mint = publicKey(value.mint);
     const tokenProgram = publicKey(value.tokenProgram ?? CLASSIC_TOKEN_PROGRAM_ID);
     const decimals = integer(value.decimals, 0, 12);
@@ -75,6 +73,57 @@ export function custodyMarketFromEnvironment(): CustodyMarket | null {
   }
 }
 
+/**
+ * All configured collateral markets.
+ *
+ * SOLCAGE_CUSTODY_MARKET accepts either a single object (the original launch
+ * shape, still supported) or an array of them. Entries that fail validation are
+ * dropped rather than taking the whole list down, and a duplicate mint keeps
+ * only its first entry so a copy-paste slip cannot create two markets that
+ * share a liability cap.
+ */
+export function custodyMarketsFromEnvironment(): CustodyMarket[] {
+  const source = process.env.SOLCAGE_CUSTODY_MARKET;
+  if (!source) return [];
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(source);
+  } catch {
+    return [];
+  }
+  const entries = Array.isArray(parsed) ? parsed : [parsed];
+  const markets: CustodyMarket[] = [];
+  const seen = new Set<string>();
+  for (const entry of entries) {
+    if (!entry || typeof entry !== "object") continue;
+    const market = parseMarket(entry as Record<string, unknown>);
+    if (!market || seen.has(market.mint)) continue;
+    seen.add(market.mint);
+    markets.push(market);
+  }
+  return markets;
+}
+
+/** Markets a player can actually post right now. */
+export function enabledCustodyMarkets(): CustodyMarket[] {
+  return custodyMarketsFromEnvironment().filter((market) => market.enabled);
+}
+
+/** Look up a market by mint, only among enabled ones. */
+export function custodyMarketByMint(mint: unknown): CustodyMarket | null {
+  if (typeof mint !== "string") return null;
+  return enabledCustodyMarkets().find((market) => market.mint === mint) ?? null;
+}
+
+/**
+ * The default market: the first enabled one, else the first configured. Kept so
+ * single-market callers and existing copy keep working.
+ */
+export function custodyMarketFromEnvironment(): CustodyMarket | null {
+  const markets = custodyMarketsFromEnvironment();
+  return markets.find((market) => market.enabled) ?? markets[0] ?? null;
+}
+
 export function custodyRuntimeConfig() {
   const network = process.env.SOLANA_NETWORK ?? "mainnet-beta";
   const swapMode: CustodySwapMode =
@@ -95,6 +144,7 @@ export function custodyRuntimeConfig() {
       ?? CLASSIC_TOKEN_PROGRAM_ID,
     swapMode,
     market: custodyMarketFromEnvironment(),
+    markets: custodyMarketsFromEnvironment(),
     hasSigningKey: Boolean(process.env.SOLCAGE_CUSTODY_SECRET_KEY),
     hasJupiterKey: Boolean(process.env.JUPITER_API_KEY),
   };

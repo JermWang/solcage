@@ -1,10 +1,25 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import { json } from "@/lib/identity";
-import { custodyRuntimeConfig } from "@/lib/custody/config";
+import { custodyRuntimeConfig, type CustodyMarket } from "@/lib/custody/config";
 import { maybeProxyCustody } from "@/lib/custody/proxy";
 import { associatedTokenAddress, custodySigner } from "@/lib/custody/solana";
 
 export const dynamic = "force-dynamic";
+
+/** Shape a market for the client. bigints become strings; nothing internal leaks. */
+function publicMarket(market: CustodyMarket) {
+  return {
+    symbol: market.symbol,
+    name: market.name,
+    mint: market.mint,
+    decimals: market.decimals,
+    tokenProgram: market.tokenProgram,
+    advanceBps: market.advanceBps,
+    maxPositionRaw: market.maxPositionRaw.toString(),
+    maxActiveLiabilityRaw: market.maxActiveLiabilityRaw.toString(),
+    enabled: market.enabled,
+  };
+}
 
 export async function GET(request: Request) {
   const proxied = await maybeProxyCustody(request);
@@ -33,11 +48,14 @@ export async function GET(request: Request) {
     signerReady,
     signerReady ? "Server-side signer matches custody wallet" : "Signer missing or mismatched",
   );
+  const enabledMarkets = config.markets.filter((market) => market.enabled);
   check(
     "market-config",
-    "Collateral market",
-    Boolean(config.market?.enabled),
-    config.market?.enabled ? `${config.market.symbol} configuration loaded` : "No enabled custody market",
+    "Collateral markets",
+    enabledMarkets.length > 0,
+    enabledMarkets.length > 0
+      ? `${enabledMarkets.length} market${enabledMarkets.length === 1 ? "" : "s"} loaded: ${enabledMarkets.map((m) => m.symbol).join(", ")}`
+      : "No enabled custody market",
   );
   const swapReady = config.swapMode === "simulated"
     ? config.network === "devnet"
@@ -140,18 +158,9 @@ export async function GET(request: Request) {
     transactionMode: ready ? "enabled" : "launch-gated",
     ready,
     checks,
-    market: config.market
-      ? {
-          symbol: config.market.symbol,
-          name: config.market.name,
-          mint: config.market.mint,
-          decimals: config.market.decimals,
-          tokenProgram: config.market.tokenProgram,
-          advanceBps: config.market.advanceBps,
-          maxPositionRaw: config.market.maxPositionRaw.toString(),
-          maxActiveLiabilityRaw: config.market.maxActiveLiabilityRaw.toString(),
-          enabled: config.market.enabled,
-        }
-      : null,
+    // `market` stays for callers that assume one collateral; `markets` is the
+    // full approved list the collateral table renders.
+    market: config.market ? publicMarket(config.market) : null,
+    markets: config.markets.map(publicMarket),
   });
 }

@@ -23,17 +23,20 @@ type CustodyConfig = {
   transactionMode: "enabled" | "launch-gated";
   ready: boolean;
   checks: Check[];
-  market: {
-    symbol: string;
-    name: string;
-    mint: string;
-    decimals: number;
-    tokenProgram: string;
-    advanceBps: number;
-    maxPositionRaw: string;
-    maxActiveLiabilityRaw: string;
-    enabled: boolean;
-  } | null;
+  market: CustodyMarket | null;
+  markets?: CustodyMarket[];
+};
+
+type CustodyMarket = {
+  symbol: string;
+  name: string;
+  mint: string;
+  decimals: number;
+  tokenProgram: string;
+  advanceBps: number;
+  maxPositionRaw: string;
+  maxActiveLiabilityRaw: string;
+  enabled: boolean;
 };
 
 type CustodyPosition = {
@@ -99,8 +102,20 @@ export default function LendingPage() {
   const [config, setConfig] = useState<CustodyConfig | null>(null);
   const [snapshot, setSnapshot] = useState<CustodySnapshot>({ positions: [], events: [] });
   const [selectedPositionId, setSelectedPositionId] = useState<string | null>(null);
+  const [selectedMint, setSelectedMint] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [transactionStatus, setTransactionStatus] = useState("");
+
+  // Every approved collateral, with the single-market response still supported.
+  const markets = config?.markets?.length
+    ? config.markets
+    : config?.market ? [config.market] : [];
+  // The collateral being posted: whichever row is selected, else the first
+  // enabled one. Falls back through so the terminal is never left marketless.
+  const market = markets.find((entry) => entry.mint === selectedMint)
+    ?? markets.find((entry) => entry.enabled)
+    ?? markets[0]
+    ?? null;
 
   const refresh = useCallback(async () => {
     const [profileResponse, configResponse, positionsResponse] = await Promise.all([
@@ -136,7 +151,7 @@ export default function LendingPage() {
   );
   const amountValid = /^(?:0|[1-9]\d*)(?:\.\d+)?$/.test(amount.trim()) && Number(amount) > 0;
   const canOpen = Boolean(
-    wallet && config?.ready && config.custodyAddress && config.market?.enabled && amountValid && !submitting,
+    wallet && config?.ready && config.custodyAddress && market?.enabled && amountValid && !submitting,
   );
   const canRepay = Boolean(
     wallet && config?.ready && activePosition?.status === "open" && activePosition.advanceRaw && !submitting,
@@ -157,7 +172,7 @@ export default function LendingPage() {
       : !config?.ready
         ? "Launch readiness required"
         : mode === "open"
-          ? (amountValid ? `OPEN ${config.market?.symbol ?? "TOKEN"} LIQUIDITY` : "Enter collateral amount")
+          ? (amountValid ? `OPEN ${market?.symbol ?? "TOKEN"} LIQUIDITY` : "Enter collateral amount")
           : mode === "repay"
             ? (activePosition?.status === "open" ? "REPAY USDC ADVANCE" : "Select an open position")
             : (activePosition && ["repaid", "repurchased"].includes(activePosition.status)
@@ -165,7 +180,7 @@ export default function LendingPage() {
                 : "Repay before claiming");
 
   async function submit() {
-    if (!canSubmit || !wallet || !config?.custodyAddress || !config.market) return;
+    if (!canSubmit || !wallet || !config?.custodyAddress || !market) return;
     setSubmitting(true);
     try {
       if (mode === "claim") {
@@ -187,9 +202,9 @@ export default function LendingPage() {
         setTransactionStatus("Approve the exact transfer in Phantom.");
         const settlement = await sendCustodyDeposit({
           amount: transferAmount,
-          decimals: isRepayment ? config.usdcDecimals : config.market.decimals,
-          mint: isRepayment ? config.usdcMint : config.market.mint,
-          tokenProgram: isRepayment ? config.usdcTokenProgram : config.market.tokenProgram,
+          decimals: isRepayment ? config.usdcDecimals : market.decimals,
+          mint: isRepayment ? config.usdcMint : market.mint,
+          tokenProgram: isRepayment ? config.usdcTokenProgram : market.tokenProgram,
           custodyAddress: config.custodyAddress,
           rpcUrl: config.clientRpcUrl,
           verifiedWallet: wallet,
@@ -205,7 +220,9 @@ export default function LendingPage() {
           headers: { "content-type": "application/json" },
           body: JSON.stringify(isRepayment
             ? { positionId: activePosition?.id, signature: settlement.signature }
-            : { signature: settlement.signature, rawAmount: settlement.rawAmount }),
+            // Tell the server which collateral this is; it re-resolves the mint
+            // against the approved list rather than trusting the value.
+            : { signature: settlement.signature, rawAmount: settlement.rawAmount, mint: market.mint }),
         });
         const payload = await response.json();
         if (!response.ok) throw new Error(payload.error ?? "Unable to settle the custody transfer.");
@@ -244,34 +261,43 @@ export default function LendingPage() {
         <section className="lending-terminal">
           <div className="collateral-market">
             <header>
-              <div><span>CUSTODY MARKET</span><h2>Launch collateral</h2></div>
+              <div><span>CUSTODY MARKET</span><h2>Accepted collateral</h2></div>
               <small>FINALIZED TRANSFERS + RESERVE GATES</small>
             </header>
             <div className="collateral-table-head"><span>ASSET</span><span>NETWORK</span><span>ADVANCE</span><span>SWAPS</span><span>STATUS</span></div>
             <div className="collateral-table">
-              {config?.market ? (
-                <button className="selected" type="button">
+              {markets.length ? markets.map((entry) => (
+                <button
+                  key={entry.mint}
+                  type="button"
+                  className={entry.mint === market?.mint ? "selected" : ""}
+                  disabled={!entry.enabled}
+                  aria-pressed={entry.mint === market?.mint}
+                  onClick={() => entry.enabled && setSelectedMint(entry.mint)}
+                >
                   <span className="asset-cell">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/media/solcage-pfp.png" alt="" />
-                    <span><b>${config.market.symbol}</b><small>{config.market.name}</small></span>
+                    <img src={`/collateral/${entry.symbol.toLowerCase()}.png`} alt="" onError={(event) => { event.currentTarget.src = "/media/solcage-pfp.png"; }} />
+                    <span><b>${entry.symbol}</b><small>{entry.name}</small></span>
                   </span>
-                  <span>{config.network}</span>
-                  <strong>{config.market.advanceBps / 100}%</strong>
-                  <span>{config.swapMode === "jupiter" ? "Jupiter V2" : "Simulated"}</span>
-                  <em className={config.ready ? "active" : "watch"}>{config.ready ? "READY" : "GATED"}</em>
+                  <span>{config?.network}</span>
+                  <strong>{entry.advanceBps / 100}%</strong>
+                  <span>{config?.swapMode === "jupiter" ? "Jupiter V2" : "Simulated"}</span>
+                  <em className={config?.ready && entry.enabled ? "active" : "watch"}>
+                    {entry.enabled ? (config?.ready ? "READY" : "GATED") : "SOON"}
+                  </em>
                 </button>
-              ) : (
+              )) : (
                 <div className="protocol-empty-position">
                   <span>MARKET CONFIGURATION PENDING</span>
-                  <p>The launch mint remains disabled until its account and custody controls are verified.</p>
+                  <p>Collateral markets remain disabled until their accounts and custody controls are verified.</p>
                 </div>
               )}
             </div>
           </div>
 
           <aside className="position-composer">
-            <header><span>CUSTODY TERMINAL</span><b>{config?.market?.symbol ?? "PENDING"}</b></header>
+            <header><span>CUSTODY TERMINAL</span><b>{market?.symbol ?? "PENDING"}</b></header>
             <div className="position-tabs">
               {(["open", "repay", "claim"] as CustodyAction[]).map((action) => (
                 <button key={action} className={mode === action ? "active" : ""} onClick={() => setMode(action)}>
@@ -284,7 +310,7 @@ export default function LendingPage() {
                 <label>COLLATERAL AMOUNT <span>WALLET-SIGNED TRANSFER</span></label>
                 <div className="position-amount">
                   <input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" aria-label="Collateral amount" />
-                  <span>{config?.market?.symbol ?? "TOKEN"}</span>
+                  <span>{market?.symbol ?? "TOKEN"}</span>
                 </div>
               </>
             ) : (
