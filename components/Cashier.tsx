@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   depositSol,
+  flushPendingDeposits,
   lamportsToSol,
   readWalletSol,
   solToLamports,
@@ -49,7 +50,14 @@ export function Cashier({ open, onClose, onBalance }: {
     let cancelled = false;
     void (async () => {
       if (cancelled) return;
+      // Credit anything left stranded by a closed tab or a slow finalization
+      // before showing balances, so the numbers are already right.
+      const recovered = await flushPendingDeposits().catch(() => 0);
+      if (cancelled) return;
       await refresh();
+      if (recovered > 0 && !cancelled) {
+        setStatus({ kind: "ok", text: "A deposit from earlier has now credited to your balance." });
+      }
     })();
     function onKey(event: KeyboardEvent) {
       if (event.key === "Escape" && !busy) onClose();
