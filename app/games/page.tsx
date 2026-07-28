@@ -265,8 +265,8 @@ export default function GamesLobby() {
 
         <section className="casino-integrity">
           <div><span>PROVABLY FAIR FLOOR</span><h2>Commit first. Reveal after.</h2></div>
-          <p>Video Poker, Baccarat, Keno, Crash, Roulette, Dice, Slots, Plinko, Blackjack, and Mines persist their HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit so every completed round has a reproducible receipt.</p>
-          <Link href="/games/video-poker">Enter Neon Draw &rarr;</Link>
+          <p>Every table persists its HMAC-SHA256 server commitment, player seed, settlement, and loyalty credit, so every completed round has a reproducible receipt you can verify yourself.</p>
+          {games[0] && <Link href={games[0].href}>Enter {games[0].name} &rarr;</Link>}
         </section>
       </div>
     </CasinoChrome>

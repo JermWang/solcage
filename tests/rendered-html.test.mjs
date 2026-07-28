@@ -59,7 +59,9 @@ test("server-renders the casino lobby and sourced original games", async () => {
   assert.equal(response.status, 200);
   const html = await response.text();
 
-  for (const title of ["Cage Roulette", "Cage Baccarat", "Neon Draw", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
+  // Neon Draw (video-poker) is withheld from the lobby; its dedicated page is
+  // still asserted in its own test below.
+  for (const title of ["Cage Roulette", "Cage Baccarat", "Neon Dice", "Neon Vault", "Neon Plinko", "Cage Blackjack", "Crystal Mines", "Cage Crash", "Cage Keno"]) {
     assert.match(html, new RegExp(title));
   }
   assert.doesNotMatch(html, /Coin Flip|FLIP THE CHIP/i);
