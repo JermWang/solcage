@@ -35,7 +35,10 @@ test("server-renders the SolCage landing experience", async () => {
   assert.match(html, /<title>SolCage — Collateral in\. Game on\.<\/title>/);
   assert.match(html, /Bag locked/);
   assert.match(html, /Tables open/);
-  assert.match(html, /LIVE TABLES 03/);
+  assert.match(html, /LIVE TABLES/);
+  // Count comes from the games catalog minus hidden games, so assert a two-digit
+  // number rather than a fixed value that drifts when a game is added or hidden.
+  assert.match(html, /Live games<\/span><b>\d\d<\/b>/);
   assert.match(html, /THE CREDIT MARKET/);
   assert.match(html, /Access the liquidity/);
   assert.match(html, /Accepted collateral coins circular carousel/);
