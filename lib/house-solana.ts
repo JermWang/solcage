@@ -117,7 +117,58 @@ export async function verifyIncomingSol(input: {
  * row into SENDING before calling this and leaves a stuck row for manual
  * reconciliation rather than re-sending.
  */
-export async function sendHouseSol(input: { destination: string; lamports: bigint }) {
+/**
+ * Poll for confirmation rather than using Connection.confirmTransaction, which
+ * opens a websocket subscription. When that subscription stalls it throws even
+ * though the transfer landed — which is how a withdrawal ended up sent on-chain
+ * while its row never advanced past `sending`.
+ *
+ * Returns "landed" or throws. A blockhash that expires with no status is the one
+ * case where we can say for certain the transfer never happened.
+ */
+async function confirmBySignature(
+  connection: Connection,
+  signature: string,
+  lastValidBlockHeight: number,
+) {
+  for (let attempt = 0; attempt < 40; attempt += 1) {
+    const { value } = await connection.getSignatureStatuses([signature]);
+    const status = value[0];
+    if (status?.err) throw new Error("Withdrawal transfer failed on Solana");
+    if (status?.confirmationStatus === "confirmed" || status?.confirmationStatus === "finalized") {
+      return { slot: status.slot };
+    }
+    if (!status && attempt % 5 === 4) {
+      const height = await connection.getBlockHeight("confirmed");
+      if (height > lastValidBlockHeight) {
+        throw new BlockhashExpired("Withdrawal expired before it was accepted");
+      }
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1_500));
+  }
+  // Landed or not, we cannot say — the caller must reconcile from the signature
+  // rather than assume either way.
+  throw new ConfirmationUnknown(signature);
+}
+
+/** The transfer provably never landed, so the funds can be safely returned. */
+export class BlockhashExpired extends Error {}
+
+/** The transfer may or may not have landed. Never refund on this without checking. */
+export class ConfirmationUnknown extends Error {
+  signature: string;
+  constructor(signature: string) {
+    super("Withdrawal confirmation timed out; verify the signature before retrying");
+    this.signature = signature;
+  }
+}
+
+export async function sendHouseSol(input: {
+  destination: string;
+  lamports: bigint;
+  /** Called with the signature the instant it is broadcast, before confirmation. */
+  onBroadcast?: (signature: string) => Promise<void>;
+}) {
   const signer = houseSigner();
   const connection = houseConnection();
   const destination = new PublicKey(input.destination);
@@ -148,12 +199,13 @@ export async function sendHouseSol(input: { destination: string; lamports: bigin
     skipPreflight: false,
     maxRetries: 3,
   });
-  const confirmation = await connection.confirmTransaction(
-    { signature, ...latest },
-    "confirmed",
-  );
-  if (confirmation.value.err) throw new Error("Withdrawal transfer failed on Solana");
-  return { signature, slot: confirmation.context.slot };
+  // Persist the signature before confirming. If confirmation stalls or the
+  // request dies here, the transfer is already on the wire and this is the only
+  // record of it — without it the money is spent with nothing pointing to it.
+  await input.onBroadcast?.(signature);
+
+  const confirmed = await confirmBySignature(connection, signature, latest.lastValidBlockHeight);
+  return { signature, slot: confirmed.slot };
 }
 
 /** Spendable house balance, excluding the fee reserve. */

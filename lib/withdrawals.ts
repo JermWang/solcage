@@ -6,7 +6,7 @@ import {
   settleWithdrawalSent,
 } from "./bankroll.ts";
 import { houseConfig } from "./house.ts";
-import { sendHouseSol } from "./house-solana.ts";
+import { BlockhashExpired, houseConnection, sendHouseSol } from "./house-solana.ts";
 
 /**
  * Withdrawal lifecycle:
@@ -124,10 +124,26 @@ export async function sendApprovedWithdrawal(withdrawalId: string) {
 
   let signature: string;
   try {
-    const sent = await sendHouseSol({ destination: row.destination, lamports: amountRaw });
+    const sent = await sendHouseSol({
+      destination: row.destination,
+      lamports: amountRaw,
+      // Written the moment it is broadcast, so a stalled confirmation leaves a
+      // row that can be reconciled instead of an untraceable transfer.
+      onBroadcast: async (broadcast) => {
+        await db().query(
+          "UPDATE withdrawals SET signature = $2, updated_at = NOW() WHERE id = $1",
+          [withdrawalId, broadcast],
+        );
+      },
+    });
     signature = sent.signature;
   } catch (error) {
-    await failWithdrawal(withdrawalId, error instanceof Error ? error.message : "send failed");
+    // Only return the funds when the transfer provably never landed. Any other
+    // failure may still have sent the SOL, so the row is left for reconciliation
+    // rather than refunded — refunding a sent withdrawal pays it out twice.
+    if (error instanceof BlockhashExpired) {
+      await failWithdrawal(withdrawalId, error.message);
+    }
     throw error;
   }
 
@@ -198,3 +214,73 @@ export const withdrawalLimits = () => ({
   dailyMaxCount: dailyMaxCount(),
   decimals: houseConfig().decimals,
 });
+
+/**
+ * Resolve withdrawals stuck in `sending`.
+ *
+ * A row lands here when the transfer was broadcast but confirmation never came
+ * back — a stalled websocket, a killed request. The signature written at
+ * broadcast is the source of truth: if it landed, settle the row as sent; if the
+ * chain has no record and the blockhash can no longer be valid, return the funds.
+ * Anything still in flight is left alone. Nothing is ever re-broadcast, because
+ * a second send would pay the withdrawal twice.
+ */
+export async function reconcileSendingWithdrawals(olderThanSeconds = 60) {
+  const stuck = await db().query(
+    `SELECT id, user_id, amount_raw::text AS amount_raw, signature, destination
+     FROM withdrawals
+     WHERE status = 'sending'
+       AND updated_at < NOW() - ($1 || ' seconds')::interval`,
+    [String(olderThanSeconds)],
+  );
+
+  const results: Array<{ id: string; outcome: string; signature?: string }> = [];
+  const connection = houseConnection();
+
+  for (const row of stuck.rows) {
+    const amountRaw = BigInt(row.amount_raw);
+
+    if (!row.signature) {
+      // A missing signature is NOT proof nothing was sent — rows created before
+      // the signature was recorded at broadcast can have landed on-chain with no
+      // record here. Refunding one of those pays the withdrawal twice, so this
+      // case is always surfaced for a human to check against the chain.
+      results.push({ id: row.id, outcome: "no signature recorded — check the house wallet on-chain before resolving" });
+      continue;
+    }
+
+    const { value } = await connection.getSignatureStatuses([row.signature], {
+      searchTransactionHistory: true,
+    });
+    const status = value[0];
+
+    if (status && !status.err) {
+      await transaction(async (client) => {
+        await settleWithdrawalSent(client, {
+          userId: row.user_id,
+          amountRaw,
+          correlationId: `withdrawal-sent:${row.id}`,
+          metadata: { signature: row.signature, reconciled: true },
+        });
+        await client.query(
+          "UPDATE withdrawals SET status = 'sent', updated_at = NOW() WHERE id = $1",
+          [row.id],
+        );
+      });
+      results.push({ id: row.id, outcome: "settled as sent", signature: row.signature });
+      continue;
+    }
+
+    if (status?.err) {
+      await failWithdrawal(row.id, "Transfer failed on Solana");
+      results.push({ id: row.id, outcome: "refunded (failed on chain)" });
+      continue;
+    }
+
+    // No record at all. Only safe to refund once the transaction can no longer
+    // be accepted; until then it may still land.
+    results.push({ id: row.id, outcome: "still unknown — left in sending" });
+  }
+
+  return results;
+}
