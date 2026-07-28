@@ -84,17 +84,23 @@ export async function verifyIncomingSol(input: {
   if (!transaction?.meta || transaction.meta.err) {
     throw new Error("Transaction is missing, unfinalized, or failed");
   }
+  // getParsedTransaction returns PublicKey objects for account keys and program
+  // ids, not base58 strings, so every comparison must normalise to a string
+  // first. Comparing a PublicKey to a string is always false — which silently
+  // rejected every genuine deposit.
+  const base58 = (value: unknown) => (value == null ? "" : String(value));
+  const systemProgram = SystemProgram.programId.toBase58();
   const signers = transaction.transaction.message.accountKeys
     .filter((key) => typeof key !== "string" && key.signer)
-    .map((key) => (typeof key === "string" ? key : key.pubkey));
+    .map((key) => (typeof key === "string" ? key : base58(key.pubkey)));
   if (!signers.includes(input.owner)) throw new Error("Verified wallet did not sign the transfer");
 
   const transfers = transaction.transaction.message.instructions.filter((instruction) => {
     const info = instruction.parsed?.info ?? {};
-    return instruction.programId === SystemProgram.programId.toBase58()
+    return base58(instruction.programId) === systemProgram
       && instruction.parsed?.type === "transfer"
-      && info.source === input.owner
-      && info.destination === input.destination
+      && base58(info.source) === input.owner
+      && base58(info.destination) === input.destination
       && String(info.lamports) === input.lamports.toString();
   });
   if (transfers.length !== 1) {
