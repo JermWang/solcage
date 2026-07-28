@@ -6,6 +6,7 @@ import { CasinoChrome } from "@/components/CasinoChrome";
 import type { BaccaratOutcome, BaccaratSelection, BaccaratWinner } from "@/lib/games/baccarat";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 
 type Card = { rank: string; suit: "hearts" | "diamonds" | "clubs" | "spades" };
 type BaccaratProof = {
@@ -133,7 +134,7 @@ export default function BaccaratPage() {
             <p><span>LOYALTY SCORE</span><b>{points.toLocaleString()} XP</b></p>
           </div>
         </header>
-        <GameHints game="baccarat" />
+        <div className="game-guidance"><GameHints game="baccarat" /><GameRules game="baccarat" /></div>
 
         <section className="baccarat-room">
           <div className={`baccarat-table ${pending ? "dealing" : ""} ${result?.winner ?? ""}`}>

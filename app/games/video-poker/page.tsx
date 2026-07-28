@@ -7,6 +7,7 @@ import { VIDEO_POKER_PAYTABLE } from "@/lib/games/videoPoker";
 import type { PlayingCard } from "@/lib/games/blackjack";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 
 type PokerProof = {
   algorithm: string;
@@ -172,7 +173,7 @@ export default function VideoPokerPage() {
             <p><span>LOYALTY SCORE</span><b>{points.toLocaleString()} XP</b></p>
           </div>
         </header>
-        <GameHints game="video-poker" />
+        <div className="game-guidance"><GameHints game="video-poker" /><GameRules game="video-poker" /></div>
 
         <section className="video-poker-machine">
           <div className="video-poker-marquee">

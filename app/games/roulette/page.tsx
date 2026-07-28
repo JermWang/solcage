@@ -6,6 +6,7 @@ import { RouletteWheel } from "react-casino-roulette";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 
 type Choice = "RED" | "BLACK" | "ZERO";
 type Proof = {
@@ -77,7 +78,7 @@ export default function RoulettePage() {
           <div><Link href="/games">← Casino</Link><span>SOLCAGE ORIGINALS / EUROPEAN ROULETTE</span><h1>Cage Roulette</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
-        <GameHints game="roulette" />
+        <div className="game-guidance"><GameHints game="roulette" /><GameRules game="roulette" /></div>
 
         <section className="roulette-room">
           <div className="roulette-visual">

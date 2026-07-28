@@ -5,6 +5,7 @@ import { useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 
 type MinesState = {
   roundId: string;
@@ -92,7 +93,7 @@ export default function MinesPage() {
           <div><Link href="/games">← Casino</Link><span>MIT MINES FOUNDATION / VERIFIED BOARD</span><h1>Crystal Mines</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
-        <GameHints game="mines" />
+        <div className="game-guidance"><GameHints game="mines" /><GameRules game="mines" /></div>
 
         <section className="mines-room">
           <div className="mines-stage">

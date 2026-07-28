@@ -5,6 +5,7 @@ import { useState, type CSSProperties } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 
 type Card = { rank: string; suit: "hearts" | "diamonds" | "clubs" | "spades" };
 type BlackjackState = {
@@ -93,7 +94,7 @@ export default function BlackjackPage() {
           <div><Link href="/games">← Casino</Link><span>BLACKJACK PARTY FOUNDATION / VERIFIED SHOE</span><h1>Cage Blackjack</h1></div>
           <div className="game-room-balance"><span>YOUR BALANCE</span><b>{bank.toFixed(2)} SOL</b></div>
         </header>
-        <GameHints game="blackjack" />
+        <div className="game-guidance"><GameHints game="blackjack" /><GameRules game="blackjack" /></div>
 
         <section className="blackjack-room">
           <div className="blackjack-table">

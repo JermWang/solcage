@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useState, type CSSProperties } from "r
 import { CasinoChrome } from "@/components/CasinoChrome";
 import { clampStake, useWager } from "@/lib/useWager";
 import { GameHints } from "@/components/GameHints";
+import { GameRules } from "@/components/GameRules";
 import {
   diceMultiplier,
   diceTarget,
@@ -141,7 +142,7 @@ export default function DicePage() {
             <b>{points.toLocaleString()} XP</b>
           </div>
         </header>
-        <GameHints game="dice" />
+        <div className="game-guidance"><GameHints game="dice" /><GameRules game="dice" /></div>
 
         <section className="dice-room">
           <div className={`dice-stage ${pending ? "rolling" : ""} ${result?.won ? "won" : result ? "lost" : ""}`}>

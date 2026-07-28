@@ -474,6 +474,33 @@ main>footer p a:hover{background:var(--lime)}
 .casino-top-actions b{color:var(--lime);font:800 10px var(--font-geist-mono)}
 .casino-deposit{height:40px;padding:0 20px;border-radius:9px;border:0;background:var(--lime);color:#09080b!important;display:grid;place-items:center;font:900 10px var(--font-geist-mono);text-transform:uppercase;letter-spacing:.07em;cursor:pointer}
 .casino-deposit:hover{filter:brightness(1.08)}
+/* Rules & payouts — always available, never dismissed */
+.game-guidance{display:flex;flex-direction:column;align-items:flex-start;gap:0}
+.rules-button{margin:0 0 18px;height:34px;padding:0 15px;border:1px solid rgba(255,255,255,.16);border-radius:9px;background:#111015;color:#c8c2d2;font:800 10px var(--font-geist-mono);letter-spacing:.06em;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:border-color .14s,color .14s}
+.rules-button:hover{color:var(--lime);border-color:rgba(201,255,56,.45)}
+.rules-button span{font-size:13px}
+.rules-overlay{position:fixed;inset:0;z-index:110;background:rgba(4,3,7,.76);backdrop-filter:blur(6px);display:grid;place-items:center;padding:20px;--casino-line:rgba(255,255,255,.09);color:#f7f5fa}
+.rules-panel{width:min(640px,100%);max-height:86vh;overflow:auto;border:1px solid var(--casino-line);border-radius:18px;background:linear-gradient(180deg,#15131c,#0c0b10);box-shadow:0 40px 80px rgba(0,0,0,.6);padding:24px}
+.rules-panel header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:14px}
+.rules-panel header span{display:block;color:var(--lime);font:800 8px var(--font-geist-mono);letter-spacing:.13em;margin-bottom:6px;text-transform:uppercase}
+.rules-panel header h2{margin:0;font-size:24px;letter-spacing:-.03em;color:#fff}
+.rules-panel header button{flex:0 0 auto;width:32px;height:32px;border:1px solid var(--casino-line);border-radius:8px;background:transparent;color:#8f8998;cursor:pointer;font-size:13px}
+.rules-panel header button:hover{color:#fff;border-color:#4d4655}
+.rules-rtp{margin:0 0 20px;padding:11px 13px;border:1px solid rgba(201,255,56,.22);border-radius:10px;background:rgba(201,255,56,.06);color:#d8d3e0;font:12px/1.5 var(--font-geist-mono)}
+.rules-rtp b{color:var(--lime);font:800 9px var(--font-geist-mono);letter-spacing:.1em;text-transform:uppercase;margin-right:9px}
+.rules-body section{margin-bottom:22px}
+.rules-body h3{margin:0 0 8px;font-size:14px;letter-spacing:-.01em;color:#fff}
+.rules-body p{margin:0;color:#b4aec0;font:13px/1.65 var(--font-geist-sans),Arial,sans-serif}
+.rules-body ol{margin:8px 0 0;padding-left:20px;display:grid;gap:6px}
+.rules-body ol li{color:#b4aec0;font:13px/1.55 var(--font-geist-sans),Arial,sans-serif}
+.rules-table-wrap{margin-top:10px;overflow-x:auto;border:1px solid var(--casino-line);border-radius:10px}
+.rules-body table{width:100%;border-collapse:collapse;font:12px var(--font-geist-mono)}
+.rules-body th{text-align:left;padding:9px 12px;background:#100e15;color:#766f7e;font:800 8px var(--font-geist-mono);letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--casino-line)}
+.rules-body td{padding:9px 12px;color:#c5bfd0;border-bottom:1px solid rgba(255,255,255,.05)}
+.rules-body tr:last-child td{border-bottom:0}
+.rules-body td:last-child{color:var(--lime);white-space:nowrap}
+@media(max-width:640px){.rules-panel{padding:18px}.rules-panel header h2{font-size:20px}}
+
 /* Beginner guidance shown above each table */
 .game-hints{margin:0 0 18px;padding:18px 20px;border:1px solid rgba(201,255,56,.22);border-radius:14px;background:linear-gradient(180deg,rgba(201,255,56,.06),rgba(201,255,56,.02))}
 .game-hints header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:10px}
