@@ -5,6 +5,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
 import { visibleGameCountLabel } from "@/lib/games-catalog";
+import { Cashier } from "@/components/Cashier";
 
 type View = "home" | "vault" | "games";
 type Asset = { symbol: string; name: string; price: number; marketCap: number; ltv: number; tone: string; origin: string; image: string };
@@ -36,6 +37,12 @@ export default function Home() {
   const [loyaltyPoints, setLoyaltyPoints] = useState(0);
   const [profileName, setProfileName] = useState("Profile");
   const [signedIn, setSignedIn] = useState<boolean | null>(null);
+  const [cashierOpen, setCashierOpen] = useState(false);
+
+  function openCashier() {
+    if (signedIn === false) window.location.assign("/profile");
+    else setCashierOpen(true);
+  }
 
   const collateral = Number(amount || 0) * asset.price;
   const available = collateral * asset.ltv / 100;
@@ -110,6 +117,7 @@ export default function Home() {
         </div>
         <div className="balances"><span>CHIPS <b>{chips.toFixed(2)}</b></span><span>LOYALTY <b>{signedIn === false ? "—" : `${loyaltyPoints.toLocaleString()} PTS`}</b></span></div>
         <div className="nav-social"><ContractAddress /><XLink /></div>
+        <button className="nav-deposit" onClick={openCashier}>Deposit SOL</button>
         <a className="wallet" href="/profile">{signedIn === false ? "Connect wallet" : profileName}</a>
       </nav>
 
@@ -155,6 +163,7 @@ export default function Home() {
       )}
       <a className="floating-play" href="/games"><span>PLAY THE FLOOR</span><b>↗</b></a>
       <footer><div><b>SOLCAGE</b><span>Collateral in. Game on.</span></div><p>Solana-native memecoin credit, game settlement and loyalty in one wallet-connected platform. <a href="/docs">Read how lending works ↗</a></p><div className="footer-social"><XLink withHandle /><span>BUILT FOR SOLANA · 2026</span></div></footer>
+      {cashierOpen && <Cashier open={cashierOpen} onClose={() => setCashierOpen(false)} />}
     </main>
   );
 }
@@ -166,7 +175,7 @@ function HomeView({ go, onSelectAsset }: { go: (v: View) => void; onSelectAsset:
     <header className="hero">
       <div className="eyebrow"><span /> MEMECOIN CREDIT ON SOLANA · $10M+ COLLATERAL · FLOOR REWARDS</div>
       <h1>Bag locked.<br /><em>Tables open.</em></h1>
-      <p>Deposit an eligible Solana memecoin, open a collateralized credit position, and take that liquidity to the floor. Every position and round builds your account history and loyalty score.</p>
+      <p>Deposit SOL and play the provably-fair floor straight away — no lending required. Or put up an eligible Solana memecoin for a credit line and take that liquidity to the tables. Every round builds your account history and loyalty score.</p>
       <div className="hero-actions"><button className="primary" onClick={() => go("games")}>Play now <span>↗</span></button><button className="secondary" onClick={() => window.location.assign("/lending")}>Open the cage</button></div>
       <div className="stats">{stats.map(([k, v]) => <div key={k}><span>{k}</span><b>{v}</b></div>)}</div>
       <div className="orbit" aria-hidden="true"><div className="coin hero-logo-coin"><BrandMark size={384} /></div><i className="ring r1" /><i className="ring r2" /><i className="dot d1" /><i className="dot d2" /></div>
