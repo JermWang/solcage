@@ -324,6 +324,20 @@ export default function DocsPage() {
               </p>
             </section>
 
+            <section id="fees">
+              <h2>Fees</h2>
+              <p>
+                A 2% rake is taken from each stake. <b>Hold 10,000 or more $SOLCAGE and that rake
+                is waived entirely</b> — your rounds settle with no fee at all.
+              </p>
+              <p className="docs-fine">
+                Your balance is read from the chain when you play, so the waiver applies
+                automatically as soon as you hold enough. Nothing to claim or switch on. Sell below
+                the threshold and the standard rake resumes. Deposits and withdrawals themselves are
+                free either way; Solana&apos;s own network fee still applies, and it is not ours.
+              </p>
+            </section>
+
             <section id="fair">
               <h2>Provable fairness</h2>
               <p>

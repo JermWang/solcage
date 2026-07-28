@@ -11,6 +11,8 @@ import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } 
 import { awardPoints } from "@/lib/rewards";
 import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
 import { MAX_MULTIPLIER, houseConfig, houseReadiness } from "@/lib/house";
+import { effectiveRakeBps } from "@/lib/fee-waiver";
+import { verifiedWallet } from "@/lib/custody/database";
 
 export const dynamic = "force-dynamic";
 
@@ -55,6 +57,12 @@ function publicResult(
 export async function POST(request: Request) {
   try {
     const identity = await requireIdentity(request);
+    // Holders of the threshold $SOLCAGE balance pay no rake. Resolved here,
+    // outside the transaction, so the chain lookup never holds a DB lock open.
+    const rakeBpsForRound = await effectiveRakeBps(
+      await verifiedWallet(identity.userId),
+      houseConfig().rakeBps,
+    );
     const body = await request.json() as Record<string, unknown>;
     const roundId = String(body.roundId ?? "");
     const clientSeed = String(body.clientSeed ?? "");
@@ -101,7 +109,7 @@ export async function POST(request: Request) {
           userId: identity.userId,
           stakeRaw: toBaseUnits(bet.toFixed(house.decimals), house.decimals),
           maxMultiplier: MAX_MULTIPLIER.slots,
-          rakeBps: house.rakeBps,
+          rakeBps: rakeBpsForRound,
           correlationId: `bet:${roundId}`,
           limits: house.limits,
           metadata: { game: "slots" },

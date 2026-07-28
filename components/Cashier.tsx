@@ -23,6 +23,7 @@ export function Cashier({ open, onClose, onBalance }: {
   const [amount, setAmount] = useState("");
   const [walletSol, setWalletSol] = useState<bigint | null>(null);
   const [casino, setCasino] = useState<{ available: string; availableRaw: bigint } | null>(null);
+  const [waiver, setWaiver] = useState<{ active: boolean; threshold: number } | null>(null);
   const [walletError, setWalletError] = useState("");
   const [busy, setBusy] = useState("");
   const [status, setStatus] = useState<{ kind: "ok" | "error"; text: string } | null>(null);
@@ -38,6 +39,7 @@ export function Cashier({ open, onClose, onBalance }: {
       ]);
       if (balance && !balance.error) {
         setCasino({ available: balance.balance, availableRaw: BigInt(balance.balanceRaw ?? "0") });
+        if (balance.feeWaiver) setWaiver({ active: balance.feeWaiver.active, threshold: balance.feeWaiver.threshold });
         onBalance?.(balance.balance);
       }
       if ("value" in wallet) {
@@ -186,6 +188,13 @@ export function Cashier({ open, onClose, onBalance }: {
 
         {status && <p className={`cashier-status ${status.kind}`} aria-live="polite">{status.text}</p>}
 
+        {waiver && (
+          <p className="cashier-waiver">
+            {waiver.active
+              ? "Fee-free: you hold enough $SOLCAGE, so no rake is taken on your rounds."
+              : `Hold ${waiver.threshold.toLocaleString()}+ $SOLCAGE and your rounds are rake-free.`}
+          </p>
+        )}
         <p className="cashier-note">
           {tab === "deposit"
             ? "One tap. Your wallet signs a plain SOL transfer — nothing else is approved."

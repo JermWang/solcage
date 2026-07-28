@@ -540,6 +540,17 @@ a.txn-row:hover .txn-link{color:var(--ink)}
 .coin-card-metrics b.up{color:#6bdba7}
 .coin-card-metrics b.down{color:#ff8f9a}
 .balance-usd{display:block;color:#6f6979;font:9px var(--font-geist-mono);margin-top:2px}
+.cashier-waiver{margin:12px 0 0;padding:9px 11px;border:1px solid rgba(201,255,56,.22);border-radius:9px;background:rgba(201,255,56,.06);color:#c9d99a;font:9px/1.5 var(--font-geist-mono)}
+.docs-fine{color:var(--muted);font:12px/1.6 var(--font-geist-mono);margin-top:10px}
+.airdrop-countdown{display:flex;flex-direction:column;gap:9px;margin:22px 0 6px;padding:16px 18px;border:1px solid var(--line);border-radius:12px;background:var(--paper);max-width:520px}
+.airdrop-countdown>span{font:800 9px var(--font-geist-mono);letter-spacing:.14em;color:var(--muted)}
+.airdrop-units{display:flex;gap:8px}
+.airdrop-units b{display:flex;align-items:baseline;gap:2px;font:800 26px var(--font-geist-mono);letter-spacing:-.02em}
+.airdrop-units em{font:800 10px var(--font-geist-mono);font-style:normal;color:var(--muted)}
+.airdrop-countdown small{color:var(--muted);font:11px/1.55 var(--font-geist-mono)}
+.airdrop-live{font:800 20px var(--font-geist-mono);color:#2f7d55}
+.airdrop-countdown.compact{margin:12px 0;padding:12px 14px}
+.airdrop-countdown.compact .airdrop-units b{font-size:19px}
 .deposit-menu{position:relative;flex:0 0 auto}
 .deposit-menu>.casino-deposit{display:inline-flex;align-items:center;gap:7px}
 .deposit-caret{font-size:9px;line-height:1}

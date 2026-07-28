@@ -7,6 +7,7 @@ import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
 import { TransactionHistory } from "@/components/TransactionHistory";
+import { AirdropCountdown } from "@/components/AirdropCountdown";
 import { signInWithWallet, signOut as walletSignOut, switchWallet as walletSwitch } from "@/lib/wallet";
 
 type History = { kind: string; points: number; multiplier: number; description: string; created_at: string };
@@ -204,6 +205,7 @@ export default function ProfilePage() {
           <strong>{profile.referrals} VERIFIED REFERRALS</strong>
         </div>
       </section>
+      <AirdropCountdown />
       <section className="history-panel">
         <div><div className="section-kicker">ON-CHAIN / DEPOSITS · WITHDRAWALS · LENDING</div><h2>Transaction history</h2></div>
         <TransactionHistory />

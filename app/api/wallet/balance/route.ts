@@ -2,6 +2,8 @@ import { transaction } from "@/lib/db";
 import { authRequired, isAuthRequired, json, requireIdentity } from "@/lib/identity";
 import { availableBalance, fromBaseUnits, lockedBalance } from "@/lib/bankroll";
 import { gameLimits, houseConfig, houseReadiness } from "@/lib/house";
+import { feeWaiverStatus } from "@/lib/fee-waiver";
+import { verifiedWallet } from "@/lib/custody/database";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,8 @@ export async function GET(request: Request) {
       raw: await availableBalance(client, identity.userId),
       locked: await lockedBalance(client, identity.userId),
     }));
+    // Same check the wager path applies, so the rake shown is the rake charged.
+    const waiver = await feeWaiverStatus(await verifiedWallet(identity.userId));
     return json({
       balanceRaw: raw.toString(),
       balance: fromBaseUnits(raw, config.decimals),
@@ -23,7 +27,9 @@ export async function GET(request: Request) {
       decimals: config.decimals,
       depositAddress: readiness.ready ? config.wallet : null,
       wagering: readiness.ready ? "open" : "closed",
-      rakeBps: config.rakeBps,
+      rakeBps: waiver.waived ? 0 : config.rakeBps,
+      standardRakeBps: config.rakeBps,
+      feeWaiver: { active: waiver.waived, balance: waiver.balance, threshold: waiver.threshold },
       games: gameLimits(config),
       limits: {
         minStakeRaw: config.limits.minStakeRaw.toString(),

@@ -13,6 +13,8 @@ import { authRequired, isAuthRequired, json, profileSnapshot, requireIdentity } 
 import { awardPoints } from "@/lib/rewards";
 import { InsufficientFunds, StakeRejected, payWinnings, takeStake, toBaseUnits } from "@/lib/bankroll";
 import { MAX_MULTIPLIER, houseConfig, houseReadiness, isGameHidden } from "@/lib/house";
+import { effectiveRakeBps } from "@/lib/fee-waiver";
+import { verifiedWallet } from "@/lib/custody/database";
 
 export const dynamic = "force-dynamic";
 
@@ -75,6 +77,12 @@ function publicState(
 export async function POST(request: Request) {
   try {
     const identity = await requireIdentity(request);
+    // Holders of the threshold $SOLCAGE balance pay no rake. Resolved here,
+    // outside the transaction, so the chain lookup never holds a DB lock open.
+    const rakeBpsForRound = await effectiveRakeBps(
+      await verifiedWallet(identity.userId),
+      houseConfig().rakeBps,
+    );
     // Withheld from the floor: refuse here too, so the API cannot be used to
     // play a game the lobby is hiding.
     if (isGameHidden("video-poker")) {
@@ -127,7 +135,7 @@ export async function POST(request: Request) {
             userId: identity.userId,
             stakeRaw: toBaseUnits(bet.toFixed(houseAtDeal.decimals), houseAtDeal.decimals),
             maxMultiplier: MAX_MULTIPLIER["video-poker"],
-            rakeBps: houseAtDeal.rakeBps,
+            rakeBps: rakeBpsForRound,
             correlationId: `bet:${roundId}`,
             limits: houseAtDeal.limits,
             metadata: { game: "video-poker" },

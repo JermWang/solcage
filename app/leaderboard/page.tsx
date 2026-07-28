@@ -6,6 +6,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/BrandMark";
 import { ContractAddress } from "@/components/ContractAddress";
 import { XLink } from "@/components/XLink";
+import { AirdropCountdown } from "@/components/AirdropCountdown";
 
 type Leader = { rank: number; username: string; displayName: string; avatarUrl: string | null; points: number; events: number; referrals: number };
 
@@ -23,6 +24,7 @@ export default function LeaderboardPage() {
     <section className="account-hero">
       <div className="section-kicker">GLOBAL RANKINGS / SEASON ZERO</div>
       <h1>The <em>loyalty board.</em></h1>
+      <AirdropCountdown />
       <p>Earn points by opening collateral tickets, playing floor rounds, and bringing verified players into the cage. Rankings include cryptographically verified Solana wallets only. Points track platform loyalty and referral activity.</p>
     </section>
     <section className="leaderboard-wrap">

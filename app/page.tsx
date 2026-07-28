@@ -9,6 +9,7 @@ import { Cashier } from "@/components/Cashier";
 import { DepositMenu } from "@/components/DepositMenu";
 import { useWager } from "@/lib/useWager";
 import { formatUsd, usePrices } from "@/lib/usePrices";
+import { coinArt } from "@/lib/coin-art";
 
 type View = "home" | "vault" | "games";
 /**
@@ -20,11 +21,11 @@ type AssetArt = { symbol: string; name: string; ltv: number; tone: string; origi
 type Asset = AssetArt & { price: number | null; change24h: number | null };
 
 const assetArt: AssetArt[] = [
-  { symbol: "FARTCOIN", name: "Fartcoin", ltv: 20, tone: "green", origin: "SOLANA", image: "/coin-art/fartcoin.webp" },
-  { symbol: "PENGU", name: "Pudgy Penguins", ltv: 20, tone: "purple", origin: "SOLANA", image: "/coin-art/pengu.webp" },
-  { symbol: "BONK", name: "Bonk", ltv: 20, tone: "orange", origin: "SOLANA", image: "/coin-art/bonk.webp" },
-  { symbol: "WIF", name: "dogwifhat", ltv: 20, tone: "green", origin: "SOLANA", image: "/coin-art/wif.jpg" },
-  { symbol: "POPCAT", name: "Popcat", ltv: 20, tone: "pink", origin: "SOLANA", image: "/coin-art/popcat.webp" },
+  { symbol: "FARTCOIN", name: "Fartcoin", ltv: 20, tone: "green", origin: "SOLANA", image: coinArt("FARTCOIN") },
+  { symbol: "PENGU", name: "Pudgy Penguins", ltv: 20, tone: "purple", origin: "SOLANA", image: coinArt("PENGU") },
+  { symbol: "BONK", name: "Bonk", ltv: 20, tone: "orange", origin: "SOLANA", image: coinArt("BONK") },
+  { symbol: "WIF", name: "dogwifhat", ltv: 20, tone: "green", origin: "SOLANA", image: coinArt("WIF") },
+  { symbol: "POPCAT", name: "Popcat", ltv: 20, tone: "pink", origin: "SOLANA", image: coinArt("POPCAT") },
 ];
 
 const games = [

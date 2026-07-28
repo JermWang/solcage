@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CasinoChrome } from "@/components/CasinoChrome";
+import { coinArt } from "@/lib/coin-art";
 
 type Check = {
   key: string;
@@ -289,7 +290,7 @@ export default function LendingPage() {
                 >
                   <span className="asset-cell">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={`/collateral/${entry.symbol.toLowerCase()}.png`} alt="" onError={(event) => { event.currentTarget.src = "/media/solcage-pfp.png"; }} />
+                    <img src={coinArt(entry.symbol)} alt="" />
                     <span><b>${entry.symbol}</b><small>{entry.name}</small></span>
                   </span>
                   <span>{config?.network}</span>
