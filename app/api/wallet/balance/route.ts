@@ -23,7 +23,6 @@ export async function GET(request: Request) {
       decimals: config.decimals,
       depositAddress: readiness.ready ? config.wallet : null,
       wagering: readiness.ready ? "open" : "closed",
-      checks: readiness.checks,
       rakeBps: config.rakeBps,
       games: gameLimits(config),
       limits: {

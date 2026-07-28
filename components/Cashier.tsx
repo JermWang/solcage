@@ -90,13 +90,8 @@ export function Cashier({ open, onClose, onBalance }: {
         setStatus({ kind: "ok", text: `Deposited ${amount} SOL. Good luck.` });
       } else {
         setBusy("Sending your withdrawal…");
-        const result = await withdrawSol(lamports);
-        setStatus({
-          kind: "ok",
-          text: result.requiresReview
-            ? `Withdrawal of ${amount} SOL queued for review — your balance is reserved for it.`
-            : `Sent ${amount} SOL to your wallet.`,
-        });
+        await withdrawSol(lamports);
+        setStatus({ kind: "ok", text: `Sent ${amount} SOL to your wallet.` });
       }
       setAmount("");
       await refresh();
@@ -161,7 +156,7 @@ export function Cashier({ open, onClose, onBalance }: {
         <p className="cashier-note">
           {tab === "deposit"
             ? "One tap. Your wallet signs a plain SOL transfer — nothing else is approved."
-            : "Withdrawals go straight back to your connected wallet. Larger amounts are reviewed first."}
+            : "Withdrawals go straight back to your connected wallet."}
         </p>
       </div>
     </div>

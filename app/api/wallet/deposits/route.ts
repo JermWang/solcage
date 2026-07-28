@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const config = houseConfig();
     const readiness = houseReadiness(config);
     if (!readiness.ready || !config.wallet) {
-      return json({ error: "The cashier is closed", checks: readiness.checks }, 503, identity);
+      return json({ error: "Deposits are temporarily unavailable." }, 503, identity);
     }
     if (config.mint) {
       return json({ error: "Token deposits are not enabled on this table" }, 503, identity);

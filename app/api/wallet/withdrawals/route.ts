@@ -51,8 +51,10 @@ export async function POST(request: Request) {
     const identity = await requireIdentity(request);
     const config = houseConfig();
     const readiness = houseReadiness(config);
+    // Never return the readiness detail to the client — it names the wallet and
+    // operational state. Just report open/closed.
     if (!readiness.ready) {
-      return json({ error: "The cashier is closed", checks: readiness.checks }, 503, identity);
+      return json({ error: "Withdrawals are temporarily unavailable." }, 503, identity);
     }
 
     const wallet = await verifiedWallet(identity.userId);
@@ -102,9 +104,20 @@ export async function POST(request: Request) {
     }, 202, identity);
   } catch (error) {
     if (isAuthRequired(error)) return authRequired();
+    // A player's own shortfall is safe to report. Everything else — above all a
+    // send that fails because the house wallet cannot cover it, whose raw error
+    // names the exact balance — is collapsed to a generic message so the
+    // bankroll is never revealed. On any send failure the lock is already
+    // refunded, so the player's balance is unchanged.
     if (error instanceof InsufficientFunds) {
-      return json({ error: "Not enough balance", balanceRaw: error.balanceRaw.toString() }, 402);
+      return json({ error: "That is more than your balance.", balanceRaw: error.balanceRaw.toString() }, 402);
     }
-    return json({ error: error instanceof Error ? error.message : "Withdrawal failed" }, 400);
+    const message = error instanceof Error ? error.message : "";
+    if (/identical withdrawal is already in progress/i.test(message)) {
+      return json({ error: "A withdrawal for that amount is already in progress." }, 409);
+    }
+    return json({
+      error: "This withdrawal couldn't be processed right now. Your balance is unchanged — try again shortly.",
+    }, 503);
   }
 }
